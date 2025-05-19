@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { HiMenuAlt2, HiSearch, HiArrowLeft } from 'react-icons/hi';
 import logo from '@/public/images/logo.png'
 import Image from 'next/image';
@@ -11,6 +11,20 @@ interface NavbarProps {
 
 export default function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
     const [isSearchVisible, setIsSearchVisible] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+                setIsSearchVisible(false);
+            }
+        }
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     return (
         <nav className="bg-white border-b border-gray-200">
@@ -33,7 +47,7 @@ export default function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                 </div>
                 <div className="flex items-center space-x-2 md:space-x-4">
                     {/* search icon */}
-                    <div className="relative">
+                    <div className="relative" ref={searchRef}>
                         <HiSearch 
                             className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" 
                             onClick={() => setIsSearchVisible(!isSearchVisible)}

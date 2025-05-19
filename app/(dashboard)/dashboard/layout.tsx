@@ -1,9 +1,17 @@
+import DashboardLayout from '@/components/Layout/DashboardLayout';
 import React from 'react'
+import { Toaster } from 'react-hot-toast';
+    
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+interface LayoutProps {
+    children: React.ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
     return (
-        <div>
+        <DashboardLayout>
             {children}
-        </div>
+            <Toaster />
+        </DashboardLayout>
     )
 }

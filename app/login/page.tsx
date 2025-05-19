@@ -3,26 +3,31 @@ import React, { useState } from 'react'
 import logo from '@/public/images/logo.png'
 import Image from 'next/image'
 import { useForm } from 'react-hook-form'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
+
 
 type FormInputs = {
-  email: string;
-  password: string;
+    email: string;
+    password: string;
 }
 
 export default function Login() {
     const [isLoading, setIsLoading] = useState(false)
-    const { 
-        register, 
-        handleSubmit, 
-        formState: { errors } 
+    const router = useRouter()
+    const {
+        register,
+        handleSubmit,
+        formState: { errors }
     } = useForm<FormInputs>()
 
     const onSubmit = async (data: FormInputs) => {
         setIsLoading(true)
         try {
             console.log(data)
-            // Handle login logic here
-            await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            toast.success('Login successful')
+            router.push('/dashboard')
         } finally {
             setIsLoading(false)
         }
@@ -48,7 +53,7 @@ export default function Login() {
                             E-Mail
                         </label>
                         <input
-                            {...register("email", { 
+                            {...register("email", {
                                 required: "E-Mail ist erforderlich",
                                 pattern: {
                                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
@@ -68,7 +73,7 @@ export default function Login() {
                             Passwort
                         </label>
                         <input
-                            {...register("password", { 
+                            {...register("password", {
                                 required: "Passwort ist erforderlich",
                                 minLength: {
                                     value: 6,

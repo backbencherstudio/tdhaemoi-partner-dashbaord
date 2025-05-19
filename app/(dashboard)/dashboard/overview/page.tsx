@@ -27,35 +27,40 @@ export default function DashboardOverview() {
 
                 {/* Table Section */}
                 <div className="w-full md:w-1/2">
-                    <div className="flex justify-between items-center p-4">
-                        <h3 className="font-semibold">IHRE GERÄTE</h3>
-                        <h3 className="font-semibold">SCANS</h3>
-                    </div>
-                    <div className="border border-gray-200 rounded-lg">
-                        <div className="flex items-center border-b border-gray-200">
-                            <div className="flex-1 border-r border-gray-200 p-4">Bozen Büro</div>
-                            <div className="w-32 text-center p-4">10</div>
-                            <div className="p-4">
-                                <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
-                            </div>
-                        </div>
-                        <div className="flex items-center border-b border-gray-200">
-                            <div className="flex-1 border-r border-gray-200 p-4">Bozen Massraum</div>
-                            <div className="w-32 text-center p-4">300</div>
-                            <div className="p-4">
-                                <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
-                            </div>
-                        </div>
-                        <div className="flex items-center">
-                            <div className="flex-1 border-r border-gray-200 p-4">Laptop Theo</div>
-                            <div className="w-32 text-center p-4">300</div>
-                            <div className="p-4">
-                                <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
-                            </div>
-                        </div>
-                    </div>
+                    <table className="w-full">
+                        <thead>
+                            <tr>
+                                <th className="text-left p-4 font-semibold border-b border-gray-400">IHRE GERÄTE</th>
+                                <th className="text-left p-4 font-semibold border-b border-gray-400">SCANS</th>
+                                <th className="text-left p-4 font-semibold border-b border-gray-400"></th>
+                            </tr>
+                        </thead>
+                        <tbody className="border border-gray-400 rounded-lg">
+                            <tr className="border-b border-gray-400">
+                                <td className="p-4 border-r border-gray-400">Bozen Büro</td>
+                                <td className="p-4 w-32 text-center">10</td>
+                                <td className="p-4 w-16 text-center">
+                                    <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer mx-auto" />
+                                </td>
+                            </tr>
+                            <tr className="border-b border-gray-400">
+                                <td className="p-4 border-r border-gray-400">Bozen Massraum</td>
+                                <td className="p-4 w-32 text-center">300</td>
+                                <td className="p-4 w-16 text-center">
+                                    <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer mx-auto" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td className="p-4 border-r border-gray-400">Laptop Theo</td>
+                                <td className="p-4 w-32 text-center">300</td>
+                                <td className="p-4 w-16 text-center">
+                                    <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer mx-auto" />
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                     <div className='flex justify-center mt-4'>
-                        <button className="text-center text-sm text-gray-500">
+                        <button className="text-center text-sm border border-gray-400 rounded-full cursor-pointer px-4 py-2 ">
                             Alle anzeigen
                         </button>
                     </div>
@@ -64,7 +69,7 @@ export default function DashboardOverview() {
             </div>
 
             {/* Icons Section */}
-            <div className="flex gap-8">
+            <div className="flex gap-8 justify-center items-center mt-10">
                 <div className="flex flex-col items-center gap-2">
                     <Link href="/dashboard/lager" className="px-4 py-1 bg-black rounded-3xl">
                         <Image src={lager} alt="Lager" width={100} height={100} />

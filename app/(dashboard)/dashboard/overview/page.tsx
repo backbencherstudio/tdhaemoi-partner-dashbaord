@@ -1,9 +1,85 @@
 import React from 'react'
 
+import lager from '@/public/images/dashboard/lager.png'
+import cart from '@/public/images/dashboard/cart.png'
+import { TbBuildingWarehouse } from 'react-icons/tb'
+import { TiShoppingCart } from 'react-icons/ti'
+import { RiSettings5Line } from 'react-icons/ri'
+import Image from 'next/image'
+import Link from 'next/link'
+
+
 export default function DashboardOverview() {
     return (
-        <div>
-            this is the dashboard overview
+        <div className="p-6 space-y-8">
+            <h1 className="text-2xl font-bold">Ihr Geschäft</h1>
+
+            <div className="flex  items-center gap-8 w-full ">
+                {/* Stats Section */}
+                <div className="flex gap-8 w-full md:w-1/2">
+                    <div className="space-y-2">
+                        <h2 className="text-5xl font-bold">140</h2>
+                        <p className="text-gray-600">Scans im Monat Februar</p>
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-5xl font-bold">10%</h2>
+                        <p className="text-gray-600">Mehr Scans als im vergangenen Monat</p>
+                    </div>
+                </div>
+
+                {/* Table Section */}
+                <div className="    w-full md:w-1/2">
+                    <div className="flex w-full">
+                        <div className="border border-gray-500 rounded-lg flex-grow">
+                            <div className="flex justify-between items-center p-4 border-b border-gray-500">
+                                <h3 className="font-semibold">IHRE GERÄTE</h3>
+                                <h3 className="font-semibold">SCANS</h3>
+                            </div>
+                            <div>
+                                <div className="flex justify-between items-center p-4 border-b border-gray-500">
+                                    <span>Bozen Büro</span>
+                                    <span>10</span>
+                                </div>
+                                <div className="flex justify-between items-center p-4 border-b border-gray-500">
+                                    <span>Bozen Massraum</span>
+                                    <span>300</span>
+                                </div>
+                                <div className="flex justify-between items-center p-4">
+                                    <span>Laptop Theo</span>
+                                    <span>300</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col justify-center gap-[22px] ml-4">
+                            <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
+                            <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
+                            <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
+                        </div>
+                    </div>
+                    <div className='flex justify-center mt-4'>
+                        <button className="text-center text-sm text-gray-500">
+                            Alle anzeigen
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            {/* Icons Section */}
+            <div className="flex gap-8">
+                <div className="flex flex-col items-center gap-2">
+                    <Link href="/dashboard/lager" className="px-4 py-1 bg-black rounded-3xl">
+                        <Image src={lager} alt="Lager" width={100} height={100} />
+                    </Link>
+                    <span>Lager</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                    <Link href="/dashboard/bestellungen" className="px-4 py-2 bg-black rounded-3xl">
+                        <Image src={cart} alt="Lager" width={100} height={100} />
+                    </Link>
+                    <span>Bestellungen</span>
+                </div>
+            </div>
         </div>
     )
 }

@@ -2,8 +2,6 @@ import React from 'react'
 
 import lager from '@/public/images/dashboard/lager.png'
 import cart from '@/public/images/dashboard/cart.png'
-import { TbBuildingWarehouse } from 'react-icons/tb'
-import { TiShoppingCart } from 'react-icons/ti'
 import { RiSettings5Line } from 'react-icons/ri'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -28,32 +26,32 @@ export default function DashboardOverview() {
                 </div>
 
                 {/* Table Section */}
-                <div className="    w-full md:w-1/2">
-                    <div className="flex w-full">
-                        <div className="border border-gray-500 rounded-lg flex-grow">
-                            <div className="flex justify-between items-center p-4 border-b border-gray-500">
-                                <h3 className="font-semibold">IHRE GERÄTE</h3>
-                                <h3 className="font-semibold">SCANS</h3>
-                            </div>
-                            <div>
-                                <div className="flex justify-between items-center p-4 border-b border-gray-500">
-                                    <span>Bozen Büro</span>
-                                    <span>10</span>
-                                </div>
-                                <div className="flex justify-between items-center p-4 border-b border-gray-500">
-                                    <span>Bozen Massraum</span>
-                                    <span>300</span>
-                                </div>
-                                <div className="flex justify-between items-center p-4">
-                                    <span>Laptop Theo</span>
-                                    <span>300</span>
-                                </div>
+                <div className="w-full md:w-1/2">
+                    <div className="flex justify-between items-center p-4">
+                        <h3 className="font-semibold">IHRE GERÄTE</h3>
+                        <h3 className="font-semibold">SCANS</h3>
+                    </div>
+                    <div className="border border-gray-200 rounded-lg">
+                        <div className="flex items-center border-b border-gray-200">
+                            <div className="flex-1 border-r border-gray-200 p-4">Bozen Büro</div>
+                            <div className="w-32 text-center p-4">10</div>
+                            <div className="p-4">
+                                <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
                             </div>
                         </div>
-                        <div className="flex flex-col justify-center gap-[22px] ml-4">
-                            <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
-                            <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
-                            <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
+                        <div className="flex items-center border-b border-gray-200">
+                            <div className="flex-1 border-r border-gray-200 p-4">Bozen Massraum</div>
+                            <div className="w-32 text-center p-4">300</div>
+                            <div className="p-4">
+                                <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
+                            </div>
+                        </div>
+                        <div className="flex items-center">
+                            <div className="flex-1 border-r border-gray-200 p-4">Laptop Theo</div>
+                            <div className="w-32 text-center p-4">300</div>
+                            <div className="p-4">
+                                <RiSettings5Line className="w-5 h-5 text-gray-500 cursor-pointer" />
+                            </div>
                         </div>
                     </div>
                     <div className='flex justify-center mt-4'>

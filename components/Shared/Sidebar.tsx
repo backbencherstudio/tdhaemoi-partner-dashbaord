@@ -4,9 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { IoClose } from 'react-icons/io5';
 import {
-    // HiHome,
     HiCog,
-    HiPencilAlt,
     HiCollection,
     HiHome,
     HiShoppingCart,
@@ -16,6 +14,9 @@ import {
     HiChat
 } from 'react-icons/hi';
 import { HiArrowRightOnRectangle } from "react-icons/hi2";
+import logo from '@/public/images/logo.png'
+import Image from 'next/image';
+
 
 interface SidebarProps {
     isOpen: boolean;
@@ -31,13 +32,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
     });
 
     const pathname = usePathname();
+    const router = useRouter();
 
-    // const handleLogout = () => {
-
-    //     localStorage.removeItem('token');
-    //     setUser(null);
-    //     router.push('/login');
-    // };
+    const handleLogout = () => {
+        router.push('/login');
+    };
 
     const menuSections = [
         {
@@ -89,7 +88,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
     return (
         <div className="w-64 h-screen bg-white  flex flex-col border-r border-gray-200">
             <div className="py-5 px-3 flex justify-between items-center border-gray-400">
-                <h2 className="text-xl font-bold mb-1">Admin Panel</h2>
+                <div className='w-16 h-16'>
+                    <Image src={logo} alt="logo" width={100} height={100} className='w-full h-full object-contain' />
+                </div>
                 <button
                     onClick={onClose}
                     className="p-1 rounded-full hover:bg-gray-100 md:hidden"
@@ -103,7 +104,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
                     <div key={section.id} className="mb-5 px-2 ">
                         {section.standalone ? (
                             <Link href={section.href} className='cursor-pointer'>
-                                <span className={`flex items-center px-4 py-2 rounded-lg ${pathname === section.href
+                                <span className={`flex items-center px-4 py-2 rounded-full ${pathname === section.href
                                     ? 'bg-black text-white'
                                     : 'text-gray-700 hover:bg-gray-100'
                                     }`}>
@@ -149,8 +150,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
             {/* Logout button */}
             <div className="border-t border-gray-200 p-4">
                 <button
-                    // onClick={handleLogout}
-                    className="flex items-center cursor-pointer w-full px-4 py-2 text-gray-700 hover:bg-indigo-600 hover:text-white rounded-md transition-colors duration-300 group"
+                    onClick={handleLogout}
+                    className="flex items-center cursor-pointer w-full px-4 py-2 text-gray-700 hover:bg-[#61A175] hover:text-white rounded-md transition-colors duration-300 group"
                 >
                     <HiArrowRightOnRectangle className="h-5 w-5 mr-3 transition-transform duration-300 group-hover:translate-x-1" />
                     Logout

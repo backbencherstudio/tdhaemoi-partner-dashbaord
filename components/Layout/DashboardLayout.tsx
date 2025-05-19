@@ -27,7 +27,7 @@ const DashboardLayout = ({ children }: LayoutProps) => {
 
             {/* Main Content */}
             <div className={`flex-1 flex flex-col overflow-hidden ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
-                <Navbar onMenuClick={toggleSidebar} />
+                <Navbar onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
                 {/* Overlay */}
                 {isSidebarOpen && (

@@ -1,10 +1,11 @@
 import React from 'react'
-
 import lager from '@/public/images/dashboard/lager.png'
 import cart from '@/public/images/dashboard/cart.png'
 import { RiSettings5Line } from 'react-icons/ri'
 import Image from 'next/image'
 import Link from 'next/link'
+import Chart from '@/components/Overview/Chart'
+import LineCharts from '@/components/Overview/LineCharts'
 
 
 export default function DashboardOverview() {
@@ -12,7 +13,7 @@ export default function DashboardOverview() {
         <div className="p-6 space-y-8">
             <h1 className="text-2xl font-bold">Ihr Geschäft</h1>
 
-            <div className="flex  items-center gap-8 w-full ">
+            <div className="flex flex-col md:flex-row items-center gap-8 w-full ">
                 {/* Stats Section */}
                 <div className="flex gap-8 w-full md:w-1/2">
                     <div className="space-y-2">
@@ -83,6 +84,10 @@ export default function DashboardOverview() {
                     <span>Bestellungen</span>
                 </div>
             </div>
+
+            {/* chart section */}
+            <Chart />
+            <LineCharts />
         </div>
     )
 }

@@ -1,0 +1,149 @@
+[
+    {
+        "id": 1,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "40",
+            "XL",
+            "41",
+            "42",
+            "XXL",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47"
+        ],
+        "Lagerort": "Alle Lagerorte",
+        "StückzahlAufLager": 100
+    },
+    {
+        "id": 2,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "40",
+            "XL"
+        ],
+        "Lagerort": "Lager 1",
+        "StückzahlAufLager": 100
+    },
+    {
+        "id": 3,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "40",
+            "XL",
+            "41",
+            "42",
+            "XXL",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47"
+        ],
+        "Lagerort": "Lager 1",
+        "StückzahlAufLager": 100
+    },
+    {
+        "id": 4,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "41",
+            "L",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47"
+        ],
+        "Lagerort": "Lager 2",
+        "StückzahlAufLager": 100
+    },
+    {
+        "id": 5,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "42",
+            "L"
+        ],
+        "Lagerort": "Lager 3",
+        "StückzahlAufLager": 100
+    },
+    {
+        "id": 6,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "43",
+            "XL",
+            "44",
+            "45",
+            "46",
+            "47"
+        ],
+        "Lagerort": "Lager 4",
+        "StückzahlAufLager": 100
+    },
+    {
+        "id": 7,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "44",
+            "XL"
+        ],
+        "Lagerort": "Lager 5",
+        "StückzahlAufLager": 100
+    },
+    {
+        "id": 8,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "45",
+            "XL"
+        ],
+        "Lagerort": "Lager 6",
+        "StückzahlAufLager": 100
+    },
+    {
+        "id": 9,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "46",
+            "XL"
+        ],
+        "Lagerort": "Lager 7",
+        "StückzahlAufLager": 100
+    },
+    {
+        "id": 10,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "47",
+            "XL"
+        ],
+        "Lagerort": "Lager 8",
+        "StückzahlAufLager": 100
+    },
+    {
+        "id": 11,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Schuhgröße": [
+            "48",
+            "XL"
+        ],
+        "Lagerort": "Lager 9",
+        "StückzahlAufLager": 100
+    }
+]

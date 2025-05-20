@@ -140,11 +140,11 @@ export default function LagerChart() {
         <div className="w-full p-4 mx-auto">
             <h1 className="text-3xl font-bold mb-8">Ihre Kunden im Geschäft</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full justify-between">
 
 
                 {/* Right pie chart */}
-                <div className="h-[300px] lg:h-[500px]">
+                <div className="h-[300px] lg:h-[500px] ">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
@@ -168,30 +168,27 @@ export default function LagerChart() {
 
 
                 {/* bar chart  */}
-                <div className="w-full p-4 h-[300px] lg:h-[500px]">
-                    <h2 className="text-2xl font-bold mb-4">Preis und Gewinn Übersicht</h2>
-                    <ResponsiveContainer width="100%" height="100%" >
-                        <BarChart
-                            data={data}
-                            margin={{
-                                top: 20,
-                                right: 30,
-                                left: 20,
-                                bottom: 20,
-                            }}
-                            barGap={0}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                            <XAxis dataKey="year" axisLine={false} tickLine={false} />
-                            <YAxis axisLine={false} tickLine={false} />
-                            <Tooltip content={<CustomTooltips active={true} payload={[]} label={''} />} />
-                            <Legend iconType="circle" verticalAlign="top" align="center" wrapperStyle={{ paddingBottom: '15px' }} />
-                            <Bar dataKey="Einkaufspreis" fill="#81E6D9" name="Einkaufspreis" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="Verkaufspreis" fill="#38B2AC" name="Verkaufspreis" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="Gewinn" fill="#4A6FA5" name="Gewinn" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="w-full overflow-x-auto">
+                    <div className="min-w-[800px] h-[300px] lg:h-[500px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={data}
+                                margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                                barGap={0}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                <XAxis dataKey="year" axisLine={false} tickLine={false} />
+                                <YAxis axisLine={false} tickLine={false} />
+                                <Tooltip content={<CustomTooltips active={true} payload={[]} label={''} />} />
+                                <Legend iconType="circle" verticalAlign="top" align="center" wrapperStyle={{ paddingBottom: '15px' }} />
+                                <Bar dataKey="Einkaufspreis" fill="#81E6D9" name="Einkaufspreis" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="Verkaufspreis" fill="#38B2AC" name="Verkaufspreis" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="Gewinn" fill="#4A6FA5" name="Gewinn" radius={[4, 4, 0, 0]} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
+
             </div>
         </div>
     )

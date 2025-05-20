@@ -1,7 +1,6 @@
-'use client'
-
+'use client' 
 import React, { useState } from 'react'
-import Image from 'next/image'
+import Image, { StaticImageData } from 'next/image'
 import shoes from '@/public/images/Favorite/shoes.png'
 import {
     DropdownMenu,
@@ -15,7 +14,7 @@ interface FavoriteModel {
     name: string
     value: number
     color: string
-    image: any
+    image: StaticImageData
     id: number
     category: string
 }

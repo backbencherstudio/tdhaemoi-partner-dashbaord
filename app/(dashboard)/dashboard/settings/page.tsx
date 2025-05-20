@@ -1,6 +1,5 @@
 import React from 'react'
 import Link from 'next/link'
-import { Settings, MessageSquare, Box, MonitorSmartphone, Headphones, Globe, LogOut } from 'lucide-react'
 import ProductManagement from '@/public/images/settings/Productmanagement.png'
 import News from '@/public/images/settings/News.png'
 import settings from '@/public/images/settings/Settings.png'

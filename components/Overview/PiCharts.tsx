@@ -1,6 +1,6 @@
 'use client'
 import React from 'react';
-import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip, Label } from 'recharts';
+import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip} from 'recharts';
 
 export default function PiCharts() {
     const [windowWidth, setWindowWidth] = React.useState(

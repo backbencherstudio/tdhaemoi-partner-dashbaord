@@ -29,6 +29,7 @@ import {
 import { IoIosArrowDown } from 'react-icons/io'
 import { IoSearch } from 'react-icons/io5'
 import { Input } from '@/components/ui/input'
+import LagerChart from '@/components/LagerChart/LagerChart'
 
 export default function Lager() {
     const [itemsPerPage, setItemsPerPage] = useState(5)
@@ -52,7 +53,7 @@ export default function Lager() {
     return (
         <div className="w-full px-5 ">
 
-            <div className="flex items-center justify-between mb-10">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-0 items-center justify-between mb-10">
                 <h1 className='text-2xl font-semibold'>Produktverwaltung</h1>
 
                 {/* Right Side: Search Bar */}
@@ -162,6 +163,11 @@ export default function Lager() {
                     </Pagination>
                 </div>
             )}
+
+
+
+            {/* Lager Chart */}
+            <LagerChart />
         </div>
     )
 }

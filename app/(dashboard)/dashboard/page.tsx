@@ -147,7 +147,7 @@ export default function Dashboard() {
                     <span className="text-md font-semibold">IHR ÜBERBLICK</span>
                 </Link>
 
-                <Link href="/customers" className="flex flex-col items-center text-center">
+                <Link href="/dashboard/customers" className="flex flex-col items-center text-center">
                     <div className=" bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2 ">
                         <Image src={users} alt='users' width={200} height={200} className='w-[130px] h-[130px] p-7' />
 
@@ -155,7 +155,7 @@ export default function Dashboard() {
                     <span className="text-md font-semibold">KUNDENSUCHE</span>
                 </Link>
 
-                <Link href="/calendar" className="flex flex-col items-center text-center">
+                <Link href="/dashboard/calendar" className="flex flex-col items-center text-center">
                     <div className=" bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2 ">
                         <Image src={date} alt='calendar' width={100} height={100} className='w-[130px] h-[130px] p-7' />
 
@@ -163,7 +163,7 @@ export default function Dashboard() {
                     <span className="text-md font-semibold">TERMINKALENDER</span>
                 </Link>
 
-                <Link href="/settings" className="flex flex-col items-center text-center">
+                <Link href="/dashboard/settings" className="flex flex-col items-center text-center">
                     <div className=" bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2 ">
                         <Image src={settings} alt='settings' width={100} height={100} className='w-[130px] h-[130px] p-7' />
 
@@ -171,7 +171,7 @@ export default function Dashboard() {
                     <span className="text-md font-semibold">EINSTELLUNGEN</span>
                 </Link>
 
-                <Link href="/products" className="flex flex-col items-center text-center">
+                <Link href="/dashboard/products" className="flex flex-col items-center text-center">
                     <div className=" bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2 ">
                         <Image src={home} alt='products' width={100} height={100} className='w-[130px] h-[130px] p-7' />
 

@@ -6,6 +6,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Chart from '@/components/Overview/Chart'
 import LineCharts from '@/components/Overview/LineCharts'
+import PiCharts from '@/components/Overview/PiCharts'
+import FavoriteModels from '@/components/Overview/FavoriteModels'
+import Pyramid from '@/components/Overview/Pyramid'
 
 
 export default function DashboardOverview() {
@@ -88,6 +91,9 @@ export default function DashboardOverview() {
             {/* chart section */}
             <Chart />
             <LineCharts />
+            <PiCharts />
+            <FavoriteModels />
+            {/* <Pyramid /> */}
         </div>
     )
 }

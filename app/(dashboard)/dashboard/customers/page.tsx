@@ -8,6 +8,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { X } from 'lucide-react'
 import scanner3D from '@/public/Kunden/3d.png'
 import userImg from '@/public/Kunden/user.png'
+import LastScans from '@/components/LastScans/LastScans'
+import { useRouter } from 'next/navigation'
 
 
 interface CustomerData {
@@ -16,7 +18,7 @@ interface CustomerData {
     Geburtsdatum: string;
     Geschäftstandort: string;
     createdAt: string;
-
+    id: number;
 }
 
 export default function Customers() {
@@ -27,6 +29,7 @@ export default function Customers() {
     const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(null);
     const [notFound, setNotFound] = useState(false);
     const [loading, setLoading] = useState(true);
+    const router = useRouter();
 
     // Fetch customer data
     useEffect(() => {
@@ -45,7 +48,7 @@ export default function Customers() {
 
     const handleSearch = () => {
         setLoading(true);
-    
+
         setTimeout(() => {
             if (!searchName && !searchPhone && !searchDob) {
                 setSelectedCustomer(null);
@@ -53,14 +56,14 @@ export default function Customers() {
                 setLoading(false);
                 return;
             }
-    
+
             const foundCustomer = customers.find(customer => {
                 if (searchName && customer.nameKunde !== searchName) return false;
                 if (searchPhone && customer.Telefon !== searchPhone) return false;
                 if (searchDob && customer.Geburtsdatum !== searchDob) return false;
                 return true;
             });
-    
+
             if (foundCustomer) {
                 setSelectedCustomer(foundCustomer);
                 setNotFound(false);
@@ -68,11 +71,14 @@ export default function Customers() {
                 setSelectedCustomer(null);
                 setNotFound(true);
             }
-    
+
             setLoading(false);
-        }, 1000); // simulate delay (remove if using real API)
+        }, 500);
     };
-    
+    // handle scan view function
+    const handleScanView = (id: number) => {
+        router.push(`/dashboard/scanning-data/${id}`);
+    }
 
     return (
         <div className="">
@@ -150,7 +156,7 @@ export default function Customers() {
                                 <p>Ort: {selectedCustomer.Geschäftstandort}</p>
                             </div>
                             <div className="flex justify-center gap-4">
-                                <Button variant="outline" className="flex items-center gap-2 cursor-pointer">
+                                <Button onClick={() => handleScanView(selectedCustomer.id)} variant="outline" className="flex items-center gap-2 cursor-pointer">
                                     <Image src={scanner3D} alt="Scan" width={20} height={20} />
                                     <span>Scan ansehen</span>
                                 </Button>
@@ -165,8 +171,12 @@ export default function Customers() {
                     <div className="text-center text-red-500">
                         Keine Ergebnisse gefunden
                     </div>
-                ) : null}
+                ) : null}  
             </div>
+
+            {/* last scans component */}
+            <LastScans />
         </div>
     )
 }
+

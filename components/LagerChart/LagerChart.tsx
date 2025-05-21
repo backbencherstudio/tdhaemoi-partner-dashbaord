@@ -169,7 +169,7 @@ export default function LagerChart() {
 
                 {/* bar chart  */}
                 <div className="w-full overflow-x-auto">
-                    <div className="min-w-[700px] h-[300px] lg:h-[500px]">
+                    <div className="min-w-[650px] h-[300px] lg:h-[500px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart
                                 data={data}

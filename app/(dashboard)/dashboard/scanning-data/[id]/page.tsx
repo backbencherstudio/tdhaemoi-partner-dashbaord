@@ -4,6 +4,13 @@ import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import { BiSolidEdit } from 'react-icons/bi';
 import { RiArrowDownSLine } from 'react-icons/ri';
+import fxImg from '@/public/images/scanning/fax.png'
+import folderImg from '@/public/images/scanning/folder.png'
+import userImg from '@/public/images/scanning/user.png'
+import shoesImg from '@/public/images/scanning/shoes.png'
+import emailImg from '@/public/images/scanning/email.png'
+import logoImg from '@/public/images/scanning/logo.png'
+import Link from 'next/link';
 
 interface ScanData {
     id: number;
@@ -97,8 +104,6 @@ export default function ScanningData() {
 
     const handleDiagnosisBlur = () => {
         setEditingDiagnosis(false);
-        // Here you could save the updated diagnosis to your backend
-        console.log("Saving diagnosis:", diagnosis);
     };
 
     const handleSupplyEdit = () => {
@@ -107,15 +112,11 @@ export default function ScanningData() {
 
     const handleSupplyBlur = () => {
         setEditingSupply(false);
-        // Here you could save the updated supply to your backend
-        console.log("Saving supply:", supply);
     };
 
     const handleDiagnosisSelect = (diagnosis: string) => {
         setSelectedDiagnosis(diagnosis);
-        setShowDiagnosisDropdown(false);
-        // Here you could save the selected diagnosis to your backend
-        console.log("Selected diagnosis:", diagnosis);
+        setShowDiagnosisDropdown(false)
     };
 
     if (loading) return <div>Loading...</div>;
@@ -137,8 +138,9 @@ export default function ScanningData() {
                 </div>
             </div>
 
-            <div className="mb-2">
+            <div className="mb-2 flex items-center gap-2">
                 <span>Scan {scanData.createdAt}</span>
+                <RiArrowDownSLine className='text-gray-900 text-2xl' />
             </div>
 
             {/* image section */}
@@ -275,21 +277,20 @@ export default function ScanningData() {
                 </div>
             </div>
 
-
             {/* button section */}
             <div className="mt-8 flex flex-col md:flex-row justify-between space-y-4 md:space-y-0">
                 <div className="flex justify-center md:justify-start">
                     <div className="flex flex-wrap space-x-2">
-                        <button className="border border-gray-300 bg-white px-4 py-1 text-sm my-1">
+                        <button className="border border-gray-300 cursor-pointer bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1">
                             Fersenneigung
                         </button>
-                        <button className="border border-gray-300 bg-[#62A07C] px-4 py-1 text-sm relative my-1">
+                        <button className="border border-gray-300 cursor-pointer bg-[#62A07C] hover:bg-gray-100 px-4 py-1 text-sm relative my-1">
                             Plantaransicht
                         </button>
-                        <button className="border border-gray-300 bg-white px-4 py-1 text-sm my-1">
+                        <button className="border border-gray-300 cursor-pointer  bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1">
                             3D-Modell
                         </button>
-                        <button className="border border-gray-300 bg-white px-4 py-1 text-sm my-1">
+                        <button className="border border-gray-300 cursor-pointer bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1">
                             Sohlen Index
                         </button>
                     </div>
@@ -297,23 +298,21 @@ export default function ScanningData() {
 
                 <div className="flex justify-center md:justify-end">
                     <div className="flex flex-wrap space-x-2">
-                        <button className="border border-gray-300 bg-white px-4 py-1 text-sm my-1">
+                        <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1">
                             Fersenneigung
                         </button>
-                        <button className="border border-gray-300 bg-[#62A07C] px-4 py-1 text-sm my-1">
+                        <button className="border border-gray-300 bg-[#62A07C] px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1">
                             Plantaransicht
                         </button>
-                        <button className="border border-gray-300 bg-white px-4 py-1 text-sm my-1">
+                        <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1">
                             3D-Modell
                         </button>
-                        <button className="border border-gray-300 bg-white px-4 py-1 text-sm my-1">
+                        <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1">
                             Sohlen Index
                         </button>
                     </div>
                 </div>
             </div>
-
-
             <hr className='my-10 border-gray-500' />
 
             {/* input section */}
@@ -325,7 +324,7 @@ export default function ScanningData() {
                             <h3 className="text-lg font-semibold">Ausführliche Diagnose</h3>
                             <button
                                 onClick={handleDiagnosisEdit}
-                                className="ml-3 "
+                                className="ml-3 cursor-pointer"
                             >
                                 <BiSolidEdit className='text-gray-900 text-xl' />
                             </button>
@@ -351,7 +350,7 @@ export default function ScanningData() {
                             <h3 className="text-lg font-semibold">Versorgung</h3>
                             <button
                                 onClick={handleSupplyEdit}
-                                className="ml-3 "
+                                className="ml-3 cursor-pointer"
                             >
                                 <BiSolidEdit className='text-gray-900 text-xl' />
                             </button>
@@ -372,8 +371,6 @@ export default function ScanningData() {
                         )}
                     </div>
                 </div>
-
-
 
                 {/* Diagnosis Dropdown */}
                 <div className="mb-8 relative">
@@ -412,66 +409,51 @@ export default function ScanningData() {
                     </div>
                 </div>
 
-
                 {/* Bottom Action Links */}
                 <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
                     <div className="flex flex-col items-center">
-                        <div className="p-3 bg-gray-100 rounded-full mb-2 relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
+                        <Link href="/dashboard/scanning-data/1/werkstattzettel" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                            <Image src={fxImg} alt="Werkstattzettel" width={50} height={50} className='w-11 h-auto'/>
 
-                        </div>
+                        </Link>
                         <span className="text-sm">Werkstattzettel<br />ausdrucken</span>
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <div className="p-3 bg-gray-100 rounded-full mb-2 relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                            </svg>
+                        <Link href="/dashboard/scanning-data/1/kundenordner" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                            <Image src={folderImg} alt="Kundenordner" width={50} height={50} className='w-10 h-auto'/>
 
-                        </div>
+                        </Link>
                         <span className="text-sm">Kundenordner</span>
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <div className="p-3 bg-gray-100 rounded-full mb-2 relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
+                        <Link href="/dashboard/scanning-data/1/kundendaten" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                            <Image src={userImg} alt="Kundendaten" width={50} height={50} className='w-10 h-auto'/>
 
-                        </div>
+                        </Link>
                         <span className="text-sm">Kundendaten und -<br />historie</span>
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <div className="p-3 bg-gray-100 rounded-full mb-2 relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0l-1.14-.76" />
-                            </svg>
+                        <Link href="/dashboard/scanning-data/1/schuhfinder" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                            <Image src={shoesImg} alt="Schuhfinder" width={50} height={50} className='w-12 h-auto'/>
 
-                        </div>
+                        </Link>
                         <span className="text-sm">Shoe Finder</span>
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <div className="p-3 bg-gray-100 rounded-full mb-2 relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-
-                        </div>
+                        <Link href="/dashboard/scanning-data/1/email" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                            <Image src={emailImg} alt="Email" width={50} height={50} className='w-11 h-auto'/>
+                        </Link>
                         <span className="text-sm">Email kontaktieren</span>
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <div className="p-3 bg-gray-100 rounded-full mb-2 relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-
-                        </div>
+                        <Link href="/dashboard/scanning-data/1/app" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                            <Image src={logoImg} alt="Zugang FeetFirst App" width={50} height={50}  className='w-11 h-auto'/>
+                        </Link>
                         <span className="text-sm">Zugang FeetFirst<br />App</span>
                     </div>
                 </div>

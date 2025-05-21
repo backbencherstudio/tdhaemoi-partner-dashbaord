@@ -1,6 +1,5 @@
 "use client"
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
 import {
     Accordion,
     AccordionContent,
@@ -8,8 +7,16 @@ import {
     AccordionTrigger
 } from '@/components/ui/accordion';
 
-// FAQ data structure
-const faqData = {
+interface FaqItem {
+    question: string;
+    answer: string;
+}
+
+interface FaqData {
+    [key: string]: FaqItem[];
+}
+
+const faqData: FaqData = {
     "SHOE FINDER": [
         {
             question: "Wie kann ich die empfohlenen Schuhmodelle anpassen?",
@@ -21,7 +28,7 @@ const faqData = {
         },
         {
             question: "Kann ich meine eigenen Lagerbestände mit dem Shoe Finder verknüpfen?",
-            answer: "Ja, der Shoe Finder zeigt automatisch nur Modelle an, die auch in deinem Lager verfügbar sind – passend zur empfohlenen Größe. Das spart Zeit in der Beratung und reduziert Retouren. In den Einstellungen kannst du außerdem individuell festlegen, welche Lagerquellen berücksichtigt werden sollen: – Nur Schuhe, die am aktuellen Standort verfügbar sind– Schuhe aus anderen Filialen deines Unternehmens – Modelle, die nachbestellt werden können So steuerst du genau, was deinen Kund:innen vorgeschlagen wird – lokal, filialübergreifend oder mit Nachlieferoption."
+            answer: "Ja, der Shoe Finder zeigt automatisch nur Modelle an, die auch in deinem Lager verfügbar sind – passend zur empfohlenen Größe. Das spart Zeit in der Beratung und reduziert Retouren.<br><br>In den Einstellungen kannst du außerdem individuell festlegen, welche Lagerquellen berücksichtigt werden sollen:<br><br>  – Nur Schuhe, die am aktuellen Standort verfügbar sind<br>– Schuhe aus anderen Filialen deines Unternehmens<br>– Modelle, die nachbestellt werden können<br><br>So steuerst du genau, was deinen Kund:innen vorgeschlagen wird – lokal, filialübergreifend oder mit Nachlieferoption."
         },
         {
             question: "Kann ich Scan-Daten auch exportieren (z. B. für den Arzt oder eine Zweitmeinung)?",
@@ -61,25 +68,25 @@ const faqData = {
         },
         {
             question: "Kann ich eine Schnittstelle zu meinem ERP/Warenwirtschaftssystem einrichten?",
-            answer: "Welche Rollen und Rechte kann ich vergeben – wer darf was im System ändern oder einsehen? Über die Benutzerverwaltung können Sie präzise festlegen, welche Mitarbeitenden welche Bereiche sehen oder bearbeiten dürfen. Wie kann ich Schulungen für neue Mitarbeiter: innen organisieren – gibt es Lernvideos oder ein Handbuch? Sie können entweder ein Schulungsvideo verwenden oder einen FeetF1rst- Trainer für einen Tag buchen, der Ihr Team intensiv einarbeitet. Gibt es regelmäßige Softwareupdates – und kann ich neue Funktionen mitgestalten ?  Ja, es gibt monatliche Updates mit neuen Features.FeetF1rst ist offen für Vorschläge und entwickelt die Software gemeinsam mit seinen Partnerbetrieben weiter."
+            answer: "Noch nicht – aktuell ist keine direkte Schnittstelle verfügbar. Die Integration zu ERP- und Warenwirtschaftssystemen ist jedoch bereits in Arbeit, damit du künftig Lagerdaten, Bestellungen und Kundendaten automatisiert zwischen deinen Systemen und der FeetF1rst-Software synchronisieren kannst. Ziel ist eine nahtlose Verbindung ohne doppelte Eingaben."
         }
     ],
     "LAGER": [
         {
-            question: "Kann ich Artikel für bestimmte Kunden bis z.B. zum Abholtermin reservieren?",
-            answer: "Ja, Sie können Artikel für bestimmte Kunden reservieren und Reservierungszeiträume festlegen."
+            question: "Kann ich Artikel für bestimmte Kunden blockieren (z. B. bis zum Abholtermin reservieren)?",
+            answer: "Ja, Sie können direkt beim jeweiligen Produkt „reserviert für … Stunden“ auswählen."
         },
         {
             question: "Wie kann ich die Lagerbewegungen nachvollziehen?",
-            answer: "Das System bietet detaillierte Tracking-Funktionen für alle Lagerbewegungen mit Protokollierung und Suchfunktionen."
+            answer: "Im Bereich „Lagerverwaltung“ findest du eine vollständige Historie aller Lagerbewegungen – inklusive Datum, Artikel, Menge, verantwortlicher Person und Grund (z. B. Verkauf, Rückgabe, Umbuchung). Du kannst die Übersicht filtern, z. B. nach Zeitraum, Artikelnummer oder Mitarbeitenden. So hast du jederzeit volle Transparenz darüber, was mit deinem Bestand passiert."
         },
         {
             question: "Kann ich meine eigenen Lagerbestände mit dem Shoe Finder verknüpfen?",
-            answer: "Ja, die Integration von eigenen Lagerbeständen mit dem Shoe Finder ist möglich und ermöglicht eine Echtzeit-Bestandsanzeige."
+            answer: "Ja, der Shoe Finder zeigt automatisch nur Modelle an, die auch in deinem Lager verfügbar sind – passend zur empfohlenen Größe. Das spart Zeit in der Beratung und reduziert Retouren. In den Einstellungen kannst du außerdem individuell festlegen, welche Lagerquellen berücksichtigt werden sollen: <br> <br> – Nur Schuhe, die am aktuellen Standort verfügbar sind <br>– Schuhe aus anderen Filialen deines Unternehmens <br> – Modelle, die nachbestellt werden können So steuerst du genau, was deinen Kund:innen vorgeschlagen wird – lokal, filialübergreifend oder mit Nachlieferoption"
         },
         {
             question: "Kann ich den Shoe Finder mit meinem Kassensystem verbinden?",
-            answer: "Das System bietet Integrationen mit gängigen Kassensystemen für einen nahtlosen Verkaufsprozess."
+            answer: "Noch nicht – aktuell ist die direkte Integration in externe Kassensysteme nicht verfügbar. Eine Anbindung ist jedoch in Planung: Ziel ist es, künftig alle empfohlenen Schuhe, Größen und Artikelnummern automatisch in den Checkout zu übernehmen, um den Verkaufsprozess im Geschäft weiter zu beschleunigen."
         }
     ],
     "BESTELLUNGEN": [
@@ -101,12 +108,6 @@ const faqData = {
         }
     ]
 };
-
-interface FaqItem {
-    question: string;
-    answer: string;
-    section: string;
-}
 
 export default function Support() {
     const [activeSection, setActiveSection] = useState<string | null>(null);
@@ -134,7 +135,7 @@ export default function Support() {
                                             {item.question}
                                         </AccordionTrigger>
                                         <AccordionContent className="text-sm text-gray-600">
-                                            {item.answer}
+                                            <div dangerouslySetInnerHTML={{ __html: item.answer }} />
                                         </AccordionContent>
                                     </AccordionItem>
                                 ))}

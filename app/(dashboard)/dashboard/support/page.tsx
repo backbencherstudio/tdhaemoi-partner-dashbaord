@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useForm } from 'react-hook-form';
+import { IoIosCall } from 'react-icons/io';
 
 interface FaqItem {
     question: string;
@@ -123,9 +124,9 @@ interface FormData {
 
 export default function Support() {
     const [activeSection, setActiveSection] = useState<string | null>(null);
-    
-    const { 
-        register, 
+
+    const {
+        register,
         handleSubmit,
         formState: { errors }
     } = useForm<FormData>();
@@ -140,7 +141,7 @@ export default function Support() {
     };
 
     return (
-        <div className="px-4 py-8">
+        <div className="px-4 ">
             <h1 className="text-3xl font-bold text-center mb-10">FEETFIRST SUPPORT</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -173,9 +174,6 @@ export default function Support() {
                     </div>
                 ))}
             </div>
-
-
-
 
             {/* Contact Form Section */}
             <div className="mt-16 bg-white p-8 rounded-md">
@@ -215,7 +213,7 @@ export default function Support() {
                                 className="border-gray-500 border"
                                 type="tel"
                                 placeholder="Telefon"
-                                {...register("phone", { 
+                                {...register("phone", {
                                     required: "This field is required",
                                     pattern: {
                                         value: /^[0-9+\-\s()]*$/,
@@ -244,14 +242,28 @@ export default function Support() {
                     </div>
 
                     <div className='flex justify-center'>
-                        <Button 
-                            type="submit" 
+                        <Button
+                            type="submit"
                             className="px-16 py-2 bg-transparent border border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white rounded-3xl cursor-pointer"
                         >
                             SENDEN
                         </Button>
                     </div>
                 </form>
+            </div>
+
+
+            {/* footer */}
+            <div className='bg-[#121212] text-white p-4 mt-14 flex items-center gap-2'>
+                <div className='flex items-center gap-5'>
+                    <div className='border border-white rounded-full p-1'>
+                        <IoIosCall className='text-2xl' />
+                    </div>
+                    <div>
+                        <p className='text-sm text-white capitalize'>WIR WERDEN UNS SCHNELLSTMÖGLICH DARUM KÜMMERN!</p>
+                        <p className='text-sm text-white capitalize'>ALTERNATIV ERREICHEN SIE UNS JEDERZEIT UNTER +39 366 508 7742</p>
+                    </div>
+                </div>
             </div>
         </div>
     );

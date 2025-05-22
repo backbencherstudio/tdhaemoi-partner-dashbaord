@@ -280,7 +280,7 @@ export default function Software() {
                 <p className='text-center text-sm text-gray-700 uppercase'>FEETF1RST COPYRIGHT 2025</p>
             </div>
 
-            <div className='max-w-7xl mx-auto flex flex-col gap-6 mb-8'>
+            <div className='flex flex-col gap-6 mb-8'>
                 <h1 className='text-2xl font-bold uppercase'>NEUERUNGEN</h1>
                 <p className='text-sm text-gray-700 leading-8'>
                     Willkommen bei der FeetF1rst Software – Ihre neue Schaltzentrale für eine perfekte Fußversorgung!
@@ -303,9 +303,9 @@ export default function Software() {
             </div>
 
             {/* Carousel Section */}
-            <div className="">
+            <div className="mt-14">
                 <div className="text-center mb-6">
-                    <h2 className="text-2xl font-bold uppercase mb-2">JETZT NEU IM SHOE FINDER FEETFIRST</h2>
+                    <h2 className="text-2xl font-bold uppercase mb-5">JETZT NEU IM SHOE FINDER FEETFIRST</h2>
                 </div>
                 <MainCarousel />
             </div>

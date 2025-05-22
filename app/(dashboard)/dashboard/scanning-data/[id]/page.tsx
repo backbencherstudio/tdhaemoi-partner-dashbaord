@@ -445,11 +445,11 @@ export default function ScanningData() {
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <Link href="/dashboard/scanning-data/1/kundendaten" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                        <Link href="/dashboard/customer-history" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
                             <Image src={userImg} alt="Kundendaten" width={50} height={50} className='w-10 h-auto' />
 
                         </Link>
-                        <span className="text-sm">Kundendaten und -<br />historie</span>
+                        <span className="text-sm">Kundendaten und - historie</span>
                     </div>
 
                     <div className="flex flex-col items-center">
@@ -461,7 +461,7 @@ export default function ScanningData() {
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <Link href="/dashboard/scanning-data/1/email" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                        <Link href="/dashboard/email" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
                             <Image src={emailImg} alt="Email" width={50} height={50} className='w-11 h-auto' />
                         </Link>
                         <span className="text-sm">Email kontaktieren</span>

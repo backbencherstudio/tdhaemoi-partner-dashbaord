@@ -9,49 +9,45 @@ import {
     PaginationPrevious
 } from "@/components/ui/pagination"
 
+const eventData = [
+    {
+        id: 1,
+        date: '2025-05-18',
+        time: '9:30',
+        title: 'MEETING HERR MÜLLER',
+        subtitle: 'ABFLUGTERMIN HERR BAUER',
+        type: 'others'
+    },
+    {
+        id: 2,
+        date: '2025-05-19',
+        time: '9:30',
+        title: 'MEETING HERR MÜLLER',
+        subtitle: 'ABFLUGTERMIN HERR BAUER',
+        type: 'user'
+    },
+    {
+        id: 3,
+        date: '2025-05-22',
+        time: '7:40',
+        title: 'FUSSANALYSE HERR MUSTERMANN',
+        subtitle: 'LAUFANALYSE FRAU MEYER',
+        type: 'others'
+    }
+]
+
 export default function AppoinmentData() {
-    const [events, setEvents] = useState([
-        {
-            id: 1,
-            date: '2025-05-18',
-            time: '9:30',
-            title: 'MEETING HERR MÜLLER',
-            subtitle: 'ABFLUGTERMIN HERR BAUER',
-            type: 'others'
-        },
-        {
-            id: 2,
-            date: '2025-05-19',
-            time: '9:30',
-            title: 'MEETING HERR MÜLLER',
-            subtitle: 'ABFLUGTERMIN HERR BAUER',
-            type: 'user'
-        },
-        {
-            id: 3,
-            date: '2025-05-22',
-            time: '7:40',
-            title: 'FUSSANALYSE HERR MUSTERMANN',
-            subtitle: 'LAUFANALYSE FRAU MEYER',
-            type: 'others'
-        }
-    ]);
+    const events = eventData;
 
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 2;
-
-    // Calculate total pages
+    
     const totalPages = Math.ceil(events.length / itemsPerPage);
-
-    // Get current events
     const indexOfLastEvent = currentPage * itemsPerPage;
     const indexOfFirstEvent = indexOfLastEvent - itemsPerPage;
     const currentEvents = events.slice(indexOfFirstEvent, indexOfLastEvent);
-
-    // Change page
     const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
-    // Format date to display day number
     const formatDay = (dateString: string) => {
         const date = new Date(dateString);
         return date.getDate();
@@ -81,7 +77,7 @@ export default function AppoinmentData() {
                         <div className="flex-1">
                             <div className="font-bold">{event.title}</div>
                             {event.time && <div>
-                                <p className='text-sm font-semibold mt-2 text-gray-500'>{event.date.split('-')[2]}/{event.date.split('-')[1]}/{event.date.split('-')[0].slice(2)}, {event.time}</p>
+                                <p className='text-sm font-semibold mt-2 text-gray-500 uppercase'>{event.date.split('-')[2]}/{event.date.split('-')[1]}/{event.date.split('-')[0].slice(2)}, {event.time}</p>
                             </div>}
                             {/* {event.subtitle && <div>{event.subtitle}</div>} */}
                         </div>

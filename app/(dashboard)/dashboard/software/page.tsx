@@ -4,6 +4,7 @@ import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
 import shoes from '@/public/images/products/shoes.png'
 import Image from 'next/image'
+import ContactPage from '@/components/Contact/ContactPage'
 
 
 
@@ -309,6 +310,9 @@ export default function Software() {
                 </div>
                 <MainCarousel />
             </div>
+
+            {/* contact form */}
+            <ContactPage />
         </div>
     )
 }

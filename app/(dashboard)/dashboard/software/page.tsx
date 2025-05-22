@@ -5,6 +5,7 @@ import Autoplay from 'embla-carousel-autoplay'
 import shoes from '@/public/images/products/shoes.png'
 import Image from 'next/image'
 import ContactPage from '@/components/Contact/ContactPage'
+import { IoIosCall } from 'react-icons/io'
 
 
 
@@ -275,7 +276,7 @@ export default function Software() {
     };
 
     return (
-        <div className=" p-4">
+        <div className="">
             <div className='flex flex-col items-center justify-center gap-2 mb-8'>
                 <h1 className='text-4xl font-bold text-center uppercase'>SOFTWARE 1.3</h1>
                 <p className='text-center text-sm text-gray-700 uppercase'>FEETF1RST COPYRIGHT 2025</p>
@@ -313,6 +314,20 @@ export default function Software() {
 
             {/* contact form */}
             <ContactPage />
+
+
+            {/* footer */}
+            <div className='bg-[#121212] text-white p-4 mt-14 flex items-center gap-2'>
+                <div className='flex items-center gap-5'>
+                    <div className='border border-white rounded-full p-1'>
+                        <IoIosCall className='text-2xl' />
+                    </div>
+                    <div>
+                        <p className='text-sm text-white capitalize'>WIR WERDEN UNS SCHNELLSTMÖGLICH DARUM KÜMMERN!</p>
+                        <p className='text-sm text-white capitalize'>ALTERNATIV ERREICHEN SIE UNS JEDERZEIT UNTER +39 366 508 7742</p>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }

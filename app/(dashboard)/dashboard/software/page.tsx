@@ -169,7 +169,7 @@ const InnerCarousel = ({ products, category }: { products: Product[], category: 
         <div className="border border-gray-300 rounded-lg p-4 bg-white min-h-96 relative">
             <h2 className="text-lg font-bold text-center mb-4 uppercase">{category}</h2>
             <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex">
+                <div className="flex ">
                     {products.map((product: Product, index: number) => (
                         <div key={product.id} className="flex-none w-full md:w-1/2 px-2">
                             <ProductCard product={product} />

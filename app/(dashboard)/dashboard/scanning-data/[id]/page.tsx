@@ -437,7 +437,7 @@ export default function ScanningData() {
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <Link href="/dashboard/scanning-data/1/kundenordner" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                        <Link href="" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
                             <Image src={folderImg} alt="Kundenordner" width={50} height={50} className='w-10 h-auto' />
 
                         </Link>
@@ -453,7 +453,7 @@ export default function ScanningData() {
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <Link href="/dashboard/scanning-data/1/schuhfinder" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                        <Link href=" " className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
                             <Image src={shoesImg} alt="Schuhfinder" width={50} height={50} className='w-12 h-auto' />
 
                         </Link>
@@ -468,7 +468,7 @@ export default function ScanningData() {
                     </div>
 
                     <div className="flex flex-col items-center">
-                        <Link href="/dashboard/scanning-data/1/app" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
+                        <Link href="" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
                             <Image src={logoImg} alt="Zugang FeetFirst App" width={50} height={50} className='w-11 h-auto' />
                         </Link>
                         <span className="text-sm">Zugang FeetFirst<br />App</span>

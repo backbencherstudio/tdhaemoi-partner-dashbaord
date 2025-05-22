@@ -6,6 +6,11 @@ import {
     AccordionItem,
     AccordionTrigger
 } from '@/components/ui/accordion';
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { useForm } from 'react-hook-form';
 
 interface FaqItem {
     question: string;
@@ -109,15 +114,33 @@ const faqData: FaqData = {
     ]
 };
 
+interface FormData {
+    reason: string;
+    company: string;
+    phone: string;
+    message: string;
+}
+
 export default function Support() {
     const [activeSection, setActiveSection] = useState<string | null>(null);
+    
+    const { 
+        register, 
+        handleSubmit,
+        formState: { errors }
+    } = useForm<FormData>();
+
+    const onSubmit = (data: FormData) => {
+        // Handle form submission here
+        console.log(data);
+    };
 
     const handleSectionClick = (section: string) => {
         setActiveSection(activeSection === section ? null : section);
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto px-4 py-8">
+        <div className="px-4 py-8">
             <h1 className="text-3xl font-bold text-center mb-10">FEETFIRST SUPPORT</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -149,6 +172,86 @@ export default function Support() {
                         </div>
                     </div>
                 ))}
+            </div>
+
+
+
+
+            {/* Contact Form Section */}
+            <div className="mt-16 bg-white p-8 rounded-md">
+                <h2 className="text-2xl font-bold text-center mb-8 uppercase">KONTAKT FEETFIRST</h2>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="reason">Grund der Kontaktaufnahme</Label>
+                        <Input
+                            id="reason"
+                            className="border-gray-500 border"
+                            placeholder="Grund der Kontaktaufnahme"
+                            {...register("reason", { required: "This field is required" })}
+                        />
+                        {errors.reason && (
+                            <p className="text-red-500 text-sm">{errors.reason.message}</p>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-4">
+                        <div className="space-y-2 w-full md:w-1/2">
+                            <Label htmlFor="company">Unternehmen</Label>
+                            <Input
+                                id="company"
+                                className="border-gray-500 border"
+                                placeholder="Unternehmen"
+                                {...register("company", { required: "This field is required" })}
+                            />
+                            {errors.company && (
+                                <p className="text-red-500 text-sm">{errors.company.message}</p>
+                            )}
+                        </div>
+
+                        <div className="space-y-2 w-full md:w-1/2">
+                            <Label htmlFor="phone">Telefon</Label>
+                            <Input
+                                id="phone"
+                                className="border-gray-500 border"
+                                type="tel"
+                                placeholder="Telefon"
+                                {...register("phone", { 
+                                    required: "This field is required",
+                                    pattern: {
+                                        value: /^[0-9+\-\s()]*$/,
+                                        message: "Please enter a valid phone number"
+                                    }
+                                })}
+                            />
+                            {errors.phone && (
+                                <p className="text-red-500 text-sm">{errors.phone.message}</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="message">Nachricht</Label>
+                        <Textarea
+                            id="message"
+                            className="border-gray-500 border"
+                            placeholder="Nachricht"
+                            rows={5}
+                            {...register("message", { required: "This field is required" })}
+                        />
+                        {errors.message && (
+                            <p className="text-red-500 text-sm">{errors.message.message}</p>
+                        )}
+                    </div>
+
+                    <div className='flex justify-center'>
+                        <Button 
+                            type="submit" 
+                            className="px-16 py-2 bg-transparent border border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white rounded-3xl cursor-pointer"
+                        >
+                            SENDEN
+                        </Button>
+                    </div>
+                </form>
             </div>
         </div>
     );

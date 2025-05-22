@@ -22,7 +22,7 @@ export default function Settingss() {
         },
         {
             label: "Nachrichten",
-            href: "/dashboard/messages",
+            href: "/dashboard/email",
             image: News,
             className: "w-[100px] h-[90px]",
             alt: "News",

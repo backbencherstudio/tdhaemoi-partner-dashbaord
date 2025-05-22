@@ -36,6 +36,14 @@ export default function Lager() {
     const [currentPage, setCurrentPage] = useState(1)
     const [showPagination, setShowPagination] = useState(false)
 
+    const chartData = [
+        { year: '2020', Einkaufspreis: 50000, Verkaufspreis: 75000, Gewinn: 25000 },
+        { year: '2021', Einkaufspreis: 60000, Verkaufspreis: 90000, Gewinn: 30000 },
+        { year: '2022', Einkaufspreis: 70000, Verkaufspreis: 105000, Gewinn: 35000 },
+        { year: '2023', Einkaufspreis: 80000, Verkaufspreis: 120000, Gewinn: 40000 },
+        { year: '2024', Einkaufspreis: 90000, Verkaufspreis: 135000, Gewinn: 45000 }
+    ];
+
     const totalPages = Math.ceil(products.length / 10)
     const startIndex = showPagination
         ? (currentPage - 1) * 10
@@ -167,7 +175,7 @@ export default function Lager() {
 
 
             {/* Lager Chart */}
-            <LagerChart />
+            <LagerChart data={chartData} />
         </div>
     )
 }

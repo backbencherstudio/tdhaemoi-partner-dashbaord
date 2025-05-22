@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
-import useEmblaCarousel from 'embla-carousel-react'
+import useEmblaCarousel, { EmblaCarouselType } from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
 import shoes from '@/public/images/products/shoes.png'
 import Image from 'next/image'
@@ -17,6 +17,8 @@ interface Product {
     gender: string;
     category: string;
     description: string;
+
+
 }
 
 const products: Product[] = [
@@ -172,7 +174,7 @@ const InnerCarousel = ({ products, category }: { products: Product[], category: 
             <h2 className="text-lg font-bold text-center mb-4 uppercase">{category}</h2>
             <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex ">
-                    {products.map((product: Product, index: number) => (
+                    {products.map((product: Product) => (
                         <div key={product.id} className="flex-none w-full md:w-1/2 px-2">
                             <ProductCard product={product} />
                         </div>
@@ -220,11 +222,11 @@ const MainCarousel = () => {
         [emblaApi]
     );
 
-    const onInit = useCallback((emblaApi: any) => {
+    const onInit = useCallback((emblaApi: EmblaCarouselType) => {
         setScrollSnaps(emblaApi.scrollSnapList());
     }, []);
 
-    const onSelect = useCallback((emblaApi: any) => {
+    const onSelect = useCallback((emblaApi: EmblaCarouselType) => {
         setSelectedIndex(emblaApi.selectedScrollSnap());
     }, []);
 

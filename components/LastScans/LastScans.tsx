@@ -14,8 +14,7 @@ interface LastScan {
 
 export default function LastScans() {
     const [lastScans, setLastScans] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const router = useRouter();
+        const router = useRouter();
 
 
     // Fetch customer data
@@ -28,7 +27,6 @@ export default function LastScans() {
             const response = await fetch('/data/userData.json');
             const data = await response.json();
             setLastScans(data);
-            setLoading(false);
         } catch (error) {
             console.error('Error fetching last scans:', error);
         }

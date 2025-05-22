@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react';
+import React from 'react';
 import {
     Accordion,
     AccordionContent,
@@ -123,7 +123,7 @@ interface FormData {
 }
 
 export default function Support() {
-    const [activeSection, setActiveSection] = useState<string | null>(null);
+    // const [activeSection, setActiveSection] = useState<string | null>(null);
 
     const {
         register,
@@ -136,9 +136,9 @@ export default function Support() {
         console.log(data);
     };
 
-    const handleSectionClick = (section: string) => {
-        setActiveSection(activeSection === section ? null : section);
-    };
+    // const handleSectionClick = (section: string) => {
+    //     setActiveSection(activeSection === section ? null : section);
+    // };
 
     return (
         <div className="px-4 ">

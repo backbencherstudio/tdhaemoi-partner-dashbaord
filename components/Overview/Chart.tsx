@@ -6,8 +6,7 @@ import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 
 export default function ScanChart() {
-    // Sample data - you would replace this with your actual data
-    const [data, setData] = useState([
+    const [data] = useState([
         { hour: '9 Uhr', scans: 6 },
         { hour: '10 Uhr', scans: 4 },
         { hour: '11 Uhr', scans: 12 },
@@ -30,7 +29,17 @@ export default function ScanChart() {
     const locations = ['Bozen', 'Meran', 'Brixen', 'Bruneck'];
 
     // Custom tooltip component
-    const CustomTooltip = ({ active, payload }: { active: boolean, payload: any }) => {
+    // Define proper type for the tooltip payload
+    interface TooltipPayload {
+        payload: {
+            hour: string;
+            scans: number;
+        };
+        value: number;
+    }
+
+    // Custom tooltip component with proper typing
+    const CustomTooltip = ({ active, payload }: { active: boolean, payload?: TooltipPayload[] }) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-white p-2 border border-gray-200 shadow-md rounded">

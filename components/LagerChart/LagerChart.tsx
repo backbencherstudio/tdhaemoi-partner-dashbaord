@@ -3,23 +3,17 @@ import React from 'react';
 import { PieChart, Pie, ResponsiveContainer, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, } from 'recharts';
 
 
-const data = [
-    {
-        year: '2025',
-        Einkaufspreis: 15000,
-        Verkaufspreis: 32000,
-        Gewinn: 17000,
-    },
-    {
-        year: '2024',
-        Einkaufspreis: 12000,
-        Verkaufspreis: 26000,
-        Gewinn: 14000,
-    },
-];
 
+interface LagerChartProps { 
+    data: {
+        year: string;
+        Einkaufspreis: number;
+        Verkaufspreis: number;
+        Gewinn: number;
+    }[];
+}
 
-export default function LagerChart() {
+export default function LagerChart({ data }: LagerChartProps) {
     const [windowWidth, setWindowWidth] = React.useState(
         typeof window !== 'undefined' ? window.innerWidth : 0
     );
@@ -47,8 +41,20 @@ export default function LagerChart() {
         { name: 'Bergschuhe', value: 15, color: '#1A2D5D' }
     ];
 
+    // Define proper types for the tooltip payloads
+    interface TooltipPayload {
+        name: string;
+        value: number;
+        color?: string;
+        payload?: {
+            name: string;
+            value: number;
+            color: string;
+        };
+    }
+
     // Custom tooltip
-    const CustomTooltip = ({ active, payload }: { active: boolean, payload: any }) => {
+    const CustomTooltip = ({ active, payload }: { active: boolean, payload?: TooltipPayload[] }) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
@@ -60,14 +66,13 @@ export default function LagerChart() {
         return null;
     };
 
-
     // Custom tooltip component
-    const CustomTooltips = ({ active, payload, label }: { active: boolean, payload: any, label: string }) => {
+    const CustomTooltips = ({ active, payload, label }: { active: boolean, payload?: TooltipPayload[], label: string }) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
                     <p className="font-semibold">{`Jahr: ${label}`}</p>
-                    {payload.map((entry: any, index: number) => (
+                    {payload.map((entry, index: number) => (
                         <p key={`item-${index}`} style={{ color: entry.color }} className="text-sm">
                             {`${entry.name}: ${entry.value.toLocaleString()} €`}
                         </p>
@@ -78,7 +83,7 @@ export default function LagerChart() {
         return null;
     };
 
-    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }: { cx: number, cy: number, midAngle: number, innerRadius: number, outerRadius: number, percent: number, index: number, name: string, value: number }) => {
+    const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, name, value }: { cx: number, cy: number, midAngle: number, innerRadius: number, outerRadius: number,  name: string, value: number }) => {
         const RADIAN = Math.PI / 180;
         const innerLineRadius = outerRadius + 10;
         const outerLineRadius = outerRadius + 30;
@@ -91,7 +96,7 @@ export default function LagerChart() {
 
         const percentRadius = outerRadius + 40;
         const percentX = cx + percentRadius * Math.cos(-midAngle * RADIAN);
-        const percentY = cy + percentRadius * Math.sin(-midAngle * RADIAN);
+    
 
         const labelRadius = outerRadius + 40;
         const labelX = cx + labelRadius * Math.cos(-midAngle * RADIAN);

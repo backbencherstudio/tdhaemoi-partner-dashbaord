@@ -3,14 +3,12 @@ import React from 'react';
 import { BarChart, Bar, XAxis, CartesianGrid, ResponsiveContainer, Tooltip, LineChart, Line, YAxis } from 'recharts';
 
 export default function LineCharts() {
-    // Sample data for the bar chart
     const barData = [
         { category: 'Herren', scans: 13, purchases: 8 },
         { category: 'Damen', scans: 20, purchases: 16 },
         { category: 'Insgesamt', scans: 28, purchases: 24 }
     ];
 
-    // Sample data for the line chart with exact values from the image
     const lineData = [
         { year: '2016', revenue: 13, profit: 6 },
         { year: '2017', revenue: 17, profit: 8 },
@@ -24,8 +22,26 @@ export default function LineCharts() {
         { year: '2025', revenue: 45, profit: 24 }
     ];
 
-    // Custom tooltip for the bar chart
-    const CustomBarTooltip = ({ active, payload }: { active: boolean, payload: any }) => {
+    interface BarTooltipPayload {
+        payload: {
+            category: string;
+            scans: number;
+            purchases: number;
+        };
+        value: number;
+    }
+
+    interface LineTooltipPayload {
+        payload: {
+            year: string;
+            revenue: number;
+            profit: number;
+        };
+        value: number;
+    }
+
+    // Custom tooltip for the bar chart with proper typing
+    const CustomBarTooltip = ({ active, payload }: { active: boolean, payload?: BarTooltipPayload[] }) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
@@ -38,8 +54,8 @@ export default function LineCharts() {
         return null;
     };
 
-    // Custom tooltip for the line chart
-    const CustomLineTooltip = ({ active, payload }: { active: boolean, payload: any }) => {
+    // Custom tooltip for the line chart with proper typing
+    const CustomLineTooltip = ({ active, payload }: { active: boolean, payload?: LineTooltipPayload[] }) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
@@ -110,7 +126,7 @@ export default function LineCharts() {
                     {/* Metric 3 */}
                     <div className="bg-white justify-center p-6 rounded-lg shadow-md flex flex-col items-center text-center">
                         <h1 className="text-6xl font-bold mb-2">35</h1>
-                        <p className="text-gray-700">Verkäufe der Firma "Salewa" (Damit Bestwert aller Marken)</p>
+                        <p className="text-gray-700">Verkäufe der Firma &quot;Salewa&quot; (Damit Bestwert aller Marken)</p>
                     </div>
 
                     {/* Metric 4 */}

@@ -29,7 +29,15 @@ export default function PiCharts() {
     ];
 
     // Custom tooltip
-    const CustomTooltip = ({ active, payload }: { active: boolean, payload: any }) => {
+    // Define interface for the tooltip payload
+    interface TooltipPayload {
+        name: string;
+        value: number;
+        color: string;
+    }
+
+    // Custom tooltip with proper typing
+    const CustomTooltip = ({ active, payload }: { active: boolean, payload?: TooltipPayload[] }) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
@@ -41,7 +49,14 @@ export default function PiCharts() {
         return null;
     };
 
-    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }: { cx: number, cy: number, midAngle: number, innerRadius: number, outerRadius: number, percent: number, index: number, name: string, value: number }) => {
+    const renderCustomizedLabel = ({ cx, cy, midAngle, outerRadius, name, value }: { 
+        cx: number, 
+        cy: number, 
+        midAngle: number, 
+        outerRadius: number, 
+        name: string, 
+        value: number 
+    }) => {
         const RADIAN = Math.PI / 180;
         const innerLineRadius = outerRadius + 10;
         const outerLineRadius = outerRadius + 30;
@@ -54,7 +69,6 @@ export default function PiCharts() {
 
         const percentRadius = outerRadius + 40;
         const percentX = cx + percentRadius * Math.cos(-midAngle * RADIAN);
-        const percentY = cy + percentRadius * Math.sin(-midAngle * RADIAN);
 
         const labelRadius = outerRadius + 40;
         const labelX = cx + labelRadius * Math.cos(-midAngle * RADIAN);

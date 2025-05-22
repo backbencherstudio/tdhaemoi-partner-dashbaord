@@ -12,6 +12,13 @@ import {
 
 } from "lucide-react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+
+interface EmailFormData {
+    to: string;
+    subject: string;
+    message: string;
+}
 
 export default function EmailPage() {
     const [activeTab, setActiveTab] = useState("inbox");
@@ -61,15 +68,20 @@ export default function EmailPage() {
 
     const toggleFavorite = (emailId: number) => {
         const newFavorites = new Set(favorites);
-        newFavorites.has(emailId) ? newFavorites.delete(emailId) : newFavorites.add(emailId);
+        if (newFavorites.has(emailId)) {
+            newFavorites.delete(emailId);
+        } else {
+            newFavorites.add(emailId);
+        }
         setFavorites(newFavorites);
     };
 
-    const handleSendEmail = async (data) => {
+    const handleSendEmail = async (data: EmailFormData) => {
         setIsSending(true);
         try {
             await new Promise(resolve => setTimeout(resolve, 1500));
             console.log("Sending email:", data);
+            toast.success("Email sent successfully");
             reset();
             setShowCompose(false);
         } catch (error) {
@@ -199,7 +211,11 @@ export default function EmailPage() {
                                             checked={selectedEmails.has(email.id)}
                                             onChange={() => {
                                                 const updated = new Set(selectedEmails);
-                                                updated.has(email.id) ? updated.delete(email.id) : updated.add(email.id);
+                                                if (updated.has(email.id)) {
+                                                    updated.delete(email.id);
+                                                } else {
+                                                    updated.add(email.id);
+                                                }
                                                 setSelectedEmails(updated);
                                             }}
                                             className="mt-1 rounded border-gray-300"
@@ -236,12 +252,12 @@ export default function EmailPage() {
                         <form onSubmit={handleSubmit(handleSendEmail)}>
                             <div className="flex items-center justify-between p-4 border-b border-gray-200">
                                 <h2 className="text-lg font-semibold">Neue Nachricht</h2>
-                                <button 
-                                    type="button" 
+                                <button
+                                    type="button"
                                     onClick={() => {
                                         reset();
                                         setShowCompose(false);
-                                    }} 
+                                    }}
                                     className="p-1 cursor-pointer hover:bg-gray-100 rounded"
                                 >
                                     <X size={16} className="text-gray-500" />
@@ -283,12 +299,12 @@ export default function EmailPage() {
 
                             <div className="p-4 border-t border-gray-200">
                                 <div className="flex justify-between gap-2">
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => {
                                             reset();
                                             setShowCompose(false);
-                                        }} 
+                                        }}
                                         className="px-4 py-2 cursor-pointer text-gray-600 hover:text-gray-800 font-medium"
                                     >
                                         Abbrechen

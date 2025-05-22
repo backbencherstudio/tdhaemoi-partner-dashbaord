@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react';
 import { Plus, X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import AppoinmentData from '@/components/AppoinmentData/AppoinmentData';
 
 const WeeklyCalendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -13,7 +14,7 @@ const WeeklyCalendar = () => {
             time: '9:30',
             title: 'MEETING HERR MÜLLER',
             subtitle: 'ABFLUGTERMIN HERR BAUER',
-            type: 'meeting'
+            type: 'user'
         },
         {
             id: 2,
@@ -230,7 +231,14 @@ const WeeklyCalendar = () => {
     const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className=" bg-white">
+
+            <div className='p-4 sm:p-6'>
+                <AppoinmentData />
+            </div>
+
+
+
             {/* Header */}
             <div className=" bg-white border-b border-gray-200 z-40">
                 <div className="p-4 sm:p-6">
@@ -239,7 +247,7 @@ const WeeklyCalendar = () => {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setShowAddForm(true)}
-                                className="flex items-center cursor-pointer gap-2 px-3 sm:px-4 py-2 border border-gray-300 rounded-full hover:bg-gray-50 text-sm"
+                                className="flex items-center cursor-pointer gap-2 px-3 sm:px-4 py-3 border border-gray-300 rounded-full hover:bg-gray-50 text-sm"
                             >
                                 <span className="hidden sm:inline">TERMIN HINZUFÜGEN</span>
                                 <span className="sm:hidden">TERMIN</span>
@@ -351,8 +359,8 @@ const WeeklyCalendar = () => {
                                                 return (
                                                     <div
                                                         key={index}
-                                                        className={`p-2 cursor-pointer hover:bg-gray-100 rounded ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-900'
-                                                            } ${isToday ? 'bg-green-500 text-white' : ''
+                                                        className={`p-2 cursor-pointer hover:bg-gray-200 rounded ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-900'
+                                                            } ${isToday ? 'bg-[#62A07C] text-white' : ''
                                                             } ${isSelected && !isToday ? 'bg-blue-100' : ''
                                                             }`}
                                                         onClick={() => handleMiniCalendarDateClick(date)}
@@ -389,7 +397,7 @@ const WeeklyCalendar = () => {
                                                 </div>
                                             </div>
                                             {isToday && (
-                                                <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                                                <div className="w-4 h-4 bg-[#62A07C] rounded-full"></div>
                                             )}
                                         </div>
 
@@ -397,8 +405,8 @@ const WeeklyCalendar = () => {
                                         <div className="space-y-3">
                                             {dayEvents.map((event) => (
                                                 <div key={event.id} className="relative group">
-                                                    <div className={`p-3 rounded-lg text-sm font-medium border-l-4 ${event.type === 'meeting' ? 'bg-gray-900 text-white border-blue-500' :
-                                                        event.type === 'user' ? 'bg-green-600 text-white border-green-700' :
+                                                    <div className={`p-3 rounded-lg text-sm font-medium border-l-4 ${event.type === 'others' ? 'bg-gray-900 text-white border-blue-500' :
+                                                        event.type === 'user' ? 'bg-[#62A07C] text-white border-green-700' :
                                                             event.type === 'others' ? 'bg-gray-900 text-white border-purple-500' :
                                                                 'bg-gray-800 text-white border-gray-600'
                                                         }`}>

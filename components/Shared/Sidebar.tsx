@@ -51,29 +51,29 @@ export default function Sidebar({ onClose }: SidebarProps) {
             label: 'Bestellungen & Produkte',
             items: [
                 { icon: HiShoppingCart, label: 'Bestellverwaltung', href: '/orders' },
-                { icon: HiCollection, label: 'Produktverwaltung', href: '/products' }
+                { icon: HiCollection, label: 'Produktverwaltung', href: '/dashboard/lager' }
             ]
         },
         {
             id: 'customers',
             label: 'Kundenmanagement',
             items: [
-                { icon: HiUsers, label: 'Kundensuche', href: '/customers' },
-                { icon: HiChat, label: 'Nachrichten', href: '/messages' }
+                { icon: HiUsers, label: 'Kundensuche', href: '/dashboard/customers' },
+                { icon: HiChat, label: 'Nachrichten', href: '/dashboard/email' }
             ]
         },
         {
             id: 'calendar',
             label: 'Kalender & Termine',
             items: [
-                { icon: HiCalendar, label: 'Terminkalender', href: '/calendar' }
+                { icon: HiCalendar, label: 'Terminkalender', href: '/dashboard/calendar' }
             ]
         },
         {
             id: 'system',
             label: 'System & Einstellungen',
             items: [
-                { icon: HiCog, label: 'Einstellungen', href: '/settings' }
+                { icon: HiCog, label: 'Einstellungen', href: '/dashboard/settings' }
             ]
         }
     ];

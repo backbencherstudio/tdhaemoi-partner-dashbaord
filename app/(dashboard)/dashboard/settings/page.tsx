@@ -15,7 +15,7 @@ export default function Settingss() {
     const settingsOptions = [
         {
             label: "Produktverwaltung",
-            href: "/dashboard/products",
+            href: "",
             image: ProductManagement,
             className: "w-[110px] h-[90px]",
             alt: "Product Management",
@@ -57,7 +57,7 @@ export default function Settingss() {
         },
         {
             label: "Log Out",
-            href: "/logout",
+            href: "",
             image: logout,
             className: "w-[110px] h-[90px]",
             alt: "Logout",

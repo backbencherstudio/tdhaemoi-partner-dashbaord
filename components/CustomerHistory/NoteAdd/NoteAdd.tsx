@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Plus, X } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 
 const CATEGORIES = [
     'Diagramm',
@@ -34,9 +35,6 @@ interface Notes {
     [key: string]: Note[];
 }
 
-interface NoteCalendarProps {
-    customerId: string;
-}
 
 export default function NoteCalendar() {
     const [activeTab, setActiveTab] = useState<string>('Diagramm');
@@ -44,11 +42,9 @@ export default function NoteCalendar() {
     const [notes, setNotes] = useState<Notes>({});
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [noteText, setNoteText] = useState<string>('');
-    // Update the state initialization
     const [noteCategory, setNoteCategory] = useState<CategoryType>('Notizen');
     const [hoveredNote, setHoveredNote] = useState<number | null>(null);
 
-    // Type the functions
     const saveNotes = (newNotes: Notes) => {
         setNotes(newNotes);
     };
@@ -84,7 +80,6 @@ export default function NoteCalendar() {
         saveNotes(updatedNotes);
     };
 
-    // Get all dates with notes, sorted by date
     const getAllDates = (): string[] => {
         const dates = Object.keys(notes).filter(date => notes[date].length > 0);
         return dates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
@@ -110,13 +105,11 @@ export default function NoteCalendar() {
     const getNotesForCategory = (date: string, category: string): Note[] => {
         const allNotes = notes[date] || [];
         if (activeTab === 'Diagramm') {
-            // In Diagramm view, show notes only in their correct category column
             return allNotes.filter(note => note.category === category);
         }
         return allNotes.filter(note => note.category === category);
     };
 
-    // Filter dates based on active tab
     const getFilteredDates = (): string[] => {
         if (activeTab === 'Diagramm') {
             return getAllDates();
@@ -129,8 +122,8 @@ export default function NoteCalendar() {
     return (
         <div className=" ">
             {/* Header with Category Tabs */}
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+            <div className="flex flex-col md:flex-row gap-5 items-center justify-between mb-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-1 bg-gray-100 p-1 rounded-lg">
                     {CATEGORIES.map((category) => (
                         <button
                             key={category}
@@ -157,113 +150,106 @@ export default function NoteCalendar() {
             </div>
 
             {/* Table Header */}
-            <div className="border border-gray-300 rounded-lg overflow-hidden">
-                <div className="grid grid-cols-7 bg-gray-100 border-b border-gray-300">
-                    <div className="p-3 font-semibold text-gray-700 border-r border-gray-300">Datum</div>
-                    <div className="p-3 font-semibold text-gray-700 border-r border-gray-300">
-                        Notizen
-                    </div>
-                    <div className="p-3 font-semibold text-gray-700 border-r border-gray-300">
-                        Bestellungen
-                    </div>
-                    <div className="p-3 font-semibold text-gray-700 border-r border-gray-300">
-                        Leistungen
-                    </div>
-                    <div className="p-3 font-semibold text-gray-700 border-r border-gray-300">
-                        Termin
-                    </div>
-                    <div className="p-3 font-semibold text-gray-700 border-r border-gray-300">
-                        Zahlungen
-                    </div>
-                    <div className="p-3 font-semibold text-gray-700">
-                        E-Mails
-                    </div>
-                </div>
+            <Table className="border border-gray-500">
+                <TableHeader>
+                    <TableRow className="border border-gray-500">
+                        <TableHead className="border border-gray-500">Datum</TableHead>
+                        <TableHead className="border border-gray-600">Notizen</TableHead>
+                        <TableHead className="border border-gray-500">Bestellungen</TableHead>
+                        <TableHead className="border border-gray-500">Leistungen</TableHead>
+                        <TableHead className="border border-gray-500">Termin</TableHead>
+                        <TableHead className="border border-gray-500">Zahlungen</TableHead>
+                        <TableHead className="border border-gray-500">E-Mails</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {/* Today Row */}
+                    {(activeTab === 'Diagramm' || notes[new Date().toISOString().split('T')[0]]?.some(note => note.category === activeTab)) && (
+                        <TableRow className="bg-blue-50">
+                            <TableCell className="border border-gray-500">
+                                <div className="bg-blue-600 text-white px-2 py-1 rounded text-sm font-medium">
+                                    Heute
+                                </div>
+                                <div className="text-xs text-gray-600 mt-1">
+                                    {formatDisplayDate(new Date().toISOString().split('T')[0])}
+                                </div>
+                            </TableCell>
+                            {['Notizen', 'Bestellungen', 'Leistungen', 'Rechnungen', 'Zahlungen', 'E-mails'].map((category) => (
+                                <TableCell key={category} className="border min-h-[80px] border-gray-500">
+                                    {(activeTab === 'Diagramm' || activeTab === category) &&
+                                        getNotesForCategory(new Date().toISOString().split('T')[0], category).map((note) => (
+                                            <div
+                                                key={note.id}
+                                                className="relative group mb-2"
+                                                onMouseEnter={() => setHoveredNote(note.id)}
+                                                onMouseLeave={() => setHoveredNote(null)}
+                                            >
+                                                <div className={`text-xs p-2 rounded text-white ${CATEGORY_COLORS[note.category]} cursor-pointer`}>
+                                                    {note.text}
+                                                </div>
+                                                {hoveredNote === note.id && (
+                                                    <button
+                                                        onClick={() => handleDeleteNote(new Date().toISOString().split('T')[0], note.id)}
+                                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <X size={10} />
+                                                    </button>
+                                                    )}
+                                                </div>
+                                            ))
+                                        }
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        )}
 
-                {/* Today Row */}
-                {(activeTab === 'Diagramm' || notes[new Date().toISOString().split('T')[0]]?.some(note => note.category === activeTab)) && (
-                    <div className="grid grid-cols-7 border-b border-gray-300 bg-blue-50">
-                        <div className="p-3 border-r border-gray-300">
-                            <div className="bg-blue-600 text-white px-2 py-1 rounded text-sm font-medium">
-                                Heute
-                            </div>
-                            <div className="text-xs text-gray-600 mt-1">
-                                {formatDisplayDate(new Date().toISOString().split('T')[0])}
-                            </div>
-                        </div>
-                        {['Notizen', 'Bestellungen', 'Leistungen', 'Rechnungen', 'Zahlungen', 'E-mails'].map((category, index) => (
-                            <div key={category} className={`p-3 min-h-[80px] ${index < 5 ? 'border-r border-gray-300' : ''}`}>
-                                {(activeTab === 'Diagramm' || activeTab === category) &&
-                                    getNotesForCategory(new Date().toISOString().split('T')[0], category).map((note) => (
-                                        <div
-                                            key={note.id}
-                                            className="relative group mb-2"
-                                            onMouseEnter={() => setHoveredNote(note.id)}
-                                            onMouseLeave={() => setHoveredNote(null)}
-                                        >
-                                            <div className={`text-xs p-2 rounded text-white ${CATEGORY_COLORS[note.category]} cursor-pointer`}>
-                                                {note.text}
-                                            </div>
-                                            {hoveredNote === note.id && (
-                                                <button
-                                                    onClick={() => handleDeleteNote(new Date().toISOString().split('T')[0], note.id)}
-                                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                        {/* Date Rows */}
+                        {getFilteredDates().filter(date => !isToday(date)).map((date) => (
+                            <TableRow key={date}>
+                                <TableCell className="border border-gray-500">
+                                    <div className="text-sm font-medium text-gray-900">
+                                        {formatDisplayDate(date)}
+                                    </div>
+                                </TableCell>
+                                {['Notizen', 'Bestellungen', 'Leistungen', 'Rechnungen', 'Zahlungen', 'E-mails'].map((category) => (
+                                    <TableCell key={category} className="border min-h-[80px] border-gray-500">
+                                        {(activeTab === 'Diagramm' || activeTab === category) &&
+                                            getNotesForCategory(date, category).map((note) => (
+                                                <div
+                                                    key={note.id}
+                                                    className="relative group mb-2"
+                                                    onMouseEnter={() => setHoveredNote(note.id)}
+                                                    onMouseLeave={() => setHoveredNote(null)}
                                                 >
-                                                    <X size={10} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))
-                                }
-                            </div>
-                        ))}
-                    </div>
-                )}
+                                                    <div className={`text-xs p-2 rounded text-white ${CATEGORY_COLORS[note.category]} cursor-pointer`}>
+                                                        {note.text}
+                                                    </div>
+                                                    {hoveredNote === note.id && (
+                                                        <button
+                                                            onClick={() => handleDeleteNote(date, note.id)}
+                                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <X size={10} />
+                                                        </button>
+                                                        )}
+                                                    </div>
+                                                ))
+                                            }
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            ))}
 
-                {/* Date Rows */}
-                {getFilteredDates().filter(date => !isToday(date)).map((date) => (
-                    <div key={date} className="grid grid-cols-7 border-b border-gray-300 hover:bg-gray-50">
-                        <div className="p-3 border-r border-gray-300">
-                            <div className="text-sm font-medium text-gray-900">
-                                {formatDisplayDate(date)}
-                            </div>
-                        </div>
-                        {['Notizen', 'Bestellungen', 'Leistungen', 'Rechnungen', 'Zahlungen', 'E-mails'].map((category, index) => (
-                            <div key={category} className={`p-3 min-h-[80px] ${index < 5 ? 'border-r border-gray-300' : ''}`}>
-                                {(activeTab === 'Diagramm' || activeTab === category) &&
-                                    getNotesForCategory(date, category).map((note) => (
-                                        <div
-                                            key={note.id}
-                                            className="relative group mb-2"
-                                            onMouseEnter={() => setHoveredNote(note.id)}
-                                            onMouseLeave={() => setHoveredNote(null)}
-                                        >
-                                            <div className={`text-xs p-2 rounded text-white ${CATEGORY_COLORS[note.category]} cursor-pointer`}>
-                                                {note.text}
-                                            </div>
-                                            {hoveredNote === note.id && (
-                                                <button
-                                                    onClick={() => handleDeleteNote(date, note.id)}
-                                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                    <X size={10} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))
-                                }
-                            </div>
-                        ))}
-                    </div>
-                ))}
-
-                {/* Empty state */}
-                {getFilteredDates().length === 0 && (
-                    <div className="p-8 text-center text-gray-500">
-                        <p>No notes found for the selected category. Click "Add Note" to get started.</p>
-                    </div>
-                )}
-            </div>
+                        {/* Empty state */}
+                        {getFilteredDates().length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={7} className="border text-center text-gray-500 p-8">
+                                    <p>No notes found for the selected category. Click "Add Note" to get started.</p>
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
 
             {/* Add Note Modal */}
             {showAddForm && (

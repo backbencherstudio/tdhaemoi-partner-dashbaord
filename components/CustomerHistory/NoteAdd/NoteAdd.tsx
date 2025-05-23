@@ -167,7 +167,7 @@ export default function NoteCalendar() {
                     {(activeTab === 'Diagramm' || notes[new Date().toISOString().split('T')[0]]?.some(note => note.category === activeTab)) && (
                         <TableRow className="bg-blue-50">
                             <TableCell className="border border-gray-500">
-                                <div className="bg-blue-600 text-white px-2 py-1 rounded text-sm font-medium">
+                                <div className="text-black px-2 py-1 rounded text-sm font-medium">
                                     Heute
                                 </div>
                                 <div className="text-xs text-gray-600 mt-1">

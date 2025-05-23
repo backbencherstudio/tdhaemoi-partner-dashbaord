@@ -2,8 +2,6 @@
 import React from 'react'
 import ReuseableCarousel from '../../ReuseableCarousel/ReuseableCarousel'
 import Image from 'next/image'
-
-
 import img1 from "@/public/images/review/shoes1.png"
 import img2 from "@/public/images/review/shoes2.png"
 import img3 from "@/public/images/review/shoes3.png"

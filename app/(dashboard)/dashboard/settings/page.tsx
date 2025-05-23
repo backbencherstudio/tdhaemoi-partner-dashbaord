@@ -29,7 +29,7 @@ export default function Settingss() {
         },
         {
             label: "Einstellungen",
-            href: "/dashboard/settings",
+            href: "/dashboard/settings-profile",
             image: settings,
             className: "w-[100px] h-[90px]",
             alt: "Settings",

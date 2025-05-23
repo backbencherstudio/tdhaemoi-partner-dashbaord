@@ -444,12 +444,11 @@ export default function ScanningData() {
                         <span className="text-sm">Kundenordner</span>
                     </div>
 
-                    <div className="flex flex-col items-center">
-                        <Link href="/dashboard/customer-history" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
-                            <Image src={userImg} alt="Kundendaten" width={50} height={50} className='w-10 h-auto' />
-
-                        </Link>
-                        <span className="text-sm">Kundendaten und - historie</span>
+                    <div className="flex flex-col items-center"> 
+                        <Link href={`/dashboard/customer-history/${scanData.id}`} className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300"> 
+                            <Image src={userImg} alt="Kundendaten" width={50} height={50} className='w-10 h-auto' /> 
+                        </Link> 
+                        <span className="text-sm">Kundendaten und - historie</span> 
                     </div>
 
                     <div className="flex flex-col items-center">

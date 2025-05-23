@@ -11,6 +11,8 @@ import folderImg from '@/public/CustomerHistory/folder.png';
 import LegImg from '@/public/CustomerHistory/leg.png';
 import ShoePurchasesMade from '@/components/CustomerHistory/ShoePurchasesMade/ShoePurchasesMade';
 import TreatmentsCarriedOut from '@/components/CustomerHistory/TreatmentsCarriedOut/TreatmentsCarriedOut';
+import ScansPromoted from '@/components/CustomerHistory/ScansPromoted/ScansPromoted';
+import Reviews from '@/components/CustomerHistory/Reviews/Reviews';
 
 
 interface CustomerData {
@@ -177,7 +179,9 @@ export default function CustomerHistory() {
             <div>
 
                 <ShoePurchasesMade />
+                <ScansPromoted />
                 <TreatmentsCarriedOut />
+                <Reviews />
             </div>
 
         </div>

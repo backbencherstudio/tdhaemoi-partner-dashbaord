@@ -194,62 +194,62 @@ export default function NoteCalendar() {
                                                     >
                                                         <X size={10} />
                                                     </button>
-                                                    )}
-                                                </div>
-                                            ))
-                                        }
-                                    </TableCell>
-                                ))}
-                            </TableRow>
-                        )}
-
-                        {/* Date Rows */}
-                        {getFilteredDates().filter(date => !isToday(date)).map((date) => (
-                            <TableRow key={date}>
-                                <TableCell className="border border-gray-500">
-                                    <div className="text-sm font-medium text-gray-900">
-                                        {formatDisplayDate(date)}
-                                    </div>
+                                                )}
+                                            </div>
+                                        ))
+                                    }
                                 </TableCell>
-                                {['Notizen', 'Bestellungen', 'Leistungen', 'Rechnungen', 'Zahlungen', 'E-mails'].map((category) => (
-                                    <TableCell key={category} className="border min-h-[80px] border-gray-500">
-                                        {(activeTab === 'Diagramm' || activeTab === category) &&
-                                            getNotesForCategory(date, category).map((note) => (
-                                                <div
-                                                    key={note.id}
-                                                    className="relative group mb-2"
-                                                    onMouseEnter={() => setHoveredNote(note.id)}
-                                                    onMouseLeave={() => setHoveredNote(null)}
-                                                >
-                                                    <div className={`text-xs p-2 rounded text-white ${CATEGORY_COLORS[note.category]} cursor-pointer`}>
-                                                        {note.text}
-                                                    </div>
-                                                    {hoveredNote === note.id && (
-                                                        <button
-                                                            onClick={() => handleDeleteNote(date, note.id)}
-                                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-                                                        >
-                                                            <X size={10} />
-                                                        </button>
-                                                        )}
-                                                    </div>
-                                                ))
-                                            }
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
                             ))}
+                        </TableRow>
+                    )}
 
-                        {/* Empty state */}
-                        {getFilteredDates().length === 0 && (
-                            <TableRow>
-                                <TableCell colSpan={7} className="border text-center text-gray-500 p-8">
-                                    <p>No notes found for the selected category. Click "Add Note" to get started.</p>
+                    {/* Date Rows */}
+                    {getFilteredDates().filter(date => !isToday(date)).map((date) => (
+                        <TableRow key={date}>
+                            <TableCell className="border border-gray-500">
+                                <div className="text-sm font-medium text-gray-900">
+                                    {formatDisplayDate(date)}
+                                </div>
+                            </TableCell>
+                            {['Notizen', 'Bestellungen', 'Leistungen', 'Rechnungen', 'Zahlungen', 'E-mails'].map((category) => (
+                                <TableCell key={category} className="border min-h-[80px] border-gray-500">
+                                    {(activeTab === 'Diagramm' || activeTab === category) &&
+                                        getNotesForCategory(date, category).map((note) => (
+                                            <div
+                                                key={note.id}
+                                                className="relative group mb-2"
+                                                onMouseEnter={() => setHoveredNote(note.id)}
+                                                onMouseLeave={() => setHoveredNote(null)}
+                                            >
+                                                <div className={`text-xs p-2 rounded text-white ${CATEGORY_COLORS[note.category]} cursor-pointer`}>
+                                                    {note.text}
+                                                </div>
+                                                {hoveredNote === note.id && (
+                                                    <button
+                                                        onClick={() => handleDeleteNote(date, note.id)}
+                                                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <X size={10} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))
+                                    }
                                 </TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                            ))}
+                        </TableRow>
+                    ))}
+
+                    {/* Empty state */}
+                    {getFilteredDates().length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={7} className="border text-center text-gray-500 p-8">
+                                <p>No notes found for the selected category. Click &quot;Add Note&quot; to get started.</p>
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
 
             {/* Add Note Modal */}
             {showAddForm && (

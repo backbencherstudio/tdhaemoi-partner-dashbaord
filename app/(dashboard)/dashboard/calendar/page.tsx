@@ -542,7 +542,7 @@ const WeeklyCalendar = () => {
                             <div className='flex justify-center'>
                                 <button
                                     onClick={handleAddEvent}
-                                    className="px-6 py-2 border bg-green-600 text-white rounded-3xl text-sm cursor-pointer hover:bg-green-700 transform duration-300"
+                                    className="px-6 py-2 border bg-[#61A07B] text-white rounded-3xl text-sm cursor-pointer hover:bg-green-700 transform duration-300"
                                 >
                                     Termin bestätigen
                                 </button>

@@ -143,7 +143,7 @@ export default function Pyramid() {
   return (
     <div className="min-h-screen pt-10">
       <div className="">
-        <h1 className="text-4xl font-bold text-center mb-12 text-gray-800 tracking-wider">
+        <h1 className="text-2xl font-bold text-center mb-12 text-gray-800 tracking-wider capitalize">
           BERWERTUNGEN IHRER KUNDEN
         </h1>
 

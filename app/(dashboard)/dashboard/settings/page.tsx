@@ -1,3 +1,4 @@
+"use client"
 import React from 'react'
 import Link from 'next/link'
 import ProductManagement from '@/public/images/settings/Productmanagement.png'
@@ -11,11 +12,17 @@ import Image from 'next/image'
 import { RiArrowRightLine } from 'react-icons/ri'
 
 export default function Settingss() {
+    const [showLanguageDropdown, setShowLanguageDropdown] = React.useState(false);
+
+    const handleLanguageClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setShowLanguageDropdown(!showLanguageDropdown);
+    };
 
     const settingsOptions = [
         {
             label: "Produktverwaltung",
-            href: "",
+            href: "/dashboard/lager",
             image: ProductManagement,
             className: "w-[110px] h-[90px]",
             alt: "Product Management",
@@ -50,10 +57,11 @@ export default function Settingss() {
         },
         {
             label: "Sprache",
-            href: "/dashboard/language",
+            href: "#",
             image: language,
             className: "w-[100px] h-[90px]",
             alt: "Language",
+            onClick: handleLanguageClick,
         },
         {
             label: "Log Out",
@@ -86,14 +94,38 @@ export default function Settingss() {
             {/* Grid of Options */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
                 {settingsOptions.map((option, index) => (
-                    <Link href={option.href} key={index} className="flex flex-col items-center">
-                        <div className="bg-white p-4 rounded-[40px] border border-gray-400 shadow-sm hover:bg-gray-50 transition-colors mb-2">
-                            <div className='flex justify-center items-center px-5 py-1 w-full'>
-                                <Image src={option.image} alt={option.alt} className={option.className} />
+                    <div key={index} className="relative">
+                        <Link 
+                            href={option.href} 
+                            onClick={option.onClick}
+                            className="flex flex-col items-center"
+                        >
+                            <div className="bg-white p-4 rounded-[40px] border border-gray-400 shadow-sm hover:bg-gray-50 transition-colors mb-2">
+                                <div className='flex justify-center items-center px-5 py-1 w-full'>
+                                    <Image src={option.image} alt={option.alt} className={option.className} />
+                                </div>
                             </div>
-                        </div>
-                        <span className="text-sm text-center">{option.label}</span>
-                    </Link>
+                            <span className="text-sm text-center">{option.label}</span>
+                        </Link>
+
+                        {/* Language Dropdown */}
+                        {option.label === "Sprache" && showLanguageDropdown && (
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                                <button 
+                                    className="w-full cursor-pointer px-4 py-2 text-left hover:bg-gray-50 rounded-t-lg"
+                                    onClick={() => setShowLanguageDropdown(false)}
+                                >
+                                    Deutsch
+                                </button>
+                                <button 
+                                    className="w-full cursor-pointer px-4 py-2 text-left hover:bg-gray-50 rounded-b-lg"
+                                    onClick={() => setShowLanguageDropdown(false)}
+                                >
+                                    English
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 ))}
             </div>
 

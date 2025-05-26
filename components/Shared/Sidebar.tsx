@@ -16,6 +16,7 @@ import {
 import { HiArrowRightOnRectangle } from "react-icons/hi2";
 import logo from '@/public/images/logo.png'
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
 
 
 interface SidebarProps {
@@ -24,6 +25,7 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onClose }: SidebarProps) {
+    const { logout } = useAuth();
     const [expandedSections, setExpandedSections] = useState({
         orders: true,
         customers: true,
@@ -34,8 +36,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
 
-    const handleLogout = () => {
-        router.push('/login');
+    const handleLogout = async () => {
+        await logout();
     };
 
     const menuSections = [

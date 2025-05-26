@@ -1,7 +1,7 @@
+'use client'
 import DashboardLayout from '@/components/Layout/DashboardLayout';
-import React from 'react'
 import { Toaster } from 'react-hot-toast';
-    
+import ProtectedRoute from '../../../lib/protected-route';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -9,9 +9,10 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
     return (
-        <DashboardLayout>
-            {children}
-            <Toaster />
-        </DashboardLayout>
-    )
+        <ProtectedRoute>
+            <DashboardLayout>
+                {children}
+            </DashboardLayout>
+        </ProtectedRoute>
+    );
 }

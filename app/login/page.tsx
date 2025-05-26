@@ -1,11 +1,13 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import logo from '@/public/images/logo.png'
 import Image from 'next/image'
 import { useForm } from 'react-hook-form'
-import { useRouter } from 'next/navigation'
-import toast from 'react-hot-toast'
 
+import toast from 'react-hot-toast'
+import { loginUser } from '@/apis/authApis'
+import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 
 type FormInputs = {
     email: string;
@@ -15,6 +17,15 @@ type FormInputs = {
 export default function Login() {
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
+    const { login, isAuthenticated } = useAuth()
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            router.push('/dashboard')
+        }
+    }, [isAuthenticated, router])
+
     const {
         register,
         handleSubmit,
@@ -24,10 +35,18 @@ export default function Login() {
     const onSubmit = async (data: FormInputs) => {
         setIsLoading(true)
         try {
-            console.log(data)
-            await new Promise(resolve => setTimeout(resolve, 2000))
-            toast.success('Login successful')
-            router.push('/dashboard')
+            const response = await loginUser(data.email, data.password)
+            if (response.success && response.user.role === 'PARTNER') {
+                await login(response.token, response.user)
+                toast.success('Login successful')
+                router.push('/dashboard')
+            } else {
+                throw new Error(' Only partners can login')
+            }
+        } catch (error) {
+         
+            const errorMessage = error instanceof Error ? error.message : 'Login failed';
+            toast.error(errorMessage);
         } finally {
             setIsLoading(false)
         }

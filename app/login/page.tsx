@@ -41,7 +41,7 @@ export default function Login() {
                 toast.success('Login successful')
                 router.push('/dashboard')
             } else {
-                throw new Error(' Only partners can login')
+                throw new Error('User not found')
             }
         } catch (error) {
          

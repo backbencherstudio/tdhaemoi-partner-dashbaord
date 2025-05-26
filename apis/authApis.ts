@@ -20,9 +20,9 @@ export const loginUser = async (email: string, password: string) => {
       password,
     });
 
-    if (!response.data?.user?.role || response.data.user.role !== 'PARTNER') {
-      throw new Error('Unauthorized: Only partners can login');
-    }
+    // if (!response.data?.user?.role || response.data.user.role !== 'PARTNER') {
+    //   throw new Error('Unauthorized: Only partners can login');
+    // }
 
     if (!response.data?.token) {
       throw new Error('Invalid response from server');

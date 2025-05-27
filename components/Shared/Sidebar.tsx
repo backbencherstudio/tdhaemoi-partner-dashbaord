@@ -34,7 +34,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
     });
 
     const pathname = usePathname();
-    const router = useRouter();
 
     const handleLogout = async () => {
         await logout();

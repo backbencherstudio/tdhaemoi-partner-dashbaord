@@ -20,10 +20,6 @@ export const loginUser = async (email: string, password: string) => {
       password,
     });
 
-    // if (!response.data?.user?.role || response.data.user.role !== 'PARTNER') {
-    //   throw new Error('Unauthorized: Only partners can login');
-    // }
-
     if (!response.data?.token) {
       throw new Error('Invalid response from server');
     }
@@ -40,3 +36,22 @@ export const loginUser = async (email: string, password: string) => {
   }
 };
 
+
+// check if user is authenticated
+// export const checkAuth = async () => {
+//   try {
+//     const token = localStorage.getItem('authToken');
+//     if (!token) throw new Error('No token found');
+
+//     const response = await axiosClient.get('/users/check-auth', {
+//       headers: {
+//         Authorization: token, 
+//       },
+//     });
+
+//     return response.data;
+//   } catch (error: any) {
+//     const errorMessage = error.response?.data?.message || error.message || 'An error occurred during login';
+//     throw new Error(errorMessage);
+//   }
+// };

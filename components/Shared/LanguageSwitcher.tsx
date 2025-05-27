@@ -29,6 +29,7 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
     const [languageDropDown, setLanguageDropDown] = useState(false);
     const [language, setLanguage] = useState("DE");
     const languageDropdownRef = useRef(null);
+    const dropdownContentRef = useRef(null);
     const { selectedLang, setSelectedLang } = useLanguage();
 
     const handleDropdownToggle = (e: React.MouseEvent) => {
@@ -38,35 +39,35 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
 
     const handleLanguageChange = (lang: string) => {
         const languageMap = {
-            'English': { code: 'en', short: 'EN' },
-            'German': { code: 'de', short: 'DE' },
-            'Arabic': { code: 'ar', short: 'AR' },
-            'Chinese': { code: 'zh-CN', short: 'ZH' },
-            'French': { code: 'fr', short: 'FR' }
+            'German': { code: 'de', short: 'DE', flag: '🇩🇪' },
+            'English': { code: 'en', short: 'EN', flag: '🇬🇧' },
+            'Arabic': { code: 'ar', short: 'AR', flag: '🇦🇪' },
+            'Chinese': { code: 'zh-CN', short: 'ZH', flag: '🇨🇳' },
+            'French': { code: 'fr', short: 'FR', flag: '🇫🇷' }
         };
 
         const langInfo = languageMap[lang as keyof typeof languageMap];
 
         if (langInfo) {
+            setSelectedLang(langInfo.code);
+            setLanguage(langInfo.short);
+            setLanguageDropDown(false);
+            onLanguageChange?.(langInfo.code);
+
+            // Initialize Google Translate
             const waitForGoogleTranslate = setInterval(() => {
-                const selectElement = document.querySelector('.goog-te-combo');
-                if (selectElement) {
+                if (typeof window.google !== 'undefined' && window.google.translate) {
                     clearInterval(waitForGoogleTranslate);
-                    (selectElement as HTMLSelectElement).value = langInfo.code;
-                    (selectElement as HTMLSelectElement).dispatchEvent(new Event('change'));
-
-                    if (typeof window.google !== 'undefined' && window.google.translate) {
-                        new window.google.translate.TranslateElement({
-                            pageLanguage: 'de',
-                            includedLanguages: 'en,de,ar,zh-CN,fr',
-                            autoDisplay: false
-                        });
+                    const selectElement = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+                    if (selectElement) {
+                        selectElement.value = langInfo.code;
+                        selectElement.dispatchEvent(new Event('change'));
                     }
-
-                    setSelectedLang(langInfo.code);
-                    setLanguage(langInfo.short);
-                    setLanguageDropDown(false);
-                    onLanguageChange?.(langInfo.code);
+                    new window.google.translate.TranslateElement({
+                        pageLanguage: 'de',
+                        includedLanguages: 'en,de,ar,zh-CN,fr',
+                        autoDisplay: false
+                    });
                 }
             }, 100);
 
@@ -75,27 +76,13 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
     };
 
     useEffect(() => {
-        const checkGoogleTranslate = () => {
-            const element = document.querySelector('.goog-te-combo');
-            if (element) {
-                const currentLang = (element as HTMLSelectElement).value;
-                setLanguage(
-                    currentLang === 'ar' ? 'AR' :
-                    currentLang === 'de' ? 'DE' :
-                    currentLang === 'zh-CN' ? 'ZH' :
-                    currentLang === 'fr' ? 'FR' : 'EN'
-                );
-            }
-        };
-
-        checkGoogleTranslate();
-        const timeoutId = setTimeout(checkGoogleTranslate, 1000);
-        return () => clearTimeout(timeoutId);
-    }, []);
-
-    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (languageDropdownRef.current && !(languageDropdownRef.current as HTMLElement).contains(event.target as Node)) {
+            if (
+                languageDropdownRef.current && 
+                dropdownContentRef.current &&
+                !(languageDropdownRef.current as HTMLElement).contains(event.target as Node) &&
+                !(dropdownContentRef.current as HTMLElement).contains(event.target as Node)
+            ) {
                 setLanguageDropDown(false);
             }
         };
@@ -104,21 +91,40 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const dropdownStyles = variant === 'minimal' ? 'py-1 w-32' : 'py-2 w-full';
+    useEffect(() => {
+        // Set initial language based on selectedLang
+        const langMap = {
+            'de': 'DE',
+            'en': 'EN',
+            'ar': 'AR',
+            'zh-CN': 'ZH',
+            'fr': 'FR'
+        };
+        setLanguage(langMap[selectedLang as keyof typeof langMap] || 'DE');
+    }, [selectedLang]);
+
+    const dropdownStyles = variant === 'minimal' ? 'w-[180px]' : 'w-[220px]';
     const buttonStyles = variant === 'minimal' 
-        ? 'px-3 py-1.5 text-sm rounded-md'
-        : 'px-4 py-2 rounded-[8px] shadow-sm border border-gray-300 font-semibold';
+        ? 'px-3 py-1.5 text-sm rounded-md bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white/90 hover:border-primary-500'
+        : 'px-4 py-2 rounded-[8px] shadow-sm border border-gray-300 font-semibold hover:shadow-md hover:border-primary-500 transition-all duration-300';
 
     return (
         <div className={`flex items-center ${className}`}>
             <div className='relative inline-block text-left' ref={languageDropdownRef}>
                 <button
-                    className={`flex justify-between items-center w-full gap-x-1.5 bg-white text-gray-900 ${buttonStyles}`}
+                    className={`flex justify-between items-center min-w-[120px] gap-x-1.5 bg-white text-gray-900 ${buttonStyles}`}
                     onClick={handleDropdownToggle}
                 >
-                    <div>{language}</div>
+                    <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 flex items-center justify-center rounded-full bg-primary-50 text-primary-600 text-xs font-medium">
+                            {language}
+                        </span>
+                        {variant !== 'minimal' && (
+                            <span className="font-medium">Language</span>
+                        )}
+                    </div>
                     <svg
-                        className={`size-5 text-[#475467] ${languageDropDown ? "rotate-180" : "rotate-0"} transform duration-300`}
+                        className={`size-4 text-gray-500 ${languageDropDown ? "rotate-180" : "rotate-0"} transform duration-300`}
                         viewBox='0 0 20 20'
                         fill='currentColor'
                     >
@@ -131,40 +137,31 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
                 </button>
 
                 {languageDropDown && (
-                    <div className={`absolute z-50 right-0 mt-2 rounded-md bg-white shadow-lg ring-1 ring-black/5 ${dropdownStyles}`}>
-                        <button
-                            onClick={() => handleLanguageChange('German')}
-                            className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 notranslate ${selectedLang === 'de' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}`}
-                        >
-                            German (DE)
-                        </button>
-                        <button
-                            onClick={() => handleLanguageChange('English')}
-                            className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 notranslate ${selectedLang === 'en' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}`}
-                        >
-                            English (EN)
-                        </button>
-                        <button
-                            onClick={() => handleLanguageChange('Arabic')}
-                            className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 notranslate ${selectedLang === 'ar' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}`}
-                        >
-                            Arabic (AR)
-                        </button>
-                        <button
-                            onClick={() => handleLanguageChange('Chinese')}
-                            className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 notranslate ${selectedLang === 'zh-CN' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}`}
-                        >
-                            Chinese (ZH)
-                        </button>
-                        <button
-                            onClick={() => handleLanguageChange('French')}
-                            className={`block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 notranslate ${selectedLang === 'fr' ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}`}
-                        >
-                            French (FR)
-                        </button>
+                    <div 
+                        ref={dropdownContentRef}
+                        className={`absolute right-0 mt-2 ${dropdownStyles} bg-white rounded-lg shadow-lg ring-1 ring-black/5 border border-gray-100 overflow-hidden z-[100]`}
+                    >
+                        {Object.entries({
+                            'German': { code: 'de', short: 'DE', flag: '🇩🇪' },
+                            'English': { code: 'en', short: 'EN', flag: '🇬🇧' },
+                            'Arabic': { code: 'ar', short: 'AR', flag: '🇦🇪' },
+                            'Chinese': { code: 'zh-CN', short: 'ZH', flag: '🇨🇳' },
+                            'French': { code: 'fr', short: 'FR', flag: '🇫🇷' }
+                        }).map(([lang, info]) => (
+                            <button
+                                key={lang}
+                                onClick={() => handleLanguageChange(lang)}
+                                className={`flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors duration-150 ${selectedLang === info.code ? 'bg-primary-50/50 text-primary-700 font-medium' : 'text-gray-700'}`}
+                            >
+                                <span className="text-base">{info.flag}</span>
+                                <span className="flex-1">{lang}</span>
+                                <span className="text-xs font-medium text-gray-400">{info.short}</span>
+                            </button>
+                        ))}
                     </div>
                 )}
             </div>
+            <div id="google_translate_element" className="hidden" />
         </div>
     );
 };

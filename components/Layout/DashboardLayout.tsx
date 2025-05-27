@@ -18,9 +18,8 @@ const DashboardLayout = ({ children }: LayoutProps) => {
         <div className="flex h-screen bg-gray-100">
             {/* Sidebar */}
             <div
-                className={`fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out ${
-                    isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
+                className={`fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                    }`}
             >
                 <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
             </div>
@@ -38,9 +37,9 @@ const DashboardLayout = ({ children }: LayoutProps) => {
                 )}
 
                 {/* Content Area */}
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4">
+                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-white p-4">
                     {children}
-                  
+
                 </main>
             </div>
         </div>

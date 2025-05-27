@@ -13,6 +13,8 @@ interface LoginResponse {
   token: string;
 }
 
+
+
 export const loginUser = async (email: string, password: string) => {
   try {
     const response = await axiosClient.post<LoginResponse>('/users/login', {
@@ -37,21 +39,22 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 
-// check if user is authenticated
-// export const checkAuth = async () => {
-//   try {
-//     const token = localStorage.getItem('authToken');
-//     if (!token) throw new Error('No token found');
+// Update user profile
+export const updateUserProfile = async (formData: FormData) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('No authentication token found');
 
-//     const response = await axiosClient.get('/users/check-auth', {
-//       headers: {
-//         Authorization: token, 
-//       },
-//     });
+    const response = await axiosClient.patch('/partner/update-partner-profile', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `${token}`
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to update profile';
+    throw new Error(errorMessage);
+  }
+};
 
-//     return response.data;
-//   } catch (error: any) {
-//     const errorMessage = error.response?.data?.message || error.message || 'An error occurred during login';
-//     throw new Error(errorMessage);
-//   }
-// };

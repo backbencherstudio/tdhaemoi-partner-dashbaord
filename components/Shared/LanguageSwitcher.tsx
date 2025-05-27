@@ -112,7 +112,7 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
         <div className={`flex items-center ${className}`}>
             <div className='relative inline-block text-left' ref={languageDropdownRef}>
                 <button
-                    className={`flex justify-between items-center min-w-[120px] gap-x-1.5 bg-white text-gray-900 ${buttonStyles}`}
+                    className={`flex cursor-pointer justify-between items-center min-w-[120px] gap-x-1.5 bg-white text-gray-900 ${buttonStyles}`}
                     onClick={handleDropdownToggle}
                 >
                     <div className="flex items-center gap-2">
@@ -151,7 +151,7 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
                             <button
                                 key={lang}
                                 onClick={() => handleLanguageChange(lang)}
-                                className={`flex items-center gap-3 w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors duration-150 ${selectedLang === info.code ? 'bg-primary-50/50 text-primary-700 font-medium' : 'text-gray-700'}`}
+                                className={`flex cursor-pointer items-center gap-3 w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 transition-colors duration-150 ${selectedLang === info.code ? 'bg-primary-50/50 text-primary-700 font-medium' : 'text-gray-700'}`}
                             >
                                 <span className="text-base">{info.flag}</span>
                                 <span className="flex-1">{lang}</span>

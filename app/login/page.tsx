@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import SendEmailModal from '@/components/ResetPassword/SendEmailModal'
 
 
 type FormInputs = {
@@ -150,30 +151,8 @@ export default function Login() {
                 </form>
                 {/* reset code  */}
                 <div className='flex justify-end items-center'>
-                    <Dialog open={isResetModalOpen} onOpenChange={setIsResetModalOpen}>
-                        <DialogTrigger asChild>
-                            <p className='text-sm text-[#585C5B] cursor-pointer'>Passwort vergessen?</p>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogTitle>Passwort zurücksetzen</DialogTitle>
-                            <Input 
-                                type="email" 
-                                placeholder="Ihre E-Mail-Adresse"
-                                value={resetEmail}
-                                onChange={(e) => setResetEmail(e.target.value)}
-                            />
-                            <Button 
-                                className="mt-4 w-full"
-                                onClick={() => {
-                                    // Add your password reset logic here
-                                    toast.success('Passwort-Reset-Link wurde gesendet');
-                                    setIsResetModalOpen(false);
-                                }}
-                            >
-                                Link senden
-                            </Button>
-                        </DialogContent>
-                    </Dialog>
+                    <SendEmailModal  open={isResetModalOpen} onOpenChange={setIsResetModalOpen}/>
+                    
                 </div>
             </div>
 

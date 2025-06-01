@@ -11,6 +11,7 @@ import {
     InputOTPSeparator,
     InputOTPSlot,
 } from "@/components/ui/input-otp"
+import { forgotPassword, matchOTP, resetPassword } from '@/apis/authApis';
 
 export default function SendEmailModal({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
     const [resetEmail, setResetEmail] = useState('');
@@ -21,8 +22,8 @@ export default function SendEmailModal({ open, onOpenChange }: { open: boolean, 
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Reset states when modal closes
     const handleOpenChange = (newOpen: boolean) => {
         if (!newOpen) {
             setResetEmail('');
@@ -35,26 +36,51 @@ export default function SendEmailModal({ open, onOpenChange }: { open: boolean, 
         onOpenChange(newOpen);
     };
 
-    const handleSendEmail = () => {
+
+    // send email with 
+    const handleSendEmail = async () => {
         if (!resetEmail) {
             toast.error('Please enter email');
             return;
         }
-        toast.success('OTP sent to your email');
-        setShowOTP(true);
+        setIsLoading(true);
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const response = await forgotPassword(resetEmail);
+        if (response.success) {
+            setIsLoading(false);
+            toast.success('OTP sent to your email');
+            setShowOTP(true);
+        } else {
+            setIsLoading(false);
+            toast.error(response.message);
+        }
     };
 
-    const handleVerifyOTP = () => {
+    const handleVerifyOTP = async () => {
         if (!otp) {
             toast.error('Please enter OTP');
             return;
         }
-        toast.success('OTP verified successfully');
-        setShowOTP(false);
-        setShowPasswordReset(true);
+        setIsLoading(true);
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await matchOTP(resetEmail, otp);
+            if (response.success) {
+                toast.success('OTP verified successfully');
+                setShowOTP(false);
+                setShowPasswordReset(true);
+            } else {
+                toast.error(response.message || 'Failed to verify OTP');
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to verify OTP');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handleResetPassword = () => {
+    const handleResetPassword = async () => {
         if (!newPassword || !confirmPassword) {
             toast.error('Please fill in all fields');
             return;
@@ -63,13 +89,26 @@ export default function SendEmailModal({ open, onOpenChange }: { open: boolean, 
             toast.error('Passwords do not match');
             return;
         }
-        if (newPassword.length < 6) {
+        if (newPassword.length < 4) {
             toast.error('Password must be at least 6 characters');
             return;
         }
-        
-        toast.success('Password reset successfully');
-        handleOpenChange(false);
+        setIsLoading(true);
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await resetPassword(resetEmail, newPassword);
+            if (response.success) {
+                toast.success('Password reset successfully');
+                handleOpenChange(false);
+            } else {
+                toast.error(response.message || 'Failed to reset password');
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to reset password');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -102,8 +141,16 @@ export default function SendEmailModal({ open, onOpenChange }: { open: boolean, 
                             <Button
                                 type="submit"
                                 className="w-full cursor-pointer"
+                                disabled={isLoading}
                             >
-                                Senden
+                                {isLoading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                                        <span>Sending...</span>
+                                    </div>
+                                ) : (
+                                    'Senden'
+                                )}
                             </Button>
                         </>
                     )}
@@ -111,28 +158,35 @@ export default function SendEmailModal({ open, onOpenChange }: { open: boolean, 
                     {showOTP && (
                         <div className="flex flex-col items-center gap-4">
                             <p className="text-sm text-muted-foreground">Enter the 6-digit code sent to your email</p>
-                            <InputOTP 
-                                value={otp} 
-                                onChange={setOTP} 
+                            <InputOTP
+                                value={otp}
+                                onChange={setOTP}
                                 maxLength={6}
                             >
                                 <InputOTPGroup>
                                     <InputOTPSlot index={0} />
                                     <InputOTPSlot index={1} />
-                                    <InputOTPSlot index={2} />
                                 </InputOTPGroup>
                                 <InputOTPSeparator />
                                 <InputOTPGroup>
+                                    <InputOTPSlot index={2} />
                                     <InputOTPSlot index={3} />
-                                    <InputOTPSlot index={4} />
-                                    <InputOTPSlot index={5} />
+
                                 </InputOTPGroup>
                             </InputOTP>
                             <Button
                                 type="submit"
                                 className="w-full cursor-pointer"
+                                disabled={isLoading}
                             >
-                                Verify OTP
+                                {isLoading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                                        <span>Verifying...</span>
+                                    </div>
+                                ) : (
+                                    'Verify OTP'
+                                )}
                             </Button>
                         </div>
                     )}
@@ -192,8 +246,16 @@ export default function SendEmailModal({ open, onOpenChange }: { open: boolean, 
                             <Button
                                 type="submit"
                                 className="w-full cursor-pointer"
+                                disabled={isLoading}
                             >
-                                Reset Password
+                                {isLoading ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                                        <span>Resetting...</span>
+                                    </div>
+                                ) : (
+                                    'Reset Password'
+                                )}
                             </Button>
                         </div>
                     )}

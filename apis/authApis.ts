@@ -58,3 +58,37 @@ export const updateUserProfile = async (formData: FormData) => {
   }
 };
 
+// forgot password
+export const forgotPassword = async (email: string) => {
+  try {
+    const response = await axiosClient.post('/partner/forgot-password/send-otp', { email });
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.message || error.message || 'Failed to send OTP';
+    throw new Error(errorMessage);
+  }
+};
+
+// match otp
+export const matchOTP = async (email: string, otp: string) => {
+  try {
+    const response = await axiosClient.post('/partner/forgot-password/verify-otp', { email, otp });
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.error || error.message || 'Failed to match OTP';
+    throw new Error(errorMessage);
+  }
+};
+
+
+// reset password
+export const resetPassword = async (email: string, password: string) => {
+  try {
+    const response = await axiosClient.post('/partner/forgot-password/reset', { email, password });
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.message || error.message || 'Failed to reset password';
+    throw new Error(errorMessage);
+  }
+};
+

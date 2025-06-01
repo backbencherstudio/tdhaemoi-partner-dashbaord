@@ -123,7 +123,6 @@ interface FormData {
 }
 
 export default function Support() {
-    // const [activeSection, setActiveSection] = useState<string | null>(null);
 
     const {
         register,
@@ -132,13 +131,10 @@ export default function Support() {
     } = useForm<FormData>();
 
     const onSubmit = (data: FormData) => {
-        // Handle form submission here
         console.log(data);
     };
 
-    // const handleSectionClick = (section: string) => {
-    //     setActiveSection(activeSection === section ? null : section);
-    // };
+
 
     return (
         <div className="px-4 ">

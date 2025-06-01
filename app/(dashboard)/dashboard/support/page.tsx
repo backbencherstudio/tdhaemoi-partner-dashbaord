@@ -142,7 +142,7 @@ export default function Support() {
 
     return (
         <div className="px-4 ">
-            <h1 className="text-3xl font-bold text-center mb-10">FEETFIRST SUPPORT</h1>
+            <h1 className="text-3xl font-bold text-center mb-10">FEETF1RST SUPPORT</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Object.keys(faqData).map((section: string) => (
@@ -177,7 +177,7 @@ export default function Support() {
 
             {/* Contact Form Section */}
             <div className="mt-16 bg-white p-8 rounded-md">
-                <h2 className="text-2xl font-bold text-center mb-8 uppercase">KONTAKT FEETFIRST</h2>
+                <h2 className="text-2xl font-bold text-center mb-8 uppercase">KONTAKT FEETF1RST</h2>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <div className="space-y-2">
                         <Label htmlFor="reason">Grund der Kontaktaufnahme</Label>

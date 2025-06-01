@@ -7,149 +7,68 @@ import shoes from '@/public/images/products/shoes.png'
 import Image from 'next/image'
 import ContactPage from '@/components/Contact/ContactPage'
 import { IoIosCall } from 'react-icons/io'
+import { getCategoriesProducts } from '@/apis/productsApis'
 
-
-
-interface Product {
-    id: number;
-    name: string;
-    price: number;
-    sub_category: string;
-    gender: string;
-    category: string;
-    description: string;
-
-
+interface Color {
+    id: string;
+    colorName: string;
+    colorCode: string;
+    images: {
+        id: string;
+        url: string;
+    }[];
 }
 
-const products: Product[] = [
-    {
-        id: 1,
-        name: "Brooks Hyperion Elite 4 PB",
-        price: 100,
-        sub_category: "Freizeitschuh",
-        gender: "Mann ",
-        category: "ALLTAGSSCHUHE",
-        description: "This is a product description"
-    },
-    {
-        id: 2,
-        name: "Brooks Hyperion Elite 4 PB",
-        price: 100,
-        sub_category: "Freizeitschuh",
-        gender: "Mann ",
-        category: "ALLTAGSSCHUHE",
-        description: "This is a product description"
-    },
-    {
-        id: 3,
-        name: "Brooks Hyperion Elite 4 PB",
-        price: 100,
-        sub_category: "Freizeitschuh",
-        gender: "Mann ",
-        category: "SPORTSCHUHE",
-        description: "This is a product description"
-    },
-    {
-        id: 4,
-        name: "Brooks Hyperion Elite 4 PB",
-        price: 100,
-        sub_category: "Freizeitschuh",
-        gender: "Mann ",
-        category: "SPORTSCHUHE",
-        description: "This is a product description"
-    },
-    {
-        id: 5,
-        name: "Brooks Hyperion Elite 4 PB",
-        price: 100,
-        sub_category: "Freizeitschuh",
-        gender: "Mann ",
-        category: "SPORTSCHUHE",
-        description: "This is a product description"
-    },
-    {
-        id: 6,
-        name: "Brooks Hyperion Elite 4 PB",
-        price: 100,
-        sub_category: "Freizeitschuh",
-        gender: "Mann ",
-        category: "SPORTSCHUHE",
-        description: "This is a product description"
-    },
-    {
-        id: 7,
-        name: "Brooks Hyperion Elite 4 PB",
-        price: 500,
-        sub_category: "Laufschuh",
-        gender: "Mann ",
-        category: "BERGSCHUHE",
-        description: "This is a product description"
-    },
-    {
-        id: 8,
-        name: "Brooks Hyperion Elite 4 PB",
-        price: 500,
-        sub_category: "Laufschuh",
-        gender: "Mann ",
-        category: "BERGSCHUHE",
-        description: "This is a product description"
-    },
-    {
-        id: 9,
-        name: "Brooks Hyperion Elite 4 PB",
-        price: 500,
-        sub_category: "Laufschuh",
-        gender: "Mann ",
-        category: "BERGSCHUHE",
-        description: "This is a product description"
-    },
-    {
-        id: 10,
-        name: "Brooks Hyperion Elite 4 PB",
-        price: 500,
-        sub_category: "Laufschuh",
-        gender: "Mann ",
-        category: "BERGSCHUHE",
-        description: "This is a product description"
-    }
-]
+interface Product {
+    id: string;
+    name: string;
+    Category: string;
+    Sub_Category: string;
+    price: number | null;
+    offer: number;
+    availability: boolean;
+    colors: Color[];
+}
 
-// Group products by category
-const groupedProducts = products.reduce((acc: { [key: string]: Product[] }, product: Product) => {
-    if (!acc[product.category]) {
-        acc[product.category] = [];
-    }
-    acc[product.category].push(product);
-    return acc;
-}, {});
-
-const categories = Object.keys(groupedProducts);
+interface CategoryData {
+    name: string;
+    totalProducts: number;
+    products: Product[];
+}
 
 // Product Card Component
 const ProductCard = ({ product }: { product: Product }) => (
-    <div className="p-4 ">
+    <div className="p-4 h-full flex flex-col">
         <div className="bg-gray-200 h-32 rounded-lg mb-3 flex items-center justify-center">
-            <Image src={shoes} alt={product.name} className="w-30 h-30 object-cover rounded" />
+            <Image
+                src={product.colors[0]?.images[0]?.url || shoes}
+                alt={product.name}
+                width={200}
+                height={200}
+                className=" object-cover w-full h-full object-center rounded"
+            />
         </div>
-        <h3 className="font-semibold text-sm mb-1">{product.name}</h3>
-        <p className="text-gray-600 text-xs mb-1">{product.sub_category} - {product.gender}</p>
-        <button className="w-full mt-2 border border-gray-600 text-xs py-1 px-2 rounded  transition-colors uppercase">
+        <div className="flex-grow">
+            <h3 className="font-semibold text-sm mb-1 line-clamp-2">{product.name}</h3>
+            <p className="text-gray-600 text-xs mb-1">
+                {product.Sub_Category !== "null" ? product.Sub_Category : product.Category}
+            </p>
+        </div>
+        <button className="w-full mt-2 border border-gray-600 text-xs py-1 px-2 rounded transition-colors uppercase">
             Jetzt hinzufügen
         </button>
     </div>
 );
 
-// Inner Carousel Component (for products within each category)
 const InnerCarousel = ({ products, category }: { products: Product[], category: string }) => {
-
     const [emblaRef, emblaApi] = useEmblaCarousel({
         loop: true,
         slidesToScroll: 1,
-        containScroll: 'trimSnaps',
         breakpoints: {
-            '(min-width: 768px)': { slidesToScroll: 2 }
-        }
+            '(min-width: 768px)': { slidesToScroll: 2 },
+            '(max-width: 767px)': { slidesToScroll: 1 }
+        },
+        containScroll: 'trimSnaps'
     });
 
     const [prevBtnEnabled, setPrevBtnEnabled] = useState(false);
@@ -174,9 +93,10 @@ const InnerCarousel = ({ products, category }: { products: Product[], category: 
         <div className="border border-gray-300 rounded-lg p-4 bg-white min-h-96 relative">
             <h2 className="text-lg font-bold text-center mb-4 uppercase">{category}</h2>
             <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex ">
+                <div className="flex">
                     {products.map((product: Product) => (
-                        <div key={product.id} className="flex-none w-full md:w-1/2 px-2">
+                        <div key={product.id} 
+                             className="flex-none w-full md:w-1/2 px-2">
                             <ProductCard product={product} />
                         </div>
                     ))}
@@ -208,10 +128,15 @@ const InnerCarousel = ({ products, category }: { products: Product[], category: 
 };
 
 // Main Carousel Component
-const MainCarousel = () => {
+const MainCarousel = ({ categories }: { categories: CategoryData[] }) => {
     const [emblaRef, emblaApi] = useEmblaCarousel({
         align: 'start',
         slidesToScroll: 1,
+        breakpoints: {
+            '(min-width: 1024px)': { slidesToScroll: 3 },
+            '(min-width: 768px)': { slidesToScroll: 2 },
+            '(max-width: 767px)': { slidesToScroll: 1 }
+        },
         containScroll: 'trimSnaps'
     }, [Autoplay()]);
 
@@ -245,10 +170,11 @@ const MainCarousel = () => {
             <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex">
                     {categories.map((category) => (
-                        <div key={category} className="flex-none w-full md:w-1/3 px-2">
+                        <div key={category.name} 
+                             className="flex-none w-full md:w-1/2 lg:w-1/3 px-2">
                             <InnerCarousel
-                                products={groupedProducts[category]}
-                                category={category}
+                                products={category.products}
+                                category={category.name.toUpperCase()}
                             />
                         </div>
                     ))}
@@ -273,7 +199,25 @@ const MainCarousel = () => {
 };
 
 export default function Software() {
+    const [categories, setCategories] = useState<CategoryData[]>([]);
+    const [loading, setLoading] = useState(true);
     const [showMore, setShowMore] = useState(false);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const data = await getCategoriesProducts();
+                setCategories(data.data);
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                setLoading(false);
+            }
+        };
+
+        fetchProducts();
+    }, []);
+
     const toggleShowMore = () => {
         setShowMore(!showMore);
     };
@@ -312,7 +256,11 @@ export default function Software() {
                 <div className="text-center mb-6">
                     <h2 className="text-2xl font-bold uppercase mb-5">JETZT NEU IM SHOE FINDER FEETFIRST</h2>
                 </div>
-                <MainCarousel />
+                {loading ? (
+                    <div className="text-center">Loading...</div>
+                ) : (
+                    <MainCarousel categories={categories} />
+                )}
             </div>
 
             {/* contact form */}

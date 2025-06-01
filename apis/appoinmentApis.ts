@@ -51,3 +51,33 @@ export const deleteAppointment = async (appointmentId: string) => {
     }
 };
 
+
+// get single appointment
+export const getSingleAppointment = async (appointmentId: string) => {
+    try {
+        const response = await axiosClient.get(`/appointment/${appointmentId}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+// update appointment
+export const updateAppointment = async (appointmentId: string, appointmentData: {
+    customer_name: string;
+    time: string;
+    date: string;
+    reason: string;
+    assignedTo: string;
+    details: string;
+    isClient: boolean;
+}) => {
+    try {
+        const response = await axiosClient.put(`/appointment/${appointmentId}`, appointmentData);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+

@@ -1,5 +1,5 @@
 'use client'
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import dashboard from '@/public/images/dashboard/dashbord.png'
 import users from '@/public/images/dashboard/user.png'
@@ -8,64 +8,25 @@ import settings from '@/public/images/dashboard/settings.png'
 import home from '@/public/images/dashboard/home.png'
 import Image from 'next/image';
 import Link from 'next/link'
+import { format, setDefaultOptions } from 'date-fns';
+import { getMyAppointments, getSingleAppointment } from '@/apis/appoinmentApis';
+import { de } from 'date-fns/locale';
+import { X } from 'lucide-react';
 
-// Add type definition
-type Appointment = {
-    time?: string;
-    title: string;
-    userType?: 'user' | 'other';
+interface AppointmentDetail {
+    id: string;
+    customer_name: string;
+    time: string;
+    date: string;
+    reason: string;
+    assignedTo: string;
+    details: string;
+    isClient: boolean;
+    user: {
+        name: string;
+        email: string;
+    };
 }
-
-// Weekly calendar data
-const weeklyCalendar: { day: string; appointments: Appointment[] }[] = [
-    {
-        day: 'Montag',
-        appointments: [
-            { time: '13:30', title: 'MEETING HERR MÜLLER', userType: 'other' },
-            { time: '13:30', title: 'FUSSANALYSE HERR BAUER', userType: 'user' },
-            { title: 'DRINGEND EINLAGE VERSENDEN', userType: 'user' },
-
-        ]
-    },
-    {
-        day: 'Dienstag',
-        appointments: [
-            { time: '13:30', title: 'MEETING HERR MÜLLER', userType: 'other' },
-            { time: '15:20', title: 'LAUFANALYSE HERR HARTMANN', userType: 'user' }
-        ]
-    },
-    {
-        day: 'Mittwoch',
-        appointments: [
-            { time: '13:30', title: 'MEETING HERR MÜLLER', userType: 'other' },
-            { time: '15:20', title: 'LAUFANALYSE HERR HARTMANN', userType: 'user' }
-        ]
-    },
-    {
-        day: 'Donnerstag',
-        appointments: [
-            { time: '13:30', title: 'MEETING HERR MUSTERMANN', userType: 'other' }
-        ]
-    },
-    {
-        day: 'Freitag',
-        appointments: [
-            { time: '13:30', title: 'MEETING HERR MUSTERMANN', userType: 'other' }
-        ]
-    },
-    {
-        day: 'Samstag',
-        appointments: [
-            { time: '13:30', title: 'MEETING HERR MUSTERMANN', userType: 'other' }
-        ]
-    },
-    {
-        day: 'Sonntag',
-        appointments: [
-            { time: '13:30', title: 'MEETING HERR MUSTERMANN', userType: 'other' }
-        ]
-    }
-]
 
 export default function Dashboard() {
     const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -76,6 +37,63 @@ export default function Dashboard() {
             '(min-width: 1024px)': { slidesToScroll: 4 }
         }
     })
+    setDefaultOptions({ locale: de });
+    const [appointments, setAppointments] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetail | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDetailLoading, setIsDetailLoading] = useState(false);
+
+    useEffect(() => {
+        fetchAppointments();
+    }, []);
+
+    const fetchAppointments = async () => {
+        try {
+            setIsLoading(true);
+            const response = await getMyAppointments({
+                page: 1,
+                limit: 100
+            });
+
+            if (response?.data) {
+                const groupedByDay = response.data.reduce((acc: any, apt: any) => {
+                    const dayName = format(new Date(apt.date), 'EEEE');
+
+                    if (!acc[dayName]) {
+                        acc[dayName] = {
+                            day: dayName,
+                            appointments: []
+                        };
+                    }
+
+                    acc[dayName].appointments.push({
+                        id: apt.id,
+                        time: apt.time,
+                        title: apt.customer_name.toUpperCase(),
+                        reason: apt.reason,
+                        assignedTo: apt.assignedTo,
+                        details: apt.details,
+                        userType: apt.isClient ? 'user' : 'other'
+                    });
+
+                    return acc;
+                }, {});
+
+                const daysOfWeek = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+                const finalAppointments = daysOfWeek.map(day => ({
+                    day: day,
+                    appointments: (groupedByDay[day]?.appointments || [])
+                }));
+
+                setAppointments(finalAppointments);
+            }
+        } catch (error) {
+            console.error('Failed to load appointments:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const scrollPrev = React.useCallback(() => {
         if (emblaApi) emblaApi.scrollPrev()
@@ -85,37 +103,58 @@ export default function Dashboard() {
         if (emblaApi) emblaApi.scrollNext()
     }, [emblaApi])
 
+    const handleAppointmentClick = async (appointmentId: string) => {
+        try {
+            setIsDetailLoading(true);
+            setIsModalOpen(true);
+            const response = await getSingleAppointment(appointmentId);
+            if (response?.success) {
+                setSelectedAppointment(response.appointment);
+            }
+        } catch (error) {
+            console.error('Failed to fetch appointment details:', error);
+        } finally {
+            setIsDetailLoading(false);
+        }
+    };
+
     return (
         <div className='p-4'>
             <div className='flex flex-col gap-3 mb-6'>
                 <h1 className='text-3xl font-bold'>WELCOME BACK ORTHOPÄDIE PUTZER</h1>
-                <p className='text-lg text-gray-500'>Dienstag, 18. Februar 2025</p>
+                <p className='text-lg text-gray-500'>{format(new Date(), 'EEEE, d. MMMM yyyy')}</p>
             </div>
 
             <div className="relative">
                 <div className="overflow-hidden" ref={emblaRef}>
                     <div className="flex">
-                        {weeklyCalendar.map((day, index) => (
-                            <div key={index} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_50%] lg:flex-[0_0_25%] p-2">
-                                <div className="border rounded-[20px] p-4 h-[400px] flex flex-col">
-                                    <h2 className="text-xl font-semibold mb-4 bg-gray-100 p-2 rounded">{day.day}</h2>
-                                    <div className="space-y-3 overflow-y-auto flex-1">
-                                        {day.appointments.map((apt, aptIndex) => (
-                                            <div
-                                                key={aptIndex}
-                                                className={`p-2 rounded ${apt.userType === 'user'
-                                                    ? 'bg-black text-white'
-                                                    : 'bg-[#62A07B] text-white'
+                        {isLoading ? (
+                            <div className="w-full flex justify-center items-center p-10">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#62A07C]"></div>
+                            </div>
+                        ) : (
+                            appointments.map((day, index) => (
+                                <div key={index} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_50%] lg:flex-[0_0_25%] p-2">
+                                    <div className="border rounded-[20px] p-4 h-[400px] flex flex-col">
+                                        <h2 className="text-xl font-semibold mb-4 bg-gray-100 p-2 rounded">{day.day}</h2>
+                                        <div className="space-y-3 overflow-y-auto flex-1">
+                                            {day.appointments.map((apt: any, aptIndex: number) => (
+                                                <div
+                                                    key={aptIndex}
+                                                    onClick={() => handleAppointmentClick(apt.id)}
+                                                    className={`p-3 rounded cursor-pointer transition-all duration-300 hover:opacity-90 ${
+                                                        apt.userType === 'user' ? 'bg-black text-white' : 'bg-[#62A07B] text-white'
                                                     }`}
-                                            >
-                                                {apt.time && <span className="font-medium">{apt.time}</span>}
-                                                <p className="font-medium">{apt.title}</p>
-                                            </div>
-                                        ))}
+                                                >
+                                                    {apt.time && <div className="text-xs opacity-90 mb-1 uppercase">{apt.time}</div>}
+                                                    <div className="font-semibold">{apt.title}</div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))
+                        )}
                     </div>
                 </div>
 
@@ -137,6 +176,62 @@ export default function Dashboard() {
                     </svg>
                 </button>
             </div>
+
+            {/* Appointment Detail Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg w-full max-w-md">
+                        <div className="p-6 space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h3 className="text-xl font-semibold">Termin Details</h3>
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="text-gray-500 hover:text-gray-700 cursor-pointer"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {isDetailLoading ? (
+                                <div className="flex justify-center py-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#62A07C]"></div>
+                                </div>
+                            ) : selectedAppointment ? (
+                                <div className="space-y-4">
+                                    <div className="bg-gray-50 p-4 rounded-lg">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <p className="text-sm text-gray-500">Kunde</p>
+                                                <p className="font-medium">{selectedAppointment.customer_name}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Datum & Zeit</p>
+                                                <p className="font-medium">
+                                                    {format(new Date(selectedAppointment.date), 'dd.MM.yyyy')} {selectedAppointment.time}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Grund</p>
+                                                <p className="font-medium">{selectedAppointment.reason}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Zugewiesen an</p>
+                                                <p className="font-medium">{selectedAppointment.assignedTo}</p>
+                                            </div>
+                                            <div className="col-span-2">
+                                                <p className="text-sm text-gray-500">Details</p>
+                                                <p className="font-medium">{selectedAppointment.details}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <p className="text-center text-gray-500">Keine Details verfügbar</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Navigation Links */}
             <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 items-center  w-full mt-10'>

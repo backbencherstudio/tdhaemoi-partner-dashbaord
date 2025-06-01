@@ -3,23 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import AppoinmentData from '@/components/AppoinmentData/AppoinmentData';
 import { useForm } from "react-hook-form"
-import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
-import { Calendar as CalendarIcon } from "lucide-react"
-import { Calendar } from "@/components/ui/calendar"
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
-import { cn } from "@/lib/utils"
 import { format } from "date-fns"
-import { createAppoinment, deleteAppointment, getMyAppointments } from '@/apis/appoinmentApis';
+import { createAppoinment, deleteAppointment, getMyAppointments, getSingleAppointment, updateAppointment } from '@/apis/appoinmentApis';
 import toast from "react-hot-toast";
+import AppointmentModal from '@/components/AppointmentModal/AppointmentModal';
 
 interface Event {
     id: number;
@@ -54,6 +41,9 @@ const WeeklyCalendar = () => {
     });
     const [showFullSubtitle, setShowFullSubtitle] = useState<number | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isEditLoading, setIsEditLoading] = useState(false);
 
     const form = useForm<{
         kunde: string;
@@ -64,6 +54,18 @@ const WeeklyCalendar = () => {
         mitarbeiter: string;
         isClientEvent: boolean;
     }>({
+        defaultValues: {
+            kunde: '',
+            uhrzeit: '',
+            selectedEventDate: '',
+            termin: '',
+            bemerk: '',
+            mitarbeiter: '',
+            isClientEvent: false
+        }
+    });
+
+    const editForm = useForm({
         defaultValues: {
             kunde: '',
             uhrzeit: '',
@@ -126,13 +128,19 @@ const WeeklyCalendar = () => {
     };
 
     const getWeekStart = (date: Date) => {
+        const today = getTodayDate();
         const d = new Date(date);
+        if (d < today) {
+            d.setDate(today.getDate());
+            d.setMonth(today.getMonth());
+            d.setFullYear(today.getFullYear());
+        }
         const day = d.getDay();
         const diff = d.getDate() - day;
-        return new Date(d.setDate(diff));
+        const weekStart = new Date(d.setDate(diff));
+        return weekStart < today ? today : weekStart;
     };
 
-    // Get week dates
     const getWeekDates = () => {
         const weekStart = getWeekStart(currentDate);
         const dates = [];
@@ -233,7 +241,21 @@ const WeeklyCalendar = () => {
         setMiniCalendarDate(date);
     };
 
+    // Helper function to handle date and time conversion
+    const createDateTimeWithOffset = (dateStr: string, timeStr: string) => {
+        const [hours, minutes] = timeStr.split(':');
+        const selectedDate = new Date(dateStr);
+        const dateTime = new Date();
+        dateTime.setFullYear(selectedDate.getFullYear());
+        dateTime.setMonth(selectedDate.getMonth());
+        dateTime.setDate(selectedDate.getDate());
+        dateTime.setHours(parseInt(hours) + 2);
+        dateTime.setMinutes(parseInt(minutes));
+        dateTime.setSeconds(0);
+        dateTime.setMilliseconds(0);
 
+        return dateTime;
+    };
 
     const onSubmit = async (data: {
         kunde: string;
@@ -252,6 +274,7 @@ const WeeklyCalendar = () => {
                 return;
             }
 
+            // Format time for display
             const timeDate = new Date(`2000-01-01T${data.uhrzeit}`);
             const formattedTime = timeDate.toLocaleTimeString('en-US', {
                 hour: '2-digit',
@@ -259,9 +282,8 @@ const WeeklyCalendar = () => {
                 hour12: true
             }).toLowerCase();
 
-            const [hours, minutes] = data.uhrzeit.split(':');
-            const dateTime = new Date(data.selectedEventDate);
-            dateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            // Create correct datetime
+            const dateTime = createDateTimeWithOffset(data.selectedEventDate, data.uhrzeit);
 
             const appointmentData = {
                 customer_name: data.kunde,
@@ -343,6 +365,79 @@ const WeeklyCalendar = () => {
 
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
+
+    const handleAppointmentClick = async (appointmentId: number) => {
+        try {
+            setIsEditLoading(true);
+            const response = await getSingleAppointment(appointmentId.toString());
+            if (response?.success) {
+                const apt = response.appointment;
+                setSelectedAppointment(apt);
+
+                // Format date and time for form
+                const date = new Date(apt.date);
+                const formattedDate = format(date, 'yyyy-MM-dd');
+                const formattedTime = apt.time.split(' ')[0];
+
+                editForm.reset({
+                    kunde: apt.customer_name,
+                    uhrzeit: formattedTime,
+                    selectedEventDate: formattedDate,
+                    termin: apt.reason,
+                    bemerk: apt.details,
+                    mitarbeiter: apt.assignedTo,
+                    isClientEvent: apt.isClient
+                });
+
+                setIsEditModalOpen(true);
+            }
+        } catch (error) {
+            toast.error('Failed to load appointment details');
+        } finally {
+            setIsEditLoading(false);
+        }
+    };
+
+    const onUpdateSubmit = async (data: any) => {
+        if (!selectedAppointment?.id) return;
+
+        const loadingToastId = toast.loading('Updating appointment...');
+        try {
+            // Format time for display
+            const timeDate = new Date(`2000-01-01T${data.uhrzeit}`);
+            const formattedTime = timeDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }).toLowerCase();
+
+            // Create correct datetime
+            const dateTime = createDateTimeWithOffset(data.selectedEventDate, data.uhrzeit);
+
+            const appointmentData = {
+                customer_name: data.kunde,
+                time: formattedTime,
+                date: dateTime.toISOString(),
+                reason: data.termin,
+                assignedTo: data.mitarbeiter || '',
+                details: data.bemerk || '',
+                isClient: data.isClientEvent
+            };
+
+            const response = await updateAppointment(selectedAppointment.id.toString(), appointmentData);
+
+            if (response.success) {
+                await fetchAppointments();
+                setIsEditModalOpen(false);
+                setRefreshKey(prev => prev + 1);
+                toast.dismiss(loadingToastId);
+                toast.success('Appointment updated successfully');
+            }
+        } catch (error: any) {
+            toast.dismiss(loadingToastId);
+            toast.error(error.message || 'Failed to update appointment');
+        }
+    };
 
     return (
         <div className=" bg-white">
@@ -521,7 +616,11 @@ const WeeklyCalendar = () => {
                                             ) : (
                                                 <>
                                                     {dayEvents.map((event: Event) => (
-                                                        <div key={event.id} className="relative group ">
+                                                        <div
+                                                            key={event.id}
+                                                            className="relative group"
+                                                            onClick={() => handleAppointmentClick(event.id)}
+                                                        >
                                                             <div className={`p-3 rounded-lg text-sm font-medium border-l-4 cursor-pointer ${event.type === 'user'
                                                                 ? 'bg-gray-900 text-white border-gray-700'
                                                                 : 'bg-[#62A07C] text-white border-green-700'
@@ -617,188 +716,27 @@ const WeeklyCalendar = () => {
             </div>
 
             {/* Add Event Modal */}
-            {showAddForm && (
-                <div className="fixed inset-0 bg-black/80 bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-lg w-full max-w-md max-h-screen overflow-y-auto">
-                        <div className="sticky top-0 bg-white border-b border-gray-200 p-4 sm:p-6">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-semibold">Neuer Termin</h3>
-                                <button
-                                    onClick={() => {
-                                        setShowAddForm(false);
-                                        form.reset();
-                                    }}
-                                    className="text-gray-500 hover:text-gray-700 cursor-pointer"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
+            <AppointmentModal
+                isOpen={showAddForm}
+                onClose={() => {
+                    setShowAddForm(false);
+                    form.reset();
+                }}
+                form={form}
+                onSubmit={onSubmit}
+                title="Neuer Termin"
+                buttonText="Termin bestätigen"
+            />
 
-                        <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 sm:p-6 space-y-4">
-                                <FormField
-                                    control={form.control}
-                                    name="isClientEvent"
-                                    render={({ field }) => (
-                                        <FormItem className="flex items-center justify-between">
-                                            <FormLabel>Kundentyp</FormLabel>
-                                            <FormControl>
-                                                <Switch
-                                                    checked={field.value}
-                                                    onCheckedChange={(checked) => {
-                                                        field.onChange(checked);
-                                                        console.log('Switch value changed to:', checked);
-                                                    }}
-                                                    className="data-[state=checked]:bg-[#61A07B] cursor-pointer"
-                                                />
-                                            </FormControl>
-                                            <span className="text-sm text-gray-500">
-                                                {field.value ? 'Kunde' : 'Andere'}
-                                            </span>
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="kunde"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Kunde<span className="text-red-500">*</span></FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Kunde" {...field} />
-                                            </FormControl>
-                                            {form.formState.errors.kunde && (
-                                                <p className="text-red-500 text-sm mt-1">
-                                                    {form.formState.errors.kunde.message}
-                                                </p>
-                                            )}
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="uhrzeit"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Uhrzeit</FormLabel>
-                                                <FormControl>
-                                                    <Input type="time" {...field} />
-                                                </FormControl>
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="selectedEventDate"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-col">
-                                                <FormLabel>Datum</FormLabel>
-                                                <Popover>
-                                                    <PopoverTrigger asChild>
-                                                        <FormControl>
-                                                            <Button
-                                                                variant={"outline"}
-                                                                className={cn(
-                                                                    "w-full pl-3 text-left font-normal",
-                                                                    !field.value && "text-muted-foreground"
-                                                                )}
-                                                            >
-                                                                {field.value ? (
-                                                                    format(new Date(field.value), "PPP")
-                                                                ) : (
-                                                                    <span>Datum wählen</span>
-                                                                )}
-                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                                            </Button>
-                                                        </FormControl>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="w-auto p-0" align="start">
-                                                        <Calendar
-                                                            mode="single"
-                                                            selected={field.value ? new Date(field.value) : undefined}
-                                                            onSelect={field.onChange}
-                                                            disabled={(date) =>
-                                                                date < new Date(new Date().setHours(0, 0, 0, 0))
-                                                            }
-                                                            initialFocus
-                                                        />
-                                                    </PopoverContent>
-                                                </Popover>
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                <FormField
-                                    control={form.control}
-                                    name="termin"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Grund</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Kundentermin wählen" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="meeting">Meeting</SelectItem>
-                                                    <SelectItem value="analyse">Analyse</SelectItem>
-                                                    <SelectItem value="consultation">consultation</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="mitarbeiter"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Mitarbeiter</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Mitarbeiter" {...field} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="bemerk"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Betreff</FormLabel>
-                                            <FormControl>
-                                                <Textarea
-                                                    placeholder="Betreff"
-                                                    className="resize-none h-24"
-                                                    {...field}
-                                                />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <div className="flex justify-center">
-                                    <Button
-                                        type="submit"
-                                        className="bg-[#61A07B] hover:bg-[#528c68] text-white rounded-3xl"
-                                    >
-                                        Termin bestätigen
-                                    </Button>
-                                </div>
-                            </form>
-                        </Form>
-                    </div>
-                </div>
-            )}
+            {/* Edit Event Modal */}
+            <AppointmentModal
+                isOpen={isEditModalOpen}
+                onClose={() => setIsEditModalOpen(false)}
+                form={editForm}
+                onSubmit={onUpdateSubmit}
+                title="Termin bearbeiten"
+                buttonText="Aktualisieren"
+            />
 
             {/* Delete Confirmation Modal */}
             {deleteConfirmation.show && (

@@ -1,48 +1,70 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Plus, X, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import AppoinmentData from '@/components/AppoinmentData/AppoinmentData';
+import { useForm } from "react-hook-form"
+import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Calendar as CalendarIcon } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { createAppoinment, deleteAppointment, getMyAppointments } from '@/apis/appoinmentApis';
+import toast from "react-hot-toast";
+
+interface Event {
+    id: number;
+    date: string;
+    time: string;
+    title: string;
+    subtitle: string;
+    type: string;
+}
 
 const WeeklyCalendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [miniCalendarDate, setMiniCalendarDate] = useState(new Date());
     const [showYearMonthPicker, setShowYearMonthPicker] = useState(false);
-    const [events, setEvents] = useState([
-        {
-            id: 1,
-            date: '2025-05-22',
-            time: '9:30',
-            title: 'MEETING HERR MÜLLER',
-            subtitle: 'ABFLUGTERMIN HERR BAUER',
-            type: 'user'
-        },
-        {
-            id: 2,
-            date: '2025-05-18',
-            title: 'STERNENSTUNDE',
-            type: 'user'
-        },
-        {
-            id: 3,
-            date: '2025-05-19',
-            time: '7:40',
-            title: 'FUSSANALYSE HERR MUSTERMANN',
-            subtitle: 'LAUFANALYSE FRAU MEYER',
-            type: 'others'
-        }
-    ]);
-
+    const [events, setEvents] = useState([]);
     const [showAddForm, setShowAddForm] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [showDatePicker, setShowDatePicker] = useState(false);
-    const [datePickerDate, setDatePickerDate] = useState(new Date());
-    const [newEvent, setNewEvent] = useState({
-        kunde: '',
-        uhrzeit: '',
-        selectedEventDate: '',
-        termin: '',
-        bemerk: '',
-        mitarbeiter: ''
+    const [isLoading, setIsLoading] = useState(true);
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{
+        show: boolean;
+        appointmentId: number | null;
+    }>({
+        show: false,
+        appointmentId: null
+    });
+
+    const form = useForm<{
+        kunde: string;
+        uhrzeit: string;
+        selectedEventDate: string;
+        termin: string;
+        bemerk: string;
+        mitarbeiter: string;
+        isClientEvent: boolean;
+    }>({
+        defaultValues: {
+            kunde: '',
+            uhrzeit: '',
+            selectedEventDate: '',
+            termin: '',
+            bemerk: '',
+            mitarbeiter: '',
+            isClientEvent: false
+        }
     });
 
     useEffect(() => {
@@ -57,6 +79,37 @@ const WeeklyCalendar = () => {
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    useEffect(() => {
+        fetchAppointments();
+    }, []);
+
+    const fetchAppointments = async () => {
+        try {
+            setIsLoading(true);
+            const response = await getMyAppointments({
+                page: 1,
+                limit: 100
+            });
+            const appointments = response?.data || [];
+
+            if (appointments.length > 0) {
+                const formattedEvents = appointments.map((apt: any) => ({
+                    id: apt.id,
+                    date: new Date(apt.date).toISOString().split('T')[0],
+                    time: apt.time,
+                    title: apt.customer_name.toUpperCase(),
+                    subtitle: apt.details?.toUpperCase(),
+                    type: apt.isClient ? 'user' : 'others'
+                }));
+                setEvents(formattedEvents);
+            }
+        } catch (error) {
+            toast.error('Failed to load appointments');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const getTodayDate = () => {
         const today = new Date();
@@ -98,12 +151,6 @@ const WeeklyCalendar = () => {
         setCurrentDate(newDate);
     };
 
-    // Navigate date picker month
-    const navigateDatePickerMonth = (direction: number) => {
-        const newDate = new Date(datePickerDate);
-        newDate.setMonth(datePickerDate.getMonth() + direction);
-        setDatePickerDate(newDate);
-    };
 
     //  mini calendar
     const generateMiniCalendar = () => {
@@ -122,24 +169,6 @@ const WeeklyCalendar = () => {
         return days;
     };
 
-    // Generate date picker calendar
-    const generateDatePickerCalendar = () => {
-        const year = datePickerDate.getFullYear();
-        const month = datePickerDate.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const startDate = new Date(firstDay);
-        startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-        const days = [];
-        for (let i = 0; i < 42; i++) {
-            const date = new Date(startDate);
-            date.setDate(startDate.getDate() + i);
-            days.push(date);
-        }
-        return days;
-    };
-
-    // Handle year/month change
     const handleYearMonthChange = (year: number, month: number) => {
         const newDate = new Date(year, month, 1);
         setMiniCalendarDate(newDate);
@@ -149,7 +178,6 @@ const WeeklyCalendar = () => {
 
     const weekDates = getWeekDates();
     const miniCalendarDays = generateMiniCalendar();
-    const datePickerDays = generateDatePickerCalendar();
     const today = getTodayDate();
 
     const monthNames = [
@@ -166,12 +194,6 @@ const WeeklyCalendar = () => {
         return `${year}-${month}-${day}`;
     };
 
-    const formatDateDisplay = (date: Date) => {
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}.${month}.${year}`;
-    };
 
     const isSameDay = (date1: Date, date2: Date) => {
         return date1.getFullYear() === date2.getFullYear() &&
@@ -181,16 +203,20 @@ const WeeklyCalendar = () => {
 
     const getEventsForDate = (date: Date) => {
         const dateStr = formatDate(date);
-        return events.filter(event => event.date === dateStr);
+        return events.filter((event: Event) => {
+            const eventDate = new Date(event.date);
+            const eventDateStr = formatDate(eventDate);
+            return eventDateStr === dateStr;
+        });
     };
 
     const handleDateClick = (date: Date) => {
+        form.reset();
+
         if (isMobile) {
             setShowDatePicker(true);
-        } else {
-            setCurrentDate(date);
         }
-        setNewEvent({ ...newEvent, selectedEventDate: formatDate(date) });
+        form.setValue('selectedEventDate', formatDate(date));
         setShowAddForm(true);
     };
 
@@ -199,45 +225,120 @@ const WeeklyCalendar = () => {
         setMiniCalendarDate(date);
     };
 
-    const handleDatePickerSelect = (date: Date) => {
-        const selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const formattedDate = formatDate(selectedDate);
-        setNewEvent({ ...newEvent, selectedEventDate: formattedDate });
-        setShowDatePicker(false);
-    };
 
-    const handleAddEvent = () => {
-        if (newEvent.kunde && newEvent.selectedEventDate) {
-            const event = {
-                id: Date.now(),
-                date: newEvent.selectedEventDate,
-                time: newEvent.uhrzeit,
-                title: newEvent.kunde.toUpperCase(),
-                subtitle: newEvent.bemerk.toUpperCase(),
-                type: 'custom'
+
+    const onSubmit = async (data: {
+        kunde: string;
+        uhrzeit: string;
+        selectedEventDate: string;
+        termin: string;
+        bemerk: string;
+        mitarbeiter: string;
+        isClientEvent: boolean;
+    }) => {
+        const loadingToastId = toast.loading('Creating appointment...');
+        try {
+            if (!data.kunde || !data.uhrzeit || !data.selectedEventDate || !data.termin) {
+                toast.dismiss(loadingToastId);
+                toast.error('Please fill in all required fields');
+                return;
+            }
+
+            const timeDate = new Date(`2000-01-01T${data.uhrzeit}`);
+            const formattedTime = timeDate.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            }).toLowerCase();
+
+            const [hours, minutes] = data.uhrzeit.split(':');
+            const dateTime = new Date(data.selectedEventDate);
+            dateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+            const appointmentData = {
+                customer_name: data.kunde,
+                time: formattedTime,
+                date: dateTime.toISOString(),
+                reason: data.termin,
+                assignedTo: data.mitarbeiter || '',
+                details: data.bemerk || '',
+                isClient: Boolean(data.isClientEvent),
+                userId: "user-uuid-1"
             };
-            setEvents([...events, event]);
-            setNewEvent({ kunde: '', uhrzeit: '', selectedEventDate: '', termin: '', bemerk: '', mitarbeiter: '' });
-            setShowAddForm(false);
+
+            const response = await createAppoinment(appointmentData);
+
+            if (response.success) {
+                const updatedResponse = await getMyAppointments({
+                    page: 1,
+                    limit: 100
+                });
+
+                if (updatedResponse.data) {
+                    const formattedEvents = updatedResponse.data.map((apt: any) => ({
+                        id: apt.id,
+                        date: new Date(apt.date).toISOString().split('T')[0],
+                        time: apt.time,
+                        title: apt.customer_name.toUpperCase(),
+                        subtitle: apt.details?.toUpperCase(),
+                        type: apt.isClient ? 'user' : 'others'
+                    }));
+                    setEvents(formattedEvents);
+                }
+
+                form.reset();
+                setShowAddForm(false);
+                toast.dismiss(loadingToastId);
+                toast.success('Appointment created successfully', {
+                    duration: 3000,
+                });
+            } else {
+                toast.dismiss(loadingToastId);
+                toast.error(response.message || 'Failed to create appointment');
+            }
+        } catch (error: any) {
+            toast.dismiss(loadingToastId);
+            const errorMessage = error.response?.data?.message || 'Failed to create appointment';
+            toast.error(errorMessage);
         }
     };
 
-    const handleDeleteEvent = (eventId: number) => {
-        setEvents(events.filter(event => event.id !== eventId));
-    };
 
+    const deleteAppointments = async (appointmentId: string) => {
+        try {
+            const response = await deleteAppointment(appointmentId);
+            const updatedResponse = await getMyAppointments({
+                page: 1,
+                limit: 100
+            });
+
+            if (updatedResponse.data) {
+                const formattedEvents = updatedResponse.data.map((apt: any) => ({
+                    id: apt.id,
+                    date: new Date(apt.date).toISOString().split('T')[0],
+                    time: apt.time,
+                    title: apt.customer_name.toUpperCase(),
+                    subtitle: apt.details?.toUpperCase(),
+                    type: apt.isClient ? 'user' : 'others'
+                }));
+                setEvents(formattedEvents);
+            }
+
+            setDeleteConfirmation({ show: false, appointmentId: null });
+            toast.success(response.message || 'Appointment deleted successfully');
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to delete appointment');
+        }
+    };
 
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
 
     return (
         <div className=" bg-white">
-
             <div className='p-4 sm:p-6'>
                 <AppoinmentData />
             </div>
-
-
 
             {/* Header */}
             <div className=" bg-white border-b border-gray-200 z-40">
@@ -403,43 +504,58 @@ const WeeklyCalendar = () => {
 
                                         {/* Events List */}
                                         <div className="space-y-3">
-                                            {dayEvents.map((event) => (
-                                                <div key={event.id} className="relative group">
-                                                    <div className={`p-3 rounded-lg text-sm font-medium border-l-4 ${event.type === 'others' ? 'bg-gray-900 text-white border-blue-500' :
-                                                        event.type === 'user' ? 'bg-[#62A07C] text-white border-green-700' :
-                                                            event.type === 'others' ? 'bg-gray-900 text-white border-purple-500' :
-                                                                'bg-gray-800 text-white border-gray-600'
-                                                        }`}>
-                                                        <div className="flex justify-between items-start">
-                                                            <div className="flex-1">
-                                                                {event.time && (
-                                                                    <div className="text-xs opacity-90 mb-1">{event.time}</div>
-                                                                )}
-                                                                <div className="font-semibold">{event.title}</div>
-                                                                {event.subtitle && (
-                                                                    <div className="text-xs opacity-90 mt-1">{event.subtitle}</div>
-                                                                )}
-                                                            </div>
-                                                            <button
-                                                                onClick={() => handleDeleteEvent(event.id)}
-                                                                className="opacity-0 cursor-pointer group-hover:opacity-100 text-white hover:bg-red-500 rounded-full p-1 ml-2"
-                                                            >
-                                                                <X className="w-3 h-3" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                                            {isLoading ? (
+                                                <div className="flex justify-center items-center py-4">
+                                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#62A07C]"></div>
                                                 </div>
-                                            ))}
+                                            ) : (
+                                                <>
+                                                    {dayEvents.map((event: Event) => (
+                                                        <div key={event.id} className="relative group">
+                                                            <div className={`p-3 rounded-lg text-sm font-medium border-l-4 ${event.type === 'user'
+                                                                ? 'bg-[#62A07C] text-white border-green-700'
+                                                                : 'bg-gray-900 text-white border-gray-700'
+                                                                }`}>
+                                                                <div className="flex justify-between items-start">
+                                                                    <div className="flex-1">
+                                                                        {event.time && (
+                                                                            <div className="text-xs opacity-90 mb-1">{event.time}</div>
+                                                                        )}
+                                                                        <div className="font-semibold">{event.title}</div>
+                                                                        {event.subtitle && (
+                                                                            <div className="text-xs opacity-90 mt-1">{event.subtitle}</div>
+                                                                        )}
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.stopPropagation();
+                                                                            setDeleteConfirmation({
+                                                                                show: true,
+                                                                                appointmentId: event.id
+                                                                            });
+                                                                        }}
+                                                                        className="opacity-0 cursor-pointer group-hover:opacity-100 text-white hover:bg-red-500 rounded-full p-1 ml-2"
+                                                                    >
+                                                                        <X className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </>
+                                            )}
 
-                                            {/* Add Event Button */}
                                             <button
-                                                onClick={() => handleDateClick(date)}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    handleDateClick(date);
+                                                }}
                                                 className="w-full cursor-pointer p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-gray-400 hover:text-gray-600 hover:bg-gray-50 text-sm transition-colors"
                                             >
                                                 + Termin hinzufügen
                                             </button>
-
-                                            {/* Decorative lines for empty space */}
                                             {dayEvents.length === 0 && (
                                                 <div className="space-y-2 py-4">
                                                     {[...Array(6)].map((_, i) => (
@@ -464,7 +580,10 @@ const WeeklyCalendar = () => {
                             <div className="flex justify-between items-center">
                                 <h3 className="text-lg font-semibold">Neuer Termin</h3>
                                 <button
-                                    onClick={() => setShowAddForm(false)}
+                                    onClick={() => {
+                                        setShowAddForm(false);
+                                        form.reset();
+                                    }}
                                     className="text-gray-500 hover:text-gray-700 cursor-pointer"
                                 >
                                     <X className="w-5 h-5" />
@@ -472,166 +591,191 @@ const WeeklyCalendar = () => {
                             </div>
                         </div>
 
-                        <div className="p-4 sm:p-6 space-y-4">
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="Kunde"
-                                    value={newEvent.kunde}
-                                    onChange={(e) => setNewEvent({ ...newEvent, kunde: e.target.value })}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="p-4 sm:p-6 space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="isClientEvent"
+                                    render={({ field }) => (
+                                        <FormItem className="flex items-center justify-between">
+                                            <FormLabel>Kundentyp</FormLabel>
+                                            <FormControl>
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={(checked) => {
+                                                        field.onChange(checked);
+                                                        console.log('Switch value changed to:', checked); 
+                                                    }}
+                                                    className="data-[state=checked]:bg-[#61A07B] cursor-pointer"
+                                                />
+                                            </FormControl>
+                                            <span className="text-sm text-gray-500">
+                                                {field.value ? 'Kunde' : 'Andere'}
+                                            </span>
+                                        </FormItem>
+                                    )}
                                 />
-                            </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="relative">
-                                    <input
-                                        type="time"
-                                        placeholder="Uhrzeit"
-                                        value={newEvent.uhrzeit}
-                                        onChange={(e) => setNewEvent({ ...newEvent, uhrzeit: e.target.value })}
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                <FormField
+                                    control={form.control}
+                                    name="kunde"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Kunde<span className="text-red-500">*</span></FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Kunde" {...field} />
+                                            </FormControl>
+                                            {form.formState.errors.kunde && (
+                                                <p className="text-red-500 text-sm mt-1">
+                                                    {form.formState.errors.kunde.message}
+                                                </p>
+                                            )}
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <FormField
+                                        control={form.control}
+                                        name="uhrzeit"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Uhrzeit</FormLabel>
+                                                <FormControl>
+                                                    <Input type="time" {...field} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <FormField
+                                        control={form.control}
+                                        name="selectedEventDate"
+                                        render={({ field }) => (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>Datum</FormLabel>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant={"outline"}
+                                                                className={cn(
+                                                                    "w-full pl-3 text-left font-normal",
+                                                                    !field.value && "text-muted-foreground"
+                                                                )}
+                                                            >
+                                                                {field.value ? (
+                                                                    format(new Date(field.value), "PPP")
+                                                                ) : (
+                                                                    <span>Datum wählen</span>
+                                                                )}
+                                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={field.value ? new Date(field.value) : undefined}
+                                                            onSelect={field.onChange}
+                                                            disabled={(date) =>
+                                                                date < new Date(new Date().setHours(0, 0, 0, 0))
+                                                            }
+                                                            initialFocus
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </FormItem>
+                                        )}
                                     />
                                 </div>
 
-                                {/* Date Picker */}
-                                <div className="relative">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowDatePicker(true)}
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between hover:bg-gray-50"
+                                <FormField
+                                    control={form.control}
+                                    name="termin"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Kundentermin</FormLabel>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Kundentermin wählen" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="meeting">Meeting</SelectItem>
+                                                    <SelectItem value="analyse">Analyse</SelectItem>
+                                                    <SelectItem value="consultation">consultation</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="mitarbeiter"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Mitarbeiter</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Mitarbeiter" {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="bemerk"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Betreff</FormLabel>
+                                            <FormControl>
+                                                <Textarea
+                                                    placeholder="Betreff"
+                                                    className="resize-none h-24"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <div className="flex justify-center">
+                                    <Button
+                                        type="submit"
+                                        className="bg-[#61A07B] hover:bg-[#528c68] text-white rounded-3xl"
                                     >
-                                        <span className={newEvent.selectedEventDate ? 'text-gray-900' : 'text-gray-500'}>
-                                            {newEvent.selectedEventDate ? formatDateDisplay(new Date(newEvent.selectedEventDate)) : 'Datum wählen'}
-                                        </span>
-                                        <Calendar className="w-4 h-4 text-gray-400" />
-                                    </button>
+                                        Termin bestätigen
+                                    </Button>
                                 </div>
-                            </div>
-
-                            <select
-                                value={newEvent.termin}
-                                onChange={(e) => setNewEvent({ ...newEvent, termin: e.target.value })}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value="">Kundentermin</option>
-                                <option value="meeting">Meeting</option>
-                                <option value="others">Analyse</option>
-                                <option value="consultation">Beratung</option>
-                            </select>
-
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="Mitarbeiter"
-                                    value={newEvent.mitarbeiter}
-                                    onChange={(e) => setNewEvent({ ...newEvent, mitarbeiter: e.target.value })}
-                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            <div className="relative">
-                                <textarea
-                                    placeholder="Betreff"
-                                    value={newEvent.bemerk}
-                                    onChange={(e) => setNewEvent({ ...newEvent, bemerk: e.target.value })}
-                                    className="w-full p-3 border border-gray-300 rounded-lg h-24 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            <div className='flex justify-center'>
-                                <button
-                                    onClick={handleAddEvent}
-                                    className="px-6 py-2 border bg-[#61A07B] text-white rounded-3xl text-sm cursor-pointer hover:bg-green-700 transform duration-300"
-                                >
-                                    Termin bestätigen
-                                </button>
-                            </div>
-                        </div>
+                            </form>
+                        </Form>
                     </div>
                 </div>
             )}
 
-            {/* Date Picker Modal */}
-            {showDatePicker && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60 p-4">
-                    <div className="bg-white rounded-lg w-full max-w-sm">
-                        <div className="p-4 border-b border-gray-200">
-                            <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-semibold">Datum auswählen</h3>
-                                <button
-                                    onClick={() => setShowDatePicker(false)}
-                                    className="text-gray-500 hover:text-gray-700 cursor-pointer"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="p-4">
-                            {/* Month/Year Navigation */}
-                            <div className="flex items-center justify-between mb-4">
-                                <button
-                                    onClick={() => navigateDatePickerMonth(-1)}
-                                    className="p-2 hover:bg-gray-100 rounded cursor-pointer"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <h4 className="font-semibold">
-                                    {monthNames[datePickerDate.getMonth()]} {datePickerDate.getFullYear()}
-                                </h4>
-                                <button
-                                    onClick={() => navigateDatePickerMonth(1)}
-                                    className="p-2 hover:bg-gray-100 rounded cursor-pointer"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
-                            </div>
-
-                            {/* Calendar Grid */}
-                            <div className="grid grid-cols-7 gap-1 text-center text-sm">
-                                {dayNames.map(day => (
-                                    <div key={day} className="p-2 font-medium text-gray-600">{day}</div>
-                                ))}
-                                {datePickerDays.map((date, index) => {
-                                    const isCurrentMonth = date.getMonth() === datePickerDate.getMonth();
-                                    const isToday = isSameDay(date, today);
-                                    const isSelected = newEvent.selectedEventDate === formatDate(date);
-
-                                    return (
-                                        <button
-                                            key={index}
-                                            onClick={() => handleDatePickerSelect(date)}
-                                            className={`p-2 cursor-pointer hover:bg-gray-100 rounded ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-900'
-                                                } ${isToday ? 'bg-green-500 text-white hover:bg-green-600' : ''
-                                                } ${isSelected && !isToday ? 'bg-blue-500 text-white hover:bg-blue-600' : ''
-                                                }`}
-                                        >
-                                            {date.getDate()}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Quick Date Buttons */}
-                            <div className="mt-4 flex gap-2">
-                                <button
-                                    onClick={() => handleDatePickerSelect(today)}
-                                    className="flex-1 py-2 px-3 text-sm border border-gray-300 rounded hover:bg-gray-50 cursor-pointer"
-                                >
-                                    Heute
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        const tomorrow = new Date(today);
-                                        tomorrow.setDate(today.getDate() + 1);
-                                        handleDatePickerSelect(tomorrow);
-                                    }}
-                                    className="flex-1 py-2 px-3 text-sm border border-gray-300 rounded hover:bg-gray-50 cursor-pointer"
-                                >
-                                    Morgen
-                                </button>
-                            </div>
+            {/* Delete Confirmation Modal */}
+            {deleteConfirmation.show && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg w-full max-w-sm p-6">
+                        <h3 className="text-lg font-semibold mb-4">Bestätigen Sie das Löschen</h3>
+                        <p className="text-gray-600 mb-6">Sind Sie sicher, dass Sie diesen Termin löschen möchten?</p>
+                        <div className="flex justify-end gap-4">
+                            <button
+                                onClick={() => setDeleteConfirmation({ show: false, appointmentId: null })}
+                                className="px-4 py-2 cursor-pointer text-gray-600 hover:bg-gray-100 rounded-lg"
+                            >
+                                Abbrechen
+                            </button>
+                            <button
+                                onClick={() => deleteConfirmation.appointmentId &&
+                                    deleteAppointments(deleteConfirmation.appointmentId.toString())}
+                                className="px-4 py-2 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-700"
+                            >
+                                Löschen
+                            </button>
                         </div>
                     </div>
                 </div>

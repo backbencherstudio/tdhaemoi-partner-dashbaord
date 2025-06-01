@@ -30,6 +30,12 @@ interface Event {
     type: string;
 }
 
+const truncateWords = (text: string, limit: number) => {
+    const words = text.split(' ');
+    if (words.length <= limit) return text;
+    return words.slice(0, limit).join(' ') + '....';
+};
+
 const WeeklyCalendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [miniCalendarDate, setMiniCalendarDate] = useState(new Date());
@@ -46,6 +52,8 @@ const WeeklyCalendar = () => {
         show: false,
         appointmentId: null
     });
+    const [showFullSubtitle, setShowFullSubtitle] = useState<number | null>(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     const form = useForm<{
         kunde: string;
@@ -284,6 +292,7 @@ const WeeklyCalendar = () => {
                         type: apt.isClient ? 'user' : 'others'
                     }));
                     setEvents(formattedEvents);
+                    setRefreshKey(prev => prev + 1);
                 }
 
                 form.reset();
@@ -322,6 +331,7 @@ const WeeklyCalendar = () => {
                     type: apt.isClient ? 'user' : 'others'
                 }));
                 setEvents(formattedEvents);
+                setRefreshKey(prev => prev + 1);
             }
 
             setDeleteConfirmation({ show: false, appointmentId: null });
@@ -337,7 +347,7 @@ const WeeklyCalendar = () => {
     return (
         <div className=" bg-white">
             <div className='p-4 sm:p-6'>
-                <AppoinmentData />
+                <AppoinmentData onRefresh={refreshKey} />
             </div>
 
             {/* Header */}
@@ -511,10 +521,10 @@ const WeeklyCalendar = () => {
                                             ) : (
                                                 <>
                                                     {dayEvents.map((event: Event) => (
-                                                        <div key={event.id} className="relative group">
-                                                            <div className={`p-3 rounded-lg text-sm font-medium border-l-4 ${event.type === 'user'
-                                                                ? 'bg-[#62A07C] text-white border-green-700'
-                                                                : 'bg-gray-900 text-white border-gray-700'
+                                                        <div key={event.id} className="relative group ">
+                                                            <div className={`p-3 rounded-lg text-sm font-medium border-l-4 cursor-pointer ${event.type === 'user'
+                                                                ? 'bg-gray-900 text-white border-gray-700'
+                                                                : 'bg-[#62A07C] text-white border-green-700'
                                                                 }`}>
                                                                 <div className="flex justify-between items-start">
                                                                     <div className="flex-1">
@@ -523,7 +533,41 @@ const WeeklyCalendar = () => {
                                                                         )}
                                                                         <div className="font-semibold">{event.title}</div>
                                                                         {event.subtitle && (
-                                                                            <div className="text-xs opacity-90 mt-1">{event.subtitle}</div>
+                                                                            <div className="text-xs  opacity-90 mt-1">
+                                                                                {event.subtitle.split(' ').length > 50 ? (
+                                                                                    <div>
+                                                                                        {showFullSubtitle === event.id ? (
+                                                                                            <>
+                                                                                                {event.subtitle}
+                                                                                                <button
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        setShowFullSubtitle(null);
+                                                                                                    }}
+                                                                                                    className="ml-1 cursor-pointer underline hover:no-underline"
+                                                                                                >
+                                                                                                    Read less
+                                                                                                </button>
+                                                                                            </>
+                                                                                        ) : (
+                                                                                            <>
+                                                                                                {truncateWords(event.subtitle, 15)}
+                                                                                                <button
+                                                                                                    onClick={(e) => {
+                                                                                                        e.stopPropagation();
+                                                                                                        setShowFullSubtitle(event.id);
+                                                                                                    }}
+                                                                                                    className="ml-1 cursor-pointer underline hover:no-underline"
+                                                                                                >
+                                                                                                    Read more
+                                                                                                </button>
+                                                                                            </>
+                                                                                        )}
+                                                                                    </div>
+                                                                                ) : (
+                                                                                    event.subtitle
+                                                                                )}
+                                                                            </div>
                                                                         )}
                                                                     </div>
                                                                     <button
@@ -535,7 +579,7 @@ const WeeklyCalendar = () => {
                                                                                 appointmentId: event.id
                                                                             });
                                                                         }}
-                                                                        className="opacity-0 cursor-pointer group-hover:opacity-100 text-white hover:bg-red-500 rounded-full p-1 ml-2"
+                                                                        className="opacity-0 cursor-pointer group-hover:opacity-100 text-white bg-red-500 rounded-full p-1 ml-2"
                                                                     >
                                                                         <X className="w-3 h-3" />
                                                                     </button>
@@ -604,7 +648,7 @@ const WeeklyCalendar = () => {
                                                     checked={field.value}
                                                     onCheckedChange={(checked) => {
                                                         field.onChange(checked);
-                                                        console.log('Switch value changed to:', checked); 
+                                                        console.log('Switch value changed to:', checked);
                                                     }}
                                                     className="data-[state=checked]:bg-[#61A07B] cursor-pointer"
                                                 />
@@ -695,7 +739,7 @@ const WeeklyCalendar = () => {
                                     name="termin"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Kundentermin</FormLabel>
+                                            <FormLabel>Grund</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>

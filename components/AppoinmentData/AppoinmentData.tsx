@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     Pagination,
     PaginationContent,
@@ -8,40 +8,65 @@ import {
     PaginationNext,
     PaginationPrevious
 } from "@/components/ui/pagination"
+import { getMyAppointments } from '@/apis/appoinmentApis';
 
-const eventData = [
-    {
-        id: 1,
-        date: '2025-05-18',
-        time: '9:30',
-        title: 'MEETING HERR MÜLLER',
-        subtitle: 'ABFLUGTERMIN HERR BAUER',
-        type: 'others'
-    },
-    {
-        id: 2,
-        date: '2025-05-19',
-        time: '9:30',
-        title: 'MEETING HERR MÜLLER',
-        subtitle: 'ABFLUGTERMIN HERR BAUER',
-        type: 'user'
-    },
-    {
-        id: 3,
-        date: '2025-05-22',
-        time: '7:40',
-        title: 'FUSSANALYSE HERR MUSTERMANN',
-        subtitle: 'LAUFANALYSE FRAU MEYER',
-        type: 'others'
-    }
-]
+// Remove eventData array and add interfaces
+interface Appointment {
+    id: number;
+    date: string;
+    time: string;
+    customer_name: string;
+    details: string;
+    isClient: boolean;
+}
 
-export default function AppoinmentData() {
-    const events = eventData;
+interface AppoinmentDataProps {
+    onRefresh?: number;
+}
 
+export default function AppoinmentData({ onRefresh }: AppoinmentDataProps) {
+    const [events, setEvents] = useState<Appointment[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
+    const [isLoading, setIsLoading] = useState(true);
     const itemsPerPage = 2;
-    
+
+    useEffect(() => {
+        fetchAppointments();
+    }, []);
+
+    // Add this effect to listen for parent refreshes
+    useEffect(() => {
+        if (onRefresh) {
+            fetchAppointments();
+        }
+    }, [onRefresh]);
+
+    const fetchAppointments = async () => {
+        try {
+            setIsLoading(true);
+            const response = await getMyAppointments({
+                page: 1,
+                limit: 100
+            });
+            
+            if (response?.data) {
+                const formattedEvents = response.data.map((apt: any) => ({
+                    id: apt.id,
+                    date: new Date(apt.date).toISOString().split('T')[0],
+                    time: apt.time,
+                    customer_name: apt.customer_name.toUpperCase(),
+                    details: apt.details?.toUpperCase(),
+                    isClient: apt.isClient
+                }));
+                setEvents(formattedEvents);
+            }
+        } catch (error) {
+            console.error('Failed to load appointments:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const totalPages = Math.ceil(events.length / itemsPerPage);
     const indexOfLastEvent = currentPage * itemsPerPage;
     const indexOfFirstEvent = indexOfLastEvent - itemsPerPage;
@@ -68,22 +93,29 @@ export default function AppoinmentData() {
                 </div>
             </div>
 
-            <div className="space-y-4">
-                {currentEvents.map((event, index) => (
-                    <div key={`${event.id}-${index}`} className="flex items-center gap-4">
-                        <div className={`w-24 h-24 rounded-lg flex items-center justify-center text-white text-2xl font-bold ${event.type === 'user' ? 'bg-black' : 'bg-[#62A07C]'}`}>
-                            {formatDay(event.date)}
+            {isLoading ? (
+                <div className="flex justify-center items-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#62A07C]"></div>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {currentEvents.map((event, index) => (
+                        <div key={`${event.id}-${index}`} className="flex items-center gap-4">
+                            <div className={`w-24 h-24 rounded-lg flex items-center justify-center text-white text-2xl font-bold ${event.isClient ? 'bg-black' : 'bg-[#62A07C]'}`}>
+                                {formatDay(event.date)}
+                            </div>
+                            <div className="flex-1">
+                                <div className="font-bold">{event.customer_name}</div>
+                                {event.time && <div>
+                                    <p className='text-sm font-semibold mt-2 text-gray-500 uppercase'>
+                                        {event.date.split('-')[2]}/{event.date.split('-')[1]}/{event.date.split('-')[0].slice(2)}, {event.time}
+                                    </p>
+                                </div>}
+                            </div>
                         </div>
-                        <div className="flex-1">
-                            <div className="font-bold">{event.title}</div>
-                            {event.time && <div>
-                                <p className='text-sm font-semibold mt-2 text-gray-500 uppercase'>{event.date.split('-')[2]}/{event.date.split('-')[1]}/{event.date.split('-')[0].slice(2)}, {event.time}</p>
-                            </div>}
-                            {/* {event.subtitle && <div>{event.subtitle}</div>} */}
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
+            )}
 
             {totalPages > 1 && (
                 <Pagination>

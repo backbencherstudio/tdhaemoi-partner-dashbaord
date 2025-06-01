@@ -92,3 +92,17 @@ export const resetPassword = async (email: string, password: string) => {
   }
 };
 
+
+// change password
+export const changePassword = async (currentPassword: string, newPassword: string) => {
+  try {
+    const response = await axiosClient.post('/partner/change-password', {
+      currentPassword,
+      newPassword
+    });
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to change password';
+    throw new Error(errorMessage);
+  }
+};

@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { postSuggestion } from '@/apis/suggestionsApis'
+import toast from 'react-hot-toast'
 
 interface ContactFormValues {
     name: string
@@ -19,7 +21,6 @@ interface ContactFormValues {
     telefon: string
     message: string
 }
-
 export default function ContactPage() {
     const form = useForm<ContactFormValues>({
         defaultValues: {
@@ -29,21 +30,30 @@ export default function ContactPage() {
             telefon: "",
             message: "",
         },
-        mode: "onBlur", // Show errors on blur
+        mode: "onBlur",
     })
 
     async function onSubmit(data: ContactFormValues) {
         try {
-            // Handle form submission here
-            console.log(data)
-            // Add your API call here
+            const suggestionData = {
+                name: data.name,
+                email: data.email,
+                phone: data.telefon,
+                firma: data.firma,
+                suggestion: data.message,
+            };
+
+            const response = await postSuggestion(suggestionData);
+            console.log('Success:', response);
+            form.reset();
+            toast.success('Ihre Nachricht wurde erfolgreich gesendet!');
+
         } catch (error) {
-            // Handle submission error
-            console.error('Submission error:', error)
+            console.error('Submission error:', error);
             form.setError('root', {
                 type: 'manual',
-                message: 'There was an error submitting the form. Please try again.'
-            })
+                message: 'Es gab einen Fehler beim Senden des Formulars. Bitte versuchen Sie es erneut.'
+            });
         }
     }
 

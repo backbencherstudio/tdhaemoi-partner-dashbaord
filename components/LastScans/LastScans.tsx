@@ -14,7 +14,7 @@ interface LastScan {
 
 export default function LastScans() {
     const [lastScans, setLastScans] = useState([]);
-        const router = useRouter();
+    const router = useRouter();
 
 
     // Fetch customer data
@@ -75,8 +75,8 @@ export default function LastScans() {
                                     <p>Ort: {scan.Geschäftstandort}</p>
 
                                     <div className='flex flex-col gap-2 z-50'>
-                                        <button onClick={() => handleScanView(scan.id)} className='bg-[#62A07C] cursor-pointer text-white px-4 py-2 rounded-md'>Scansadas ansehen</button>
-                                        <button className='bg-[#62A07C] text-white px-4 py-2 rounded-md'>Kundeninfo</button>
+                                        <button onClick={() => handleScanView(scan.id)} className='bg-[#62A07C] cursor-pointer hover:bg-[#62a07c98] transform duration-300 text-white px-4 py-2 rounded-md'>Scansadas ansehen</button>
+                                        <button  className='bg-[#62A07C]  text-white px-4 py-2 rounded-md'>Kundeninfo</button>
                                     </div>
                                 </div>
                             </div>

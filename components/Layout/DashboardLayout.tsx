@@ -31,7 +31,7 @@ const DashboardLayout = ({ children }: LayoutProps) => {
                 {/* Overlay */}
                 {isSidebarOpen && (
                     <div
-                        className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+                        className="fixed inset-0 bg-black/50 z-30 sm:hidden"
                         onClick={() => setIsSidebarOpen(false)}
                     />
                 )}

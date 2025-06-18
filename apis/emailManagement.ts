@@ -19,8 +19,8 @@ export const composeEmail = async (data: CreateEmailData) => {
 };
 
 
-// send  email data should be like this
-export const getInboxEmail = async (page: number, limit: number) => {
+// receive email
+export const receiveEmail = async (page: number, limit: number) => {
     try {
         const response = await axiosClient.get(`/message/inbox?page=${page}&limit=${limit}`);
         return response.data;
@@ -30,8 +30,8 @@ export const getInboxEmail = async (page: number, limit: number) => {
 };
 
 
-// get all email 
-export const getAllEmail = async (page: number, limit: number) => {
+// sent email
+export const sentAllEmail = async (page: number, limit: number) => {
     try {
         const response = await axiosClient.get(`/message/sendbox?page=${page}&limit=${limit}`);
         return response.data;
@@ -40,3 +40,36 @@ export const getAllEmail = async (page: number, limit: number) => {
     }
 };
 
+
+// get a favorite email search=
+export const getFavoriteEmail = async (page: number, limit: number, search: string) => {
+    try {
+        const response = await axiosClient.get(`/message/favorites?page=${page}&limit=${limit}&search=${search}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+
+// add and remove favorite 
+export const addAndRemoveFavoriteEmail = async (id: string) => {
+    try {
+        const response = await axiosClient.put(`/message/${id}/favorite`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+// get single email
+export const getSingleEmail = async (id: string) => {
+    try {
+        const response = await axiosClient.get(`/message/${id}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};

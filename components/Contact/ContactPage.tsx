@@ -49,11 +49,8 @@ export default function ContactPage() {
             toast.success('Ihre Nachricht wurde erfolgreich gesendet!');
 
         } catch (error) {
+            // toast.error(error as string);
             console.error('Submission error:', error);
-            form.setError('root', {
-                type: 'manual',
-                message: 'Es gab einen Fehler beim Senden des Formulars. Bitte versuchen Sie es erneut.'
-            });
         }
     }
 

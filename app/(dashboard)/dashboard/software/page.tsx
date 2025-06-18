@@ -10,7 +10,7 @@ import { IoIosCall } from 'react-icons/io'
 import { getCategoriesProducts } from '@/apis/productsApis'
 
 interface Color {
-    id: string;
+    id: string; 
     colorName: string;
     colorCode: string;
     images: {
@@ -95,8 +95,8 @@ const InnerCarousel = ({ products, category }: { products: Product[], category: 
             <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex">
                     {products.map((product: Product) => (
-                        <div key={product.id} 
-                             className="flex-none w-full md:w-1/2 px-2">
+                        <div key={product.id}
+                            className="flex-none w-full md:w-1/2 px-2">
                             <ProductCard product={product} />
                         </div>
                     ))}
@@ -170,8 +170,8 @@ const MainCarousel = ({ categories }: { categories: CategoryData[] }) => {
             <div className="overflow-hidden" ref={emblaRef}>
                 <div className="flex">
                     {categories.map((category) => (
-                        <div key={category.name} 
-                             className="flex-none w-full md:w-1/2 lg:w-1/3 px-2">
+                        <div key={category.name}
+                            className="flex-none w-full md:w-1/2 lg:w-1/3 px-2">
                             <InnerCarousel
                                 products={category.products}
                                 category={category.name.toUpperCase()}

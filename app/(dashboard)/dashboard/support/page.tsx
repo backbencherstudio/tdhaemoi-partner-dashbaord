@@ -1,5 +1,5 @@
 "use client"
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Accordion,
     AccordionContent,
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useForm } from 'react-hook-form';
 import { IoIosCall } from 'react-icons/io';
+import { feetF1stEmail } from '@/apis/suggestionsApis';
 
 interface FaqItem {
     question: string;
@@ -117,24 +118,36 @@ const faqData: FaqData = {
 
 interface FormData {
     reason: string;
-    company: string;
+    name: string;
     phone: string;
-    message: string;
+    suggestion: string;
 }
 
 export default function Support() {
+    const [isLoading, setIsLoading] = useState(false);
 
     const {
         register,
         handleSubmit,
-        formState: { errors }
+        formState: { errors },
+        reset
     } = useForm<FormData>();
 
-    const onSubmit = (data: FormData) => {
-        console.log(data);
+    const onSubmit = async (data: FormData) => {
+        setIsLoading(true);
+        try {
+            await feetF1stEmail(data);
+            console.log('Email sent successfully:', data);
+            // Reset form after successful submission
+            reset();
+            // You can add a success message here if needed
+        } catch (error) {
+            console.error('Error sending email:', error);
+            // You can add error handling here if needed
+        } finally {
+            setIsLoading(false);
+        }
     };
-
-
 
     return (
         <div className="px-4 ">
@@ -190,15 +203,15 @@ export default function Support() {
 
                     <div className="flex flex-col md:flex-row gap-4">
                         <div className="space-y-2 w-full md:w-1/2">
-                            <Label htmlFor="company">Unternehmen</Label>
+                            <Label htmlFor="name">Name</Label>
                             <Input
-                                id="company"
+                                id="name"
                                 className="border-gray-500 border"
-                                placeholder="Unternehmen"
-                                {...register("company", { required: "This field is required" })}
+                                placeholder="Name"
+                                {...register("name", { required: "This field is required" })}
                             />
-                            {errors.company && (
-                                <p className="text-red-500 text-sm">{errors.company.message}</p>
+                            {errors.name && (
+                                <p className="text-red-500 text-sm">{errors.name.message}</p>
                             )}
                         </div>
 
@@ -224,25 +237,33 @@ export default function Support() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="message">Nachricht</Label>
+                        <Label htmlFor="suggestion">Nachricht</Label>
                         <Textarea
-                            id="message"
+                            id="suggestion"
                             className="border-gray-500 border"
                             placeholder="Nachricht"
                             rows={5}
-                            {...register("message", { required: "This field is required" })}
+                            {...register("suggestion", { required: "This field is required" })}
                         />
-                        {errors.message && (
-                            <p className="text-red-500 text-sm">{errors.message.message}</p>
+                        {errors.suggestion && (
+                            <p className="text-red-500 text-sm">{errors.suggestion.message}</p>
                         )}
                     </div>
 
                     <div className='flex justify-center'>
                         <Button
                             type="submit"
-                            className="px-16 py-2 bg-transparent border border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white rounded-3xl cursor-pointer"
+                            disabled={isLoading}
+                            className="px-16 py-2 bg-transparent border border-gray-500 text-gray-500 hover:bg-gray-500 hover:text-white rounded-3xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            SENDEN
+                            {isLoading ? (
+                                <div className="flex items-center gap-2">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                                    SENDEN...
+                                </div>
+                            ) : (
+                                'SENDEN'
+                            )}
                         </Button>
                     </div>
                 </form>

@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useForm } from 'react-hook-form';
 import { IoIosCall } from 'react-icons/io';
 import { feetF1stEmail } from '@/apis/suggestionsApis';
+import toast from 'react-hot-toast';
 
 interface FaqItem {
     question: string;
@@ -137,13 +138,12 @@ export default function Support() {
         setIsLoading(true);
         try {
             await feetF1stEmail(data);
-            console.log('Email sent successfully:', data);
-            // Reset form after successful submission
+            toast.success('Email sent successfully');
             reset();
-            // You can add a success message here if needed
+
         } catch (error) {
             console.error('Error sending email:', error);
-            // You can add error handling here if needed
+            toast.error('Error sending email');
         } finally {
             setIsLoading(false);
         }

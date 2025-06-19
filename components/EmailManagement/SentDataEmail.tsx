@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Mail, Star, Trash2 } from 'lucide-react';
-import { receiveEmail, sentAllEmail, getFavoriteEmail, addAndRemoveFavoriteEmail, singleEmailDelete } from '@/apis/emailManagement';
+import { receiveEmail, sentAllEmail, getFavoriteEmail, addAndRemoveFavoriteEmail } from '@/apis/emailManagement';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -132,27 +132,7 @@ export default function SentDataEmail({
         return words.slice(0, maxWords).join(' ') + '...';
     };
 
-    useEffect(() => {
-        fetchEmails(1);
-        // eslint-disable-next-line
-    }, [activeTab, topTab]);
-
-    useEffect(() => {
-        fetchEmails(1);
- 
-    }, [pagination.limit]);
-
-    useEffect(() => {
-        fetchEmails(1);
-    }, [debouncedSearch]);
-
-    useEffect(() => {
-        if (refreshKey) {
-            fetchEmails(pagination.page);
-        }
-    }, [refreshKey]);
-
-    const fetchEmails = async (page: number) => {
+    const fetchEmails = useCallback(async (page: number) => {
         setLoading(true);
         setError(null);
         try {
@@ -180,7 +160,26 @@ export default function SentDataEmail({
         } finally {
             setLoading(false);
         }
-    };
+    }, [activeTab, pagination.limit, debouncedSearch, onFavoriteCountChange]);
+
+    useEffect(() => {
+        fetchEmails(1);
+    }, [activeTab, topTab, fetchEmails]);
+
+    useEffect(() => {
+        fetchEmails(1);
+ 
+    }, [pagination.limit, fetchEmails]);
+
+    useEffect(() => {
+        fetchEmails(1);
+    }, [debouncedSearch, fetchEmails]);
+
+    useEffect(() => {
+        if (refreshKey) {
+            fetchEmails(pagination.page);
+        }
+    }, [refreshKey, fetchEmails, pagination.page]);
 
     const updateFavoriteCount = async () => {
         try {
@@ -220,7 +219,7 @@ export default function SentDataEmail({
     };
 
     // Filter logic: only show for 'allgemein' and 'fastfirst'
-    const filteredEmails = emailList.filter(email => {
+    const filteredEmails = emailList.filter(() => {
         if (topTab !== 'allgemein' && topTab !== 'fastfirst') return false;
         return true;
     });

@@ -73,8 +73,9 @@ export default function SendEmailModal({ open, onOpenChange }: { open: boolean, 
             } else {
                 toast.error(response.message || 'Failed to verify OTP');
             }
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to verify OTP');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to verify OTP';
+            toast.error(errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -104,8 +105,9 @@ export default function SendEmailModal({ open, onOpenChange }: { open: boolean, 
             } else {
                 toast.error(response.message || 'Failed to reset password');
             }
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to reset password');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to reset password';
+            toast.error(errorMessage);
         } finally {
             setIsLoading(false);
         }

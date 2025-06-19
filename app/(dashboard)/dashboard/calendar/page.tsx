@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import AppoinmentData from '@/components/AppoinmentData/AppoinmentData';
 import { useForm } from "react-hook-form"
-import { format } from "date-fns"
+// import { format } from "date-fns"
 import { createAppoinment, deleteAppointment, getMyAppointments, getSingleAppointment, updateAppointment } from '@/apis/appoinmentApis';
 import toast from "react-hot-toast";
 import AppointmentModal from '@/components/AppointmentModal/AppointmentModal';
@@ -125,7 +125,7 @@ const WeeklyCalendar = () => {
                 }));
                 setEvents(formattedEvents);
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to load appointments');
         } finally {
             setIsLoading(false);
@@ -365,8 +365,9 @@ const WeeklyCalendar = () => {
 
             setDeleteConfirmation({ show: false, appointmentId: null });
             toast.success(response.message || 'Appointment deleted successfully');
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to delete appointment');
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to delete appointment';
+            toast.error(errorMessage);
         }
     };
 
@@ -382,7 +383,6 @@ const WeeklyCalendar = () => {
 
                 // Format date and time for form
                 const date = new Date(apt.date);
-                const formattedDate = format(date, 'yyyy-MM-dd');
                 const formattedTime = apt.time.split(' ')[0];
 
                 editForm.reset({
@@ -397,7 +397,7 @@ const WeeklyCalendar = () => {
 
                 setIsEditModalOpen(true);
             }
-        } catch (error) {
+        } catch {
             toast.error('Failed to load appointment details');
         }
     };
@@ -436,7 +436,8 @@ const WeeklyCalendar = () => {
                 toast.success('Appointment updated successfully');
             }
         } catch (error: unknown) {
-            toast.error(error instanceof Error ? error.message : 'Failed to update appointment');
+            const errorMessage = error instanceof Error ? error.message : 'Failed to update appointment';
+            toast.error(errorMessage);
         }
     };
 

@@ -3,7 +3,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import SentDataEmail from '@/components/EmailManagement/SentDataEmail';
 import { Search, Trash2 } from 'lucide-react';
-import { FavoriteCountContext } from '../layout';
+import { FavoriteCountContext } from '@/contexts/FavoriteCountContext';
 import { groupEmailDelete, singleEmailDelete } from '@/apis/emailManagement';
 import toast from 'react-hot-toast';
 import {

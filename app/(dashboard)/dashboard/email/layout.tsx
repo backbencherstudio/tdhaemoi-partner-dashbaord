@@ -2,20 +2,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Mail, Star, Send, Plus, Menu } from 'lucide-react';
-import React, { useState, useEffect, createContext } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getFavoriteEmail } from '@/apis/emailManagement';
+import { FavoriteCountContext } from '@/contexts/FavoriteCountContext';
 
 const tabs = [
     { key: 'inbox', label: 'Posteingang', icon: Mail },
     { key: 'favorites', label: 'Favoriten', icon: Star },
     { key: 'sent', label: 'Gesendet', icon: Send },
 ];
-
-// Context to provide favoriteCount and updater
-export const FavoriteCountContext = createContext<{
-    favoriteCount: number;
-    updateFavoriteCount: () => void;
-}>({ favoriteCount: 0, updateFavoriteCount: () => { } });
 
 export default function EmailLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();

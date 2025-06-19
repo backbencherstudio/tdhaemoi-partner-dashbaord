@@ -16,6 +16,29 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
+interface EmailData {
+  id: string;
+  subject: string;
+  content: string;
+  createdAt: string;
+  isFavorite: boolean;
+  sender?: {
+    id: string;
+    name: string;
+    email: string;
+    image: string;
+    role: string;
+  };
+  recipient?: {
+    id: string;
+    name: string | null;
+    email: string;
+    image: string | null;
+    role: string;
+  };
+  recipientEmail?: string;
+}
+
 const topTabs = [
   { id: "allgemein", color: "bg-gray-200", label: "Allgemein", short: "A" },
   { id: "fastfirst", color: "bg-blue-500", label: "FastFirst Nachrichten", short: "F" },
@@ -64,16 +87,6 @@ export default function EmailTabPage() {
     router.push(`/dashboard/email/${tab}?${params.toString()}`);
   };
 
-  const handleSearchChange = (value: string) => {
-    setSearch(value);
-    updateURL(value, topTab);
-  };
-
-  const handleTopTabChange = (newTopTab: string) => {
-    setTopTab(newTopTab);
-    updateURL(search, newTopTab);
-  };
-
   const handleSingleEmailDelete = (emailId: string) => {
     setEmailToDelete(emailId);
     setShowSingleDeleteDialog(true);
@@ -97,7 +110,7 @@ export default function EmailTabPage() {
     }
   };
 
-  const handleEmailClick = (email: any) => {
+  const handleEmailClick = (email: EmailData) => {
     router.push(`/dashboard/email/${tab}/${email.id}`);
   };
 
@@ -112,7 +125,7 @@ export default function EmailTabPage() {
       setSelectedEmails(new Set());
 
       setRefreshKey(prev => prev + 1);
-    } catch (error) {
+    } catch {
       // console.error('Failed to delete emails:', error);
       toast.error('Failed to delete selected emails');
     } finally {

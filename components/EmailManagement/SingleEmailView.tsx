@@ -1,6 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
-import { ArrowLeft, Trash2, Archive, Reply, Forward, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 
 interface Sender {
     id: string;
@@ -50,7 +50,6 @@ export default function SingleEmailView({ email, fromTab, onBack, onDelete, onAr
         });
     };
 
-    // Add null checks and fallbacks
     const senderName = email.sender?.name || 'Unknown Sender';
     const senderEmail = email.sender?.email || 'No email';
     const senderRole = email.sender?.role || 'Unknown';
@@ -61,7 +60,6 @@ export default function SingleEmailView({ email, fromTab, onBack, onDelete, onAr
 
     return (
         <div className="flex-1 flex flex-col bg-white">
-            {/* Header with back button and actions */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
                 <div className="flex items-center gap-3">
                     <button
@@ -97,10 +95,8 @@ export default function SingleEmailView({ email, fromTab, onBack, onDelete, onAr
                 </div>
             </div>
 
-            {/* Email Content */}
             <div className="flex-1 overflow-auto p-6">
                 <div className="">
-                    {/* Email Header Info */}
                     <div className="mb-6 pb-4 border-b border-gray-200">
                         <div className="flex items-start justify-between mb-4">
                             <div className="flex items-center gap-3">
@@ -137,7 +133,6 @@ export default function SingleEmailView({ email, fromTab, onBack, onDelete, onAr
 
                     </div>
 
-                    {/* Email Body */}
                     <div className="prose max-w-none">
                         <div className="text-gray-800 leading-relaxed">
                             <p className="mb-4">

@@ -1,9 +1,20 @@
 "use client";
-import React, { useState, useContext } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useContext, useEffect } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import SentDataEmail from '@/components/EmailManagement/SentDataEmail';
 import { Search, Trash2 } from 'lucide-react';
 import { FavoriteCountContext } from '../layout';
+import { groupEmailDelete, singleEmailDelete } from '@/apis/emailManagement';
+import toast from 'react-hot-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const topTabs = [
   { id: "allgemein", color: "bg-gray-200", label: "Allgemein", short: "A" },
@@ -16,14 +27,98 @@ const topTabs = [
 export default function EmailTabPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const tab = params.tab as string;
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [topTab, setTopTab] = useState('allgemein');
   const [search, setSearch] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showSingleDeleteDialog, setShowSingleDeleteDialog] = useState(false);
+  const [emailToDelete, setEmailToDelete] = useState<string | null>(null);
   const { updateFavoriteCount } = useContext(FavoriteCountContext);
+
+  // Initialize search from URL on component mount
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') || '';
+    const urlTopTab = searchParams.get('tab') || 'allgemein';
+    setSearch(urlSearch);
+    setTopTab(urlTopTab);
+  }, [searchParams]);
+
+  // Update URL when search or topTab changes
+  const updateURL = (newSearch: string, newTopTab?: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (newSearch.trim()) {
+      params.set('search', newSearch);
+    } else {
+      params.delete('search');
+    }
+    
+    if (newTopTab) {
+      params.set('tab', newTopTab);
+    }
+    
+    router.push(`/dashboard/email/${tab}?${params.toString()}`);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    updateURL(value, topTab);
+  };
+
+  const handleTopTabChange = (newTopTab: string) => {
+    setTopTab(newTopTab);
+    updateURL(search, newTopTab);
+  };
+
+  const handleSingleEmailDelete = (emailId: string) => {
+    setEmailToDelete(emailId);
+    setShowSingleDeleteDialog(true);
+  };
+
+  const confirmSingleEmailDelete = async () => {
+    if (!emailToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      await singleEmailDelete(emailToDelete);
+      toast.success('E-Mail erfolgreich gelöscht');
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Failed to delete email:', error);
+      toast.error('Fehler beim Löschen der E-Mail');
+    } finally {
+      setIsDeleting(false);
+      setShowSingleDeleteDialog(false);
+      setEmailToDelete(null);
+    }
+  };
 
   const handleEmailClick = (email: any) => {
     router.push(`/dashboard/email/${tab}/${email.id}`);
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedEmails.size === 0) return;
+
+    setIsDeleting(true);
+    try {
+      const messageIds = Array.from(selectedEmails);
+      await groupEmailDelete(messageIds);
+      toast.success(`${selectedEmails.size} email(s) deleted successfully`);
+      setSelectedEmails(new Set());
+
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      // console.error('Failed to delete emails:', error);
+      toast.error('Failed to delete selected emails');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
   };
 
   return (
@@ -53,11 +148,12 @@ export default function EmailTabPage() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
             {selectedEmails.size > 0 && (
               <button
-                onClick={() => setSelectedEmails(new Set())}
-                className="flex items-center gap-2 bg-red-50 text-red-600 px-3 py-1 rounded-lg hover:bg-red-100 transition"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={isDeleting}
+                className="flex items-center gap-2 bg-red-50 text-red-600 px-3 py-1 rounded-lg hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Trash2 size={16} />
-                {`Löschen (${selectedEmails.size})`}
+                {isDeleting ? 'Löschen...' : `Löschen (${selectedEmails.size})`}
               </button>
             )}
             <div className="relative flex-1 sm:flex-none">
@@ -83,7 +179,67 @@ export default function EmailTabPage() {
         onSelectedEmailsChange={setSelectedEmails}
         onFavoriteCountChange={updateFavoriteCount}
         search={search}
+        refreshKey={refreshKey}
+        onSingleEmailDelete={handleSingleEmailDelete}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>E-Mails löschen</DialogTitle>
+            <DialogDescription>
+              Sind Sie sicher, dass Sie {selectedEmails.size} ausgewählte E-Mail(s) löschen möchten?
+              Diese Aktion kann nicht rückgängig gemacht werden.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteSelected}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Löschen...' : 'Löschen'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Single Email Delete Confirmation Dialog */}
+      <Dialog open={showSingleDeleteDialog} onOpenChange={setShowSingleDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>E-Mail löschen</DialogTitle>
+            <DialogDescription>
+              Sind Sie sicher, dass Sie diese E-Mail löschen möchten? 
+              Diese Aktion kann nicht rückgängig gemacht werden.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowSingleDeleteDialog(false)}
+              disabled={isDeleting}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmSingleEmailDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Löschen...' : 'Löschen'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 } 

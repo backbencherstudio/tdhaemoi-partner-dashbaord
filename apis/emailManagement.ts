@@ -20,9 +20,9 @@ export const composeEmail = async (data: CreateEmailData) => {
 
 
 // receive email
-export const receiveEmail = async (page: number, limit: number) => {
+export const receiveEmail = async (page: number, limit: number, search: string) => {
     try {
-        const response = await axiosClient.get(`/message/inbox?page=${page}&limit=${limit}`);
+        const response = await axiosClient.get(`/message/inbox?page=${page}&limit=${limit}&search=${search}`);
         return response.data;
     } catch (error) {
         throw error;
@@ -31,9 +31,9 @@ export const receiveEmail = async (page: number, limit: number) => {
 
 
 // sent email
-export const sentAllEmail = async (page: number, limit: number) => {
+export const sentAllEmail = async (page: number, limit: number, search: string) => {
     try {
-        const response = await axiosClient.get(`/message/sendbox?page=${page}&limit=${limit}`);
+        const response = await axiosClient.get(`/message/sendbox?page=${page}&limit=${limit}&search=${search}`);
         return response.data;
     } catch (error) {
         throw error;
@@ -41,7 +41,7 @@ export const sentAllEmail = async (page: number, limit: number) => {
 };
 
 
-// get a favorite email search=
+// get a favorite email 
 export const getFavoriteEmail = async (page: number, limit: number, search: string) => {
     try {
         const response = await axiosClient.get(`/message/favorites?page=${page}&limit=${limit}&search=${search}`);
@@ -68,6 +68,28 @@ export const addAndRemoveFavoriteEmail = async (id: string) => {
 export const getSingleEmail = async (id: string) => {
     try {
         const response = await axiosClient.get(`/message/${id}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+// group email delete body te id pass korbo
+
+export const groupEmailDelete = async (messageIds: string[]) => {
+    try {
+        const response = await axiosClient.delete('/message/permanent', { data: { messageIds } });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+
+
+// single email delete
+export const singleEmailDelete = async (id: string) => {
+    try {
+        const response = await axiosClient.delete(`/message/delete/${id}`);
         return response.data;
     } catch (error) {
         throw error;

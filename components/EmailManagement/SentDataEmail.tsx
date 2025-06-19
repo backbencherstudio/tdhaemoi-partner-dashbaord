@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Star, Trash2 } from 'lucide-react';
-import { receiveEmail, sentAllEmail, getFavoriteEmail, addAndRemoveFavoriteEmail } from '@/apis/emailManagement';
+import { receiveEmail, sentAllEmail, getFavoriteEmail, addAndRemoveFavoriteEmail, singleEmailDelete } from '@/apis/emailManagement';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -47,7 +47,26 @@ interface SentDataEmailProps {
     onSelectedEmailsChange: (emails: Set<string>) => void;
     onFavoriteCountChange?: (count: number) => void;
     search?: string;
+    refreshKey?: number;
+    onSingleEmailDelete?: (emailId: string) => void;
 }
+
+// Custom debounce hook
+const useDebounce = (value: string, delay: number) => {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+
+    return debouncedValue;
+};
 
 export default function SentDataEmail({
     activeTab,
@@ -57,6 +76,8 @@ export default function SentDataEmail({
     onSelectedEmailsChange,
     onFavoriteCountChange,
     search = '',
+    refreshKey,
+    onSingleEmailDelete,
 }: SentDataEmailProps) {
     const [emailList, setEmailList] = useState<EmailData[]>([]);
     const [loading, setLoading] = useState(true);
@@ -68,7 +89,8 @@ export default function SentDataEmail({
         totalPages: 0,
     });
 
-    // Helper function to format date intelligently
+    const debouncedSearch = useDebounce(search, 500);
+
     const formatEmailDate = (dateString: string) => {
         const emailDate = new Date(dateString);
         const now = new Date();
@@ -117,8 +139,18 @@ export default function SentDataEmail({
 
     useEffect(() => {
         fetchEmails(1);
-        // eslint-disable-next-line
+ 
     }, [pagination.limit]);
+
+    useEffect(() => {
+        fetchEmails(1);
+    }, [debouncedSearch]);
+
+    useEffect(() => {
+        if (refreshKey) {
+            fetchEmails(pagination.page);
+        }
+    }, [refreshKey]);
 
     const fetchEmails = async (page: number) => {
         setLoading(true);
@@ -126,14 +158,14 @@ export default function SentDataEmail({
         try {
             let response;
             if (activeTab === 'sent') {
-                response = await sentAllEmail(page, pagination.limit);
+                response = await sentAllEmail(page, pagination.limit, debouncedSearch);
             } else if (activeTab === 'favorites') {
-                response = await getFavoriteEmail(page, pagination.limit, search);
+                response = await getFavoriteEmail(page, pagination.limit, debouncedSearch);
                 if (onFavoriteCountChange && response.pagination) {
                     onFavoriteCountChange(response.pagination.total);
                 }
             } else {
-                response = await receiveEmail(page, pagination.limit);
+                response = await receiveEmail(page, pagination.limit, debouncedSearch);
             }
             if (response && response.data) {
                 setEmailList(response.data);
@@ -152,7 +184,7 @@ export default function SentDataEmail({
 
     const updateFavoriteCount = async () => {
         try {
-            const response = await getFavoriteEmail(1, 1, search);
+            const response = await getFavoriteEmail(1, 1, debouncedSearch);
             if (onFavoriteCountChange && response.pagination) {
                 onFavoriteCountChange(response.pagination.total);
             }
@@ -161,12 +193,20 @@ export default function SentDataEmail({
 
     const handleToggleFavorite = async (emailId: string) => {
         try {
+            const email = emailList.find(e => e.id === emailId);
+            const isCurrentlyFavorite = email?.isFavorite || false;
+            
             await addAndRemoveFavoriteEmail(emailId);
             await updateFavoriteCount();
             fetchEmails(pagination.page);
-            toast.success('Favorite status updated');
+            
+            if (isCurrentlyFavorite) {
+                toast.success('Favorit entfernt');
+            } else {
+                toast.success('Zu Favoriten hinzugefügt');
+            }
         } catch {
-            toast.error('Failed to update favorite status');
+            toast.error('Fehler beim Aktualisieren des Favoriten-Status');
         }
     };
 
@@ -182,16 +222,6 @@ export default function SentDataEmail({
     // Filter logic: only show for 'allgemein' and 'fastfirst'
     const filteredEmails = emailList.filter(email => {
         if (topTab !== 'allgemein' && topTab !== 'fastfirst') return false;
-        if (search) {
-            const q = search.toLowerCase();
-            const subject = email.subject?.toLowerCase() || '';
-            const content = email.content?.toLowerCase() || '';
-            const sender = email.sender?.name?.toLowerCase() || '';
-            const recipient = email.recipient?.name?.toLowerCase() || '';
-            if (!subject.includes(q) && !content.includes(q) && !sender.includes(q) && !recipient.includes(q)) {
-                return false;
-            }
-        }
         return true;
     });
 
@@ -236,6 +266,36 @@ export default function SentDataEmail({
 
     return (
         <div className="flex-1 flex flex-col min-w-0">
+            {/* Select All Header */}
+            {filteredEmails.length > 0 && (
+                <div className="bg-gray-50 border-b border-gray-200 px-4 py-2">
+                    <div className="flex items-center gap-3">
+                        <input
+                            type="checkbox"
+                            checked={filteredEmails.length > 0 && filteredEmails.every(email => selectedEmails.has(email.id))}
+                            onChange={e => {
+                                const updated = new Set(selectedEmails);
+                                if (e.target.checked) {
+                                    // Select all filtered emails
+                                    filteredEmails.forEach(email => updated.add(email.id));
+                                } else {
+                                    // Deselect all filtered emails
+                                    filteredEmails.forEach(email => updated.delete(email.id));
+                                }
+                                onSelectedEmailsChange(updated);
+                            }}
+                            className="rounded border-gray-300 cursor-pointer hover:border-[#61A07B] transition-colors"
+                        />
+                        <span className="text-sm text-gray-600">
+                            {selectedEmails.size > 0 
+                                ? `${selectedEmails.size} ausgewählt` 
+                                : 'Alle auswählen'
+                            }
+                        </span>
+                    </div>
+                </div>
+            )}
+            
             <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 <div className="w-full">
                     {filteredEmails.map(email => (
@@ -296,6 +356,7 @@ export default function SentDataEmail({
                                 <button
                                     onClick={e => {
                                         e.stopPropagation();
+                                        onSingleEmailDelete?.(email.id);
                                     }}
                                     className="p-1 cursor-pointer rounded-full hover:bg-red-100 transition-colors opacity-0 group-hover:opacity-100 flex-shrink-0"
                                 >

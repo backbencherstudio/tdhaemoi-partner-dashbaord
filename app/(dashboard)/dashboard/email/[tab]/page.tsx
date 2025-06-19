@@ -71,21 +71,21 @@ export default function EmailTabPage() {
   }, [searchParams]);
 
   // Update URL when search or topTab changes
-  const updateURL = (newSearch: string, newTopTab?: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+  // const updateURL = (newSearch: string, newTopTab?: string) => {
+  //   const params = new URLSearchParams(searchParams.toString());
     
-    if (newSearch.trim()) {
-      params.set('search', newSearch);
-    } else {
-      params.delete('search');
-    }
+  //   if (newSearch.trim()) {
+  //     params.set('search', newSearch);
+  //   } else {
+  //     params.delete('search');
+  //   }
     
-    if (newTopTab) {
-      params.set('tab', newTopTab);
-    }
+  //   if (newTopTab) {
+  //     params.set('tab', newTopTab);
+  //   }
     
-    router.push(`/dashboard/email/${tab}?${params.toString()}`);
-  };
+  //   router.push(`/dashboard/email/${tab}?${params.toString()}`);
+  // };
 
   const handleSingleEmailDelete = (emailId: string) => {
     setEmailToDelete(emailId);

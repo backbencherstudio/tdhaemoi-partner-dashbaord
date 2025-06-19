@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
         hostname: '192.168.4.3',
         port: '3001',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'date-advanced-electrical-hypothetical.trycloudflare.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },

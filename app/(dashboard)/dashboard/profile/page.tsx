@@ -6,6 +6,7 @@ import { FaUserCircle } from 'react-icons/fa'
 import { updateUserProfile, changePassword } from '@/apis/authApis'
 import toast from 'react-hot-toast'
 import { useForm } from 'react-hook-form'
+import Image from 'next/image'
 
 interface ProfileFormData {
   fullName: string;
@@ -160,7 +161,9 @@ export default function Profile() {
                         <div className="flex flex-col items-center mb-8">
                             <div className="relative w-24 md:w-32 h-24 md:h-32 mb-4">
                                 {profileImage ? (
-                                    <img
+                                    <Image
+                                        width={100}
+                                        height={100}
                                         src={profileImage}
                                         alt="Profile"
                                         className="w-full h-full rounded-full object-cover border-4 border-gray-200"

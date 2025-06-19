@@ -34,10 +34,9 @@ interface SingleEmailViewProps {
     fromTab?: string;
     onBack: () => void;
     onDelete: (id: string) => void;
-    onArchive: (id: string) => void;
 }
 
-export default function SingleEmailView({ email, fromTab, onBack, onDelete, onArchive }: SingleEmailViewProps) {
+export default function SingleEmailView({ email, fromTab, onBack, onDelete }: SingleEmailViewProps) {
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('de-DE', {

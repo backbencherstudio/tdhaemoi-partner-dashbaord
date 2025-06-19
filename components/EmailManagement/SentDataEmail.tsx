@@ -312,7 +312,7 @@ export default function SentDataEmail({
                                     <input
                                         type="checkbox"
                                         checked={selectedEmails.has(email.id)}
-                                        onChange={e => {
+                                        onChange={() => {
                                             const updated = new Set(selectedEmails);
                                             if (updated.has(email.id)) {
                                                 updated.delete(email.id);

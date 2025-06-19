@@ -8,9 +8,6 @@ import toast from 'react-hot-toast'
 import { loginUser } from '@/apis/authApis'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import SendEmailModal from '@/components/ResetPassword/SendEmailModal'
 
 
@@ -25,7 +22,6 @@ export default function Login() {
     const { login, isAuthenticated } = useAuth()
     const [showPassword, setShowPassword] = useState(false);
     const [isResetModalOpen, setIsResetModalOpen] = useState(false);
-    const [resetEmail, setResetEmail] = useState('');
 
     // Redirect if already authenticated
     useEffect(() => {

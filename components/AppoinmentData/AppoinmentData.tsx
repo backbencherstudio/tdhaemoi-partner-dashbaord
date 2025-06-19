@@ -50,7 +50,7 @@ export default function AppoinmentData({ onRefresh }: AppoinmentDataProps) {
             });
             
             if (response?.data) {
-                const formattedEvents = response.data.map((apt: any) => ({
+                const formattedEvents = response.data.map((apt: Appointment) => ({
                     id: apt.id,
                     date: new Date(apt.date).toISOString().split('T')[0],
                     time: apt.time,

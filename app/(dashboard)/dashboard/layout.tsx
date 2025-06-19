@@ -1,6 +1,5 @@
 'use client'
 import DashboardLayout from '@/components/Layout/DashboardLayout';
-import { Toaster } from 'react-hot-toast';
 import ProtectedRoute from '../../../lib/protected-route';
 
 interface LayoutProps {

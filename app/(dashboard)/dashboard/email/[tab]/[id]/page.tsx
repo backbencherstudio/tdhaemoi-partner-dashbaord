@@ -14,12 +14,39 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
+interface Sender {
+  id: string;
+  name: string;
+  email: string;
+  image: string;
+  role: string;
+}
+
+interface Recipient {
+  id: string;
+  name: string | null;
+  email: string;
+  image: string | null;
+  role: string;
+}
+
+interface EmailData {
+  id: string;
+  subject: string;
+  content: string;
+  createdAt: string;
+  isFavorite: boolean;
+  sender?: Sender;
+  recipient?: Recipient;
+  recipientEmail?: string;
+}
+
 export default function EmailDetailPage() {
   const params = useParams();
   const router = useRouter();
   const tab = params.tab as string;
   const id = params.id as string;
-  const [email, setEmail] = useState<any>(null);
+  const [email, setEmail] = useState<EmailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -64,7 +91,6 @@ export default function EmailDetailPage() {
         fromTab={tab}
         onBack={() => router.back()}
         onDelete={handleDelete}
-        onArchive={() => {}}
       />
 
       {/* Delete Confirmation Dialog */}

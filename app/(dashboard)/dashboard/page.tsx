@@ -28,6 +28,28 @@ interface AppointmentDetail {
     };
 }
 
+interface AppointmentItem {
+    id: string;
+    time: string;
+    title: string;
+    reason: string;
+    assignedTo: string;
+    details: string;
+    userType: 'user' | 'other';
+}
+
+interface DayAppointments {
+    day: string;
+    appointments: AppointmentItem[];
+}
+
+interface GroupedAppointments {
+    [key: string]: {
+        day: string;
+        appointments: AppointmentItem[];
+    };
+}
+
 export default function Dashboard() {
     const [emblaRef, emblaApi] = useEmblaCarousel({
         slidesToScroll: 1,
@@ -38,7 +60,7 @@ export default function Dashboard() {
         }
     })
     setDefaultOptions({ locale: de });
-    const [appointments, setAppointments] = useState<any[]>([]);
+    const [appointments, setAppointments] = useState<DayAppointments[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetail | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,7 +79,7 @@ export default function Dashboard() {
             });
 
             if (response?.data) {
-                const groupedByDay = response.data.reduce((acc: any, apt: any) => {
+                const groupedByDay = response.data.reduce((acc: GroupedAppointments, apt: AppointmentDetail) => {
                     const dayName = format(new Date(apt.date), 'EEEE');
 
                     if (!acc[dayName]) {
@@ -138,7 +160,7 @@ export default function Dashboard() {
                                     <div className="border rounded-[20px] p-4 h-[400px] flex flex-col">
                                         <h2 className="text-xl font-semibold mb-4 bg-gray-100 p-2 rounded">{day.day}</h2>
                                         <div className="space-y-3 overflow-y-auto flex-1">
-                                            {day.appointments.map((apt: any, aptIndex: number) => (
+                                            {day.appointments.map((apt: AppointmentItem, aptIndex: number) => (
                                                 <div
                                                     key={aptIndex}
                                                     onClick={() => handleAppointmentClick(apt.id)}

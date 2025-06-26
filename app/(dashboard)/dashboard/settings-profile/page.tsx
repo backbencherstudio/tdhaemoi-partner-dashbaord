@@ -78,7 +78,7 @@ export default function SettingsProfilePage() {
                 className="flex flex-col lg:flex-row gap-6"
             >
                 {/* Sidebar */}
-                <div className="w-full lg:w-4/12 xl:w-3/12 lg:sticky lg:top-0 self-start">
+                <div className="w-full lg:w-5/12 2xl:w-3/12 lg:sticky lg:top-0 self-start">
                     <div className="overflow-x-auto lg:overflow-visible">
                         <TabsList className="flex flex-row lg:flex-col items-start h-fit space-x-2 lg:space-x-0 lg:space-y-7 bg-gray-50/50 p-2 rounded-lg shadow-sm backdrop-blur-sm whitespace-nowrap lg:whitespace-normal">
                             {sidebarData.map((item) => (

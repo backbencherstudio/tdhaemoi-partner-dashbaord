@@ -1,4 +1,5 @@
 import React from 'react'
+import toast from 'react-hot-toast'
 import {
   Card,
   CardHeader,
@@ -12,9 +13,13 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select"
-import { Input } from '@/components/ui/input'
+import { Button } from "@/components/ui/button"
 
 export default function LanguageTimeZone() {
+  const handleSave = () => {
+    toast.success('Einstellungen erfolgreich gespeichert!')
+  }
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -35,7 +40,6 @@ export default function LanguageTimeZone() {
             <SelectContent>
               <SelectItem value="de">Deutsch</SelectItem>
               <SelectItem value="en">Englisch</SelectItem>
-              <SelectItem value="fr">Französisch</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -43,14 +47,33 @@ export default function LanguageTimeZone() {
         {/* Standardzeitzone */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Standardzeitzone:</label>
-          <Input placeholder="z. B. Europe/Berlin" />
+          <Select>
+            <SelectTrigger>
+              <SelectValue placeholder="Zeitzone wählen" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Europe/London">Europe/London (UTC +0)</SelectItem>
+              <SelectItem value="Europe/Berlin">Europe/Berlin (UTC +1)</SelectItem>
+              <SelectItem value="Europe/Vienna">Europe/Vienna (UTC +1)</SelectItem>
+              <SelectItem value="Europe/Paris">Europe/Paris (UTC +1)</SelectItem>
+              <SelectItem value="Europe/Madrid">Europe/Madrid (UTC +1)</SelectItem>
+              <SelectItem value="Europe/Rome">Europe/Rome (UTC +1)</SelectItem>
+              <SelectItem value="Europe/Athens">Europe/Athens (UTC +2)</SelectItem>
+              <SelectItem value="Europe/Bucharest">Europe/Bucharest (UTC +2)</SelectItem>
+              <SelectItem value="Europe/Riga">Europe/Riga (UTC +2)</SelectItem>
+              <SelectItem value="Europe/Helsinki">Europe/Helsinki (UTC +2)</SelectItem>
+              <SelectItem value="Europe/Istanbul">Europe/Istanbul (UTC +3)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        {/* Mehrsprachigkeit */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Mehrsprachigkeit</label>
-          <Input placeholder="z. B. Aktiviert / Deaktiviert" />
+        {/* Save Button */}
+        <div className="flex justify-end pt-4">
+          <Button onClick={handleSave}>
+            Speichern
+          </Button>
         </div>
+
       </CardContent>
     </Card>
   )

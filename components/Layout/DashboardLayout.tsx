@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Sidebar from '../Shared/Sidebar';
 import Navbar from '../Shared/Navbar';
+import TeamChat from '../Shared/TeamChat';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -25,7 +26,7 @@ const DashboardLayout = ({ children }: LayoutProps) => {
             </div>
 
             {/* Main Content */}
-            <div className={`flex-1 flex flex-col overflow-hidden ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+            <div className={`flex-1 flex flex-col overflow-hidden ${isSidebarOpen ? 'ml-80' : 'ml-0'}`}>
                 <Navbar onMenuClick={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
                 {/* Overlay */}
@@ -39,9 +40,13 @@ const DashboardLayout = ({ children }: LayoutProps) => {
                 {/* Content Area */}
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-white p-4">
                     {children}
-
                 </main>
+
+                {/* Global Team Chat */}
+                <TeamChat />
+
             </div>
+
         </div>
     );
 };

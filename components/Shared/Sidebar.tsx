@@ -17,6 +17,8 @@ import { HiArrowRightOnRectangle } from "react-icons/hi2";
 import logo from '@/public/images/logo.png'
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
+import { FaMoneyCheckAlt } from 'react-icons/fa';
+import { TbDashboardFilled } from 'react-icons/tb';
 
 
 interface SidebarProps {
@@ -27,10 +29,13 @@ interface SidebarProps {
 export default function Sidebar({ onClose }: SidebarProps) {
     const { logout } = useAuth();
     const [expandedSections, setExpandedSections] = useState({
-        orders: true,
-        customers: true,
-        calendar: true,
-        system: true
+        '1': true,
+        '2': true,
+        '3': true,
+        '4': true,
+        '5': true,
+        '6': true,
+        '7': true
     });
 
     const pathname = usePathname();
@@ -41,22 +46,23 @@ export default function Sidebar({ onClose }: SidebarProps) {
 
     const menuSections = [
         {
-            id: 'dashboard',
+            id: '1',
             standalone: true,
             icon: HiHome,
             label: 'Dashboard',
             href: '/dashboard'
         },
         {
-            id: 'orders',
-            label: 'Bestellungen & Produkte',
+            id: '2',
+            label: 'Aufträge & Produkte',
             items: [
-                { icon: HiShoppingCart, label: 'Bestellverwaltung', href: '/orders' },
+                { icon: HiShoppingCart, label: 'Aufträge', href: '/dashboard/orders' },
+                { icon: HiShoppingCart, label: 'Sammelbestellungen', href: '/dashboard/group-orders' },
                 { icon: HiCollection, label: 'Produktverwaltung', href: '/dashboard/lager' }
             ]
         },
         {
-            id: 'customers',
+            id: '3',
             label: 'Kundenmanagement',
             items: [
                 { icon: HiUsers, label: 'Kundensuche', href: '/dashboard/customers' },
@@ -64,14 +70,30 @@ export default function Sidebar({ onClose }: SidebarProps) {
             ]
         },
         {
-            id: 'calendar',
+            id: '4',
+            label: 'Individuelle Kundenversorgung',
+            items: [
+                { icon: HiUsers, label: 'Maßschäfte', href: '/dashboard/custom-shafts' },
+                { icon: HiChat, label: 'Fußübungen', href: '/dashboard/foot-exercises' }
+            ]
+        },
+        {
+            id: '5',
             label: 'Kalender & Termine',
             items: [
                 { icon: HiCalendar, label: 'Terminkalender', href: '/dashboard/calendar' }
             ]
         },
         {
-            id: 'system',
+            id: '6',
+            label: 'Finanzen',
+            items: [
+                { icon: FaMoneyCheckAlt, label: 'Finanzen im Überblick', href: '/dashboard/finance' },
+                { icon: TbDashboardFilled, label: 'Dashboard FeetF1rst', href: '/dashboard/dashboard-feetfirst' }
+            ]
+        },
+        {
+            id: '7',
             label: 'System & Einstellungen',
             items: [
                 { icon: HiCog, label: 'Einstellungen', href: '/dashboard/settings' }
@@ -87,9 +109,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
     };
 
     return (
-        <div className="w-64 h-screen bg-white  flex flex-col border-r border-gray-200">
+        <div className="w-80 h-screen bg-white  flex flex-col border-r border-gray-200 ">
             <div className="py-5 px-3 flex justify-between items-center border-gray-400">
-                <div className='w-16 h-16'>
+                <div className='w-14 h-14'>
                     <Image src={logo} alt="logo" width={100} height={100} className='w-full h-full object-contain' />
                 </div>
                 <button
@@ -100,12 +122,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
                 </button>
             </div>
 
-            <nav className="mt-4 flex-1 ">
+            <nav className="mt-4 flex-1 overflow-y-auto">
                 {menuSections.map((section) => (
-                    <div key={section.id} className="mb-5 px-2 ">
+                    <div key={section.id} className="mb-3 px-2 ">
                         {section.standalone ? (
                             <Link href={section.href} className='cursor-pointer'>
-                                <span className={`flex items-center px-4 py-2 rounded-full ${pathname === section.href
+                                <span className={`flex items-center px-4 py-1 rounded-full ${pathname === section.href
                                     ? 'bg-black text-white'
                                     : 'text-gray-700 hover:bg-gray-100'
                                     }`}>
@@ -128,9 +150,9 @@ export default function Sidebar({ onClose }: SidebarProps) {
                                 {expandedSections[section.id as keyof typeof expandedSections] && (
                                     <ul className="mt-1 space-y-1">
                                         {section.items?.map((item) => (
-                                            <li key={item.href}>
+                                            <li key={`${section.id}-${item.label}`}>
                                                 <Link href={item.href}>
-                                                    <span className={`flex items-center px-8 py-2 ${pathname === item.href
+                                                    <span className={`flex items-center px-8 py-1 rounded-full ${pathname === item.href
                                                         ? 'bg-black text-white'
                                                         : 'text-gray-700 hover:bg-gray-100'
                                                         }`}>
@@ -149,7 +171,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
             </nav>
 
             {/* Logout button */}
-            <div className="border-t border-gray-200 p-4">
+            <div className="border-t border-gray-200  pb-1">
                 <button
                     onClick={handleLogout}
                     className="flex items-center cursor-pointer w-full px-4 py-2 text-gray-700 hover:bg-[#61A175] hover:text-white rounded-md transition-colors duration-300 group"

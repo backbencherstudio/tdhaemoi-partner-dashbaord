@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { HiMenuAlt2, HiSearch, HiArrowLeft } from 'react-icons/hi';
 import logo from '@/public/images/logo.png'
 import Image from 'next/image';
+import { IoNotificationsOutline } from 'react-icons/io5';
 
 interface NavbarProps {
     onMenuClick: () => void;
@@ -34,7 +35,7 @@ export default function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                     className="text-gray-600 cursor-pointer hover:text-gray-800 transition-all duration-300"
                 >
                     {isSidebarOpen ? (
-                        <HiArrowLeft className="text-2xl hidden md:block"  />
+                        <HiArrowLeft className="text-2xl hidden md:block" />
                     ) : (
                         <HiMenuAlt2 className="text-2xl" />
                     )}
@@ -46,13 +47,14 @@ export default function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                     </div>
                 </div>
                 <div className="flex items-center space-x-2 md:space-x-4">
+                    <IoNotificationsOutline className='text-2xl text-gray-600 hover:text-gray-800 cursor-pointer' />
                     {/* search icon */}
                     <div className="relative" ref={searchRef}>
-                        <HiSearch 
-                            className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer" 
+                        <HiSearch
+                            className="h-6 w-6 text-gray-600 hover:text-gray-800 cursor-pointer"
                             onClick={() => setIsSearchVisible(!isSearchVisible)}
                         />
-                        
+
                         {/* Search dropdown */}
                         {isSearchVisible && (
                             <div className="absolute right-0 top-10 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-3">

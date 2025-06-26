@@ -62,6 +62,7 @@ export default function Dashboard() {
     setDefaultOptions({ locale: de });
     const [appointments, setAppointments] = useState<DayAppointments[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetail | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -73,6 +74,7 @@ export default function Dashboard() {
     const fetchAppointments = async () => {
         try {
             setIsLoading(true);
+            setError(null);
             const response = await getMyAppointments({
                 page: 1,
                 limit: 100
@@ -109,9 +111,25 @@ export default function Dashboard() {
                 }));
 
                 setAppointments(finalAppointments);
+            } else {
+                // If no data, still show the structure with empty appointments
+                const daysOfWeek = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+                const emptyAppointments = daysOfWeek.map(day => ({
+                    day: day,
+                    appointments: []
+                }));
+                setAppointments(emptyAppointments);
             }
         } catch (error) {
             console.error('Failed to load appointments:', error);
+            setError('Netzwerkfehler beim Laden der Termine');
+            // Even on error, show the structure with empty appointments
+            const daysOfWeek = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+            const emptyAppointments = daysOfWeek.map(day => ({
+                day: day,
+                appointments: []
+            }));
+            setAppointments(emptyAppointments);
         } finally {
             setIsLoading(false);
         }
@@ -147,56 +165,75 @@ export default function Dashboard() {
                 <p className='text-lg text-gray-500'>{format(new Date(), 'EEEE, d. MMMM yyyy')}</p>
             </div>
 
+
             <div className="relative">
                 <div className="overflow-hidden" ref={emblaRef}>
                     <div className="flex">
-                        {isLoading ? (
-                            <div className="w-full flex justify-center items-center p-10">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#62A07C]"></div>
-                            </div>
-                        ) : (
+                        {
                             appointments.map((day, index) => (
                                 <div key={index} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_50%] lg:flex-[0_0_25%] p-2">
                                     <div className="border rounded-[20px] p-4 h-[400px] flex flex-col">
-                                        <h2 className="text-xl font-semibold mb-4 bg-gray-100 p-2 rounded">{day.day}</h2>
+                                        <h2 className="text-xl font-semibold mb-4 bg-gray-100 p-2 rounded">{day?.day}</h2>
                                         <div className="space-y-3 overflow-y-auto flex-1">
-                                            {day.appointments.map((apt: AppointmentItem, aptIndex: number) => (
-                                                <div
-                                                    key={aptIndex}
-                                                    onClick={() => handleAppointmentClick(apt.id)}
-                                                    className={`p-3 rounded cursor-pointer transition-all duration-300 hover:opacity-90 ${
-                                                        apt.userType === 'user' ? 'bg-black text-white' : 'bg-[#62A07B] text-white'
-                                                    }`}
-                                                >
-                                                    {apt.time && <div className="text-xs opacity-90 mb-1 uppercase">{apt.time}</div>}
-                                                    <div className="font-semibold">{apt.title}</div>
+                                            {isLoading ? (
+                                                // Loading skeleton
+                                                Array.from({ length: 3 }).map((_, i) => (
+                                                    <div key={i} className="p-3 rounded bg-gray-200 animate-pulse">
+                                                        <div className="h-3 bg-gray-300 rounded mb-2"></div>
+                                                        <div className="h-4 bg-gray-300 rounded"></div>
+                                                    </div>
+                                                ))
+                                            ) : day.appointments.length > 0 ? (
+                                                // Actual appointments
+                                                day.appointments.map((apt: AppointmentItem, aptIndex: number) => (
+                                                    <div
+                                                        key={aptIndex}
+                                                        onClick={() => handleAppointmentClick(apt.id)}
+                                                        className={`p-3 rounded cursor-pointer transition-all duration-300 hover:opacity-90 ${apt.userType === 'user' ? 'bg-black text-white' : 'bg-[#62A07B] text-white'
+                                                            }`}
+                                                    >
+                                                        {apt.time && <div className="text-xs opacity-90 mb-1 uppercase">{apt.time}</div>}
+                                                        <div className="font-semibold">{apt.title}</div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                // Empty state
+                                                <div className="flex items-center justify-center h-full">
+                                                    <div className="text-center text-gray-500">
+                                                        <div className="text-4xl mb-2">📅</div>
+                                                        <p className="text-sm">Keine Termine</p>
+                                                    </div>
                                                 </div>
-                                            ))}
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             ))
-                        )}
+                        }
                     </div>
                 </div>
 
-                {/* Navigation Arrows */}
-                <button
-                    onClick={scrollPrev}
-                    className="absolute cursor-pointer left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 bg-white p-2 transition-all duration-300 rounded-full shadow-lg hover:bg-gray-100 z-10"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                    </svg>
-                </button>
-                <button
-                    onClick={scrollNext}
-                    className="absolute cursor-pointer right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white transition-all duration-300 p-2 rounded-full shadow-lg hover:bg-gray-100 z-10"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                </button>
+                {/* Navigation Arrows - Only show if there are appointments or not loading */}
+                {!isLoading && appointments.some(day => day.appointments.length > 0) && (
+                    <>
+                        <button
+                            onClick={scrollPrev}
+                            className="absolute cursor-pointer left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 bg-white p-2 transition-all duration-300 rounded-full shadow-lg hover:bg-gray-100 z-10"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={scrollNext}
+                            className="absolute cursor-pointer right-0 top-1/2 -translate-y-1/2 translate-x-1/2 bg-white transition-all duration-300 p-2 rounded-full shadow-lg hover:bg-gray-100 z-10"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </button>
+                    </>
+                )}
             </div>
 
             {/* Appointment Detail Modal */}

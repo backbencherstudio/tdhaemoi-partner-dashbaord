@@ -108,11 +108,11 @@ export default function Settingss() {
                     <div key={index} className="relative">
                         {option.onClick ? (
                             <div
-                                className="flex flex-col items-center cursor-pointer"
+                                className="flex flex-col items-center cursor-pointer capitalize"
                                 onClick={option.onClick}
                             >
                                 <div className="bg-white  hover:bg-gray-200 p-6 rounded-[40px] border-2 border-gray-300 hover:shadow-xl hover:border-primary-500 transition-all duration-300 mb-3">
-                                    <div className='flex justify-center items-center px-10 py-2 w-full'>
+                                    <div className='flex justify-center items-center px-10 py-2 w-full '>
                                         <option.icon className={option.className} />
                                     </div>
                                 </div>
@@ -121,11 +121,11 @@ export default function Settingss() {
                         ) : (
                             <Link href={option.href} className="flex flex-col items-center">
                                 <div className="bg-white hover:bg-gray-200 p-6 rounded-[40px] border-2 border-gray-300 hover:shadow-xl hover:border-primary-500 transition-all duration-300 mb-3">
-                                    <div className='flex justify-center items-center px-10 py-2  w-full'>
+                                    <div className='flex justify-center items-center px-10 py-2  w-full '>
                                         <option.icon className={option.className} />
                                     </div>
                                 </div>
-                                <span className="text-base font-medium text-gray-700">{option.label}</span>
+                                <span className="text-base font-medium text-gray-700 capitalize">{option.label}</span>
                             </Link>
                         )}
 

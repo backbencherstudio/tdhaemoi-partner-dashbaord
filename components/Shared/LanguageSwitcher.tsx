@@ -41,9 +41,9 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
         const languageMap = {
             'German': { code: 'de', short: 'DE', flag: '🇩🇪' },
             'English': { code: 'en', short: 'EN', flag: '🇬🇧' },
-            'Arabic': { code: 'ar', short: 'AR', flag: '🇦🇪' },
-            'Chinese': { code: 'zh-CN', short: 'ZH', flag: '🇨🇳' },
-            'French': { code: 'fr', short: 'FR', flag: '🇫🇷' }
+            // 'Arabic': { code: 'ar', short: 'AR', flag: '🇦🇪' },
+            // 'Chinese': { code: 'zh-CN', short: 'ZH', flag: '🇨🇳' },
+            // 'French': { code: 'fr', short: 'FR', flag: '🇫🇷' }
         };
 
         const langInfo = languageMap[lang as keyof typeof languageMap];
@@ -65,7 +65,7 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
                     }
                     new window.google.translate.TranslateElement({
                         pageLanguage: 'de',
-                        includedLanguages: 'en,de,ar,zh-CN,fr',
+                        includedLanguages: 'en,de',
                         autoDisplay: false
                     });
                 }
@@ -78,7 +78,7 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
-                languageDropdownRef.current && 
+                languageDropdownRef.current &&
                 dropdownContentRef.current &&
                 !(languageDropdownRef.current as HTMLElement).contains(event.target as Node) &&
                 !(dropdownContentRef.current as HTMLElement).contains(event.target as Node)
@@ -96,15 +96,15 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
         const langMap = {
             'de': 'DE',
             'en': 'EN',
-            'ar': 'AR',
-            'zh-CN': 'ZH',
-            'fr': 'FR'
+            // 'ar': 'AR',
+            // 'zh-CN': 'ZH',
+            // 'fr': 'FR'
         };
         setLanguage(langMap[selectedLang as keyof typeof langMap] || 'DE');
     }, [selectedLang]);
 
     const dropdownStyles = variant === 'minimal' ? 'w-[180px]' : 'w-[220px]';
-    const buttonStyles = variant === 'minimal' 
+    const buttonStyles = variant === 'minimal'
         ? 'px-3 py-1.5 text-sm rounded-md bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white/90 hover:border-primary-500'
         : 'px-4 py-2 rounded-[8px] shadow-sm border border-gray-300 font-semibold hover:shadow-md hover:border-primary-500 transition-all duration-300';
 
@@ -137,16 +137,16 @@ const LanguageSwitcher = ({ variant = 'default', className = '', onLanguageChang
                 </button>
 
                 {languageDropDown && (
-                    <div 
+                    <div
                         ref={dropdownContentRef}
                         className={`absolute right-0 mt-2 ${dropdownStyles} bg-white rounded-lg shadow-lg ring-1 ring-black/5 border border-gray-100 overflow-hidden z-[100]`}
                     >
                         {Object.entries({
                             'German': { code: 'de', short: 'DE', flag: '🇩🇪' },
                             'English': { code: 'en', short: 'EN', flag: '🇬🇧' },
-                            'Arabic': { code: 'ar', short: 'AR', flag: '🇦🇪' },
-                            'Chinese': { code: 'zh-CN', short: 'ZH', flag: '🇨🇳' },
-                            'French': { code: 'fr', short: 'FR', flag: '🇫🇷' }
+                            // 'Arabic': { code: 'ar', short: 'AR', flag: '🇦🇪' },
+                            // 'Chinese': { code: 'zh-CN', short: 'ZH', flag: '🇨🇳' },
+                            // 'French': { code: 'fr', short: 'FR', flag: '🇫🇷' }
                         }).map(([lang, info]) => (
                             <button
                                 key={lang}

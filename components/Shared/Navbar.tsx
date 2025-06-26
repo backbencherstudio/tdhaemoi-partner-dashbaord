@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { HiMenuAlt2, HiSearch, HiArrowLeft } from 'react-icons/hi';
 import logo from '@/public/images/logo.png'
 import Image from 'next/image';
-import { IoNotificationsOutline } from 'react-icons/io5';
+import NotificationPage from './Notification';
 
 interface NavbarProps {
     onMenuClick: () => void;
@@ -47,7 +47,7 @@ export default function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                     </div>
                 </div>
                 <div className="flex items-center space-x-2 md:space-x-4">
-                    <IoNotificationsOutline className='text-2xl text-gray-600 hover:text-gray-800 cursor-pointer' />
+                    <NotificationPage />
                     {/* search icon */}
                     <div className="relative" ref={searchRef}>
                         <HiSearch

@@ -4,6 +4,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import HighPriorityCard from '@/components/OrdersPage/HighPriorityCard/HighPriorityCard';
 
 const chartData = [
     { date: '01.06', value: 1500 },
@@ -111,40 +112,48 @@ function AuftragssucheCard() {
 
 export default function Orders() {
     return (
-        <div className='py-5 px-8 bg-white rounded-xl shadow'>
-            <div className="text-2xl font-bold mb-5">Revenue Overview</div>
-            <div className='flex flex-col xl:flex-row items-stretch w-full gap-6'>
-                {/* left side card  */}
-                <div className="bg-white rounded-lg shadow p-8 flex flex-col items-center justify-center min-w-[250px] border mb-4 md:mb-0 xl:w-4/12">
-                    <div className="text-2xl font-bold text-center mb-2">Geschäftsumsatz<br />(letzten 30 Tage)</div>
-                    <div className="text-4xl font-extrabold mt-4">{formatEuro(totalRevenue)}</div>
+        <>
+
+            <div className='py-5 px-8 bg-white rounded-xl shadow'>
+                <div className="text-2xl font-bold mb-5">Revenue Overview</div>
+                <div className='flex flex-col xl:flex-row items-stretch w-full gap-6'>
+                    {/* left side card  */}
+                    <div className="bg-white rounded-lg p-8 flex flex-col items-center justify-center min-w-[250px] border mb-4 md:mb-0 xl:w-4/12">
+                        <div className="text-2xl font-bold text-center mb-2">Geschäftsumsatz<br />(letzten 30 Tage)</div>
+                        <div className="text-4xl font-extrabold mt-4">{formatEuro(totalRevenue)}</div>
+                    </div>
+
+                    {/* right side line chart */}
+                    <div className="w-full overflow-x-auto xl:w-8/12 flex items-stretch" style={{ minWidth: 0 }}>
+                        <LineChartComponent chartData={chartData} />
+                    </div>
                 </div>
 
-                {/* right side line chart */}
-                <div className="w-full overflow-x-auto xl:w-8/12 flex items-stretch" style={{ minWidth: 0 }}>
-                    <LineChartComponent chartData={chartData} />
+                <hr className='my-5 border-gray-200 border' />
+
+                {/* card bottom  */}
+                <div className="flex flex-col md:flex-row justify-between items-stretch w-full gap-0">
+                    {/* Einlagen in Produktion */}
+                    <div className="flex-1 flex flex-col items-center justify-center  border-gray-300 py-6">
+                        <div className="text-lg font-bold text-[#1E1F6D] mb-2 text-center">Einlagen in Produktion</div>
+                        <div className="text-4xl font-extrabold">35</div>
+                    </div>
+                    <div className='border-r border-gray-300 hidden md:block'></div>
+                    {/* Ausgeführte Einlagen (letzten 30 Tage) */}
+                    <div className="flex-1 flex flex-col items-center justify-center  border-gray-300 py-6">
+                        <div className="text-lg font-bold text-[#62A07C] mb-2 text-center">Ausgeführte Einlagen<br />(letzten 30 Tage)</div>
+                        <div className="text-4xl font-extrabold">150</div>
+                    </div>
+                    <div className='border-r border-gray-300 mr-5 hidden md:block'></div>
+                    {/* Auftragssuche */}
+                    <AuftragssucheCard />
+
                 </div>
+
+
             </div>
+            <HighPriorityCard />
+        </>
 
-            <hr className='my-5 border-gray-200 border' />
-
-            {/* card bottom  */}
-            <div className="flex flex-col md:flex-row justify-between items-stretch w-full gap-0">
-                {/* Einlagen in Produktion */}
-                <div className="flex-1 flex flex-col items-center justify-center  border-gray-300 py-6">
-                    <div className="text-lg font-bold text-[#1E1F6D] mb-2 text-center">Einlagen in Produktion</div>
-                    <div className="text-4xl font-extrabold">35</div>
-                </div>
-                <div className='border-r border-gray-300 hidden md:block'></div>
-                {/* Ausgeführte Einlagen (letzten 30 Tage) */}
-                <div className="flex-1 flex flex-col items-center justify-center  border-gray-300 py-6">
-                    <div className="text-lg font-bold text-[#62A07C] mb-2 text-center">Ausgeführte Einlagen<br />(letzten 30 Tage)</div>
-                    <div className="text-4xl font-extrabold">150</div>
-                </div>
-                <div className='border-r border-gray-300 mr-5 hidden md:block'></div>
-                {/* Auftragssuche */}
-                <AuftragssucheCard />
-            </div>
-        </div>
     )
 }

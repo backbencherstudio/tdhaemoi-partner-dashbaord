@@ -19,6 +19,8 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { FaMoneyCheckAlt } from 'react-icons/fa';
 import { TbDashboardFilled } from 'react-icons/tb';
+import { GiFootprint } from 'react-icons/gi';
+import { FaShoePrints } from 'react-icons/fa';
 
 
 interface SidebarProps {
@@ -73,8 +75,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
             id: '4',
             label: 'Individuelle Kundenversorgung',
             items: [
-                { icon: HiUsers, label: 'Maßschäfte', href: '/dashboard/custom-shafts' },
-                { icon: HiChat, label: 'Fußübungen', href: '/dashboard/foot-exercises' }
+                { icon: FaShoePrints, label: 'Maßschäfte', href: '/dashboard/custom-shafts' },
+                { icon: GiFootprint, label: 'Fußübungen', href: '/dashboard/foot-exercises' }
             ]
         },
         {

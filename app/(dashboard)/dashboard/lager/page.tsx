@@ -275,7 +275,7 @@ export default function Lager() {
                             onClick={handleShowMore}
                             variant="outline"
                             size="lg"
-                            className="px-8 py-3"
+                            className="px-8 py-3 cursor-pointer"
                         >
                             Mehr anzeigen
                         </Button>

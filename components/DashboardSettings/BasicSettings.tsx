@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     Select,
     SelectContent,
@@ -7,19 +7,50 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 
 export default function BasicSettings() {
     // Define the type for the field keys
     type FieldKey = 'firstName' | 'lastName' | 'dob' | 'email' | 'phone' | 'address';
-    // State for required fields
-    const [requiredFields, setRequiredFields] = useState<Record<FieldKey, boolean>>({
+    
+    // Initial state for required fields
+    const initialRequiredFields = {
         firstName: false,
         lastName: false,
         dob: false,
         email: false,
         phone: false,
         address: false,
-    });
+    };
+
+    // Initial state for shipping settings
+    const initialShippingSettings = {
+        shippingTime: '',
+        shippingCost: '',
+        shippingReminder: '',
+        productionTime: '',
+        lowStockThreshold: '',
+        employees: '',
+        prices: '',
+        businessLocation: ''
+    };
+
+    // State for required fields
+    const [requiredFields, setRequiredFields] = useState<Record<FieldKey, boolean>>(initialRequiredFields);
+
+    // State for shipping settings
+    const [shippingSettings, setShippingSettings] = useState(initialShippingSettings);
+
+    // State to track if there are any changes
+    const [hasChanges, setHasChanges] = useState(false);
+
+    // Check for changes whenever states change
+    useEffect(() => {
+        const requiredFieldsChanged = JSON.stringify(requiredFields) !== JSON.stringify(initialRequiredFields);
+        const shippingSettingsChanged = JSON.stringify(shippingSettings) !== JSON.stringify(initialShippingSettings);
+        
+        setHasChanges(requiredFieldsChanged || shippingSettingsChanged);
+    }, [requiredFields, shippingSettings]);
 
     const handleCheckboxChange = (field: FieldKey) => {
         setRequiredFields(prev => ({
@@ -28,12 +59,32 @@ export default function BasicSettings() {
         }));
     };
 
+    const handleShippingSettingChange = (setting: keyof typeof shippingSettings, value: string) => {
+        setShippingSettings(prev => ({
+            ...prev,
+            [setting]: value,
+        }));
+    };
+
+    const handleSaveSettings = () => {
+        // Here you would typically save to your backend/API
+        console.log('Saving settings:', { requiredFields, shippingSettings });
+        // Add your API call here
+        alert('Einstellungen gespeichert!');
+        setHasChanges(false);
+    };
+
+    const handleResetSettings = () => {
+        setRequiredFields(initialRequiredFields);
+        setShippingSettings(initialShippingSettings);
+        setHasChanges(false);
+    };
+
     return (
-        <div className=" py-8">
+        <div className="py-8">
             {/* Customer Data & Management – Required Fields */}
             <div className="bg-white p-6 rounded-lg mb-10 shadow-sm">
                 <h1 className="text-2xl font-bold mb-1 flex items-center gap-2">
-                    <span className="material-icons text-xl">manage_accounts</span>
                     Kundendaten & Verwaltung
                 </h1>
                 <p className="text-base font-semibold mb-3 mt-2">Pflichtfelder definieren</p>
@@ -72,7 +123,7 @@ export default function BasicSettings() {
                     <div>
                         <h2 className="text-lg font-semibold mb-1">Versandzeiten</h2>
                         <p className="text-sm text-gray-600 mb-2">Define the standard shipping times for all orders</p>
-                        <Select>
+                        <Select value={shippingSettings.shippingTime} onValueChange={(value) => handleShippingSettingChange('shippingTime', value)}>
                             <SelectTrigger className="w-[280px]">
                                 <SelectValue placeholder="Standardzeit auswählen" />
                             </SelectTrigger>
@@ -88,7 +139,7 @@ export default function BasicSettings() {
                     <div>
                         <h2 className="text-lg font-semibold mb-1">Versandkosten für den Kunden</h2>
                         <p className="text-sm text-gray-600 mb-2">Set the default shipping fees that will be charged to customers</p>
-                        <Select>
+                        <Select value={shippingSettings.shippingCost} onValueChange={(value) => handleShippingSettingChange('shippingCost', value)}>
                             <SelectTrigger className="w-[280px]">
                                 <SelectValue placeholder="Versandkosten auswählen" />
                             </SelectTrigger>
@@ -102,9 +153,9 @@ export default function BasicSettings() {
                     </div>
 
                     <div>
-                        <h2 className="text-lg font-semibold mb-1">Errinerungen für den Versand</h2>
+                        <h2 className="text-lg font-semibold mb-1">Erinnerungen für den Versand</h2>
                         <p className="text-sm text-gray-600 mb-2">Specify after how many days automatic shipping reminders should be triggered</p>
-                        <Select>
+                        <Select value={shippingSettings.shippingReminder} onValueChange={(value) => handleShippingSettingChange('shippingReminder', value)}>
                             <SelectTrigger className="w-[280px]">
                                 <SelectValue placeholder="Erinnerungszeit auswählen" />
                             </SelectTrigger>
@@ -117,10 +168,10 @@ export default function BasicSettings() {
                         </Select>
                     </div>
 
-                    <div className='bg-white p-3 rounded-lg'>
+                    <div className='bg-gray-50 p-3 rounded-lg'>
                         <h2 className="text-lg font-semibold">Produktionszeiten für Einlagenherstellung</h2>
                         <p className="text-sm text-gray-600">Select the standard production times for insoles</p>
-                        <Select>
+                        <Select value={shippingSettings.productionTime} onValueChange={(value) => handleShippingSettingChange('productionTime', value)}>
                             <SelectTrigger className="w-[280px] mt-2">
                                 <SelectValue placeholder="Produktionszeit auswählen" />
                             </SelectTrigger>
@@ -133,10 +184,10 @@ export default function BasicSettings() {
                         </Select>
                     </div>
 
-                    <div className='bg-white p-3 rounded-lg'>
+                    <div className='bg-gray-50 p-3 rounded-lg'>
                         <h2 className="text-lg font-semibold">Ab wann Lagerstand gering sein soll</h2>
                         <p className="text-sm text-gray-600">Define when a product should be marked as having low stock</p>
-                        <Select>
+                        <Select value={shippingSettings.lowStockThreshold} onValueChange={(value) => handleShippingSettingChange('lowStockThreshold', value)}>
                             <SelectTrigger className="w-[280px] mt-2">
                                 <SelectValue placeholder="Schwellenwert auswählen" />
                             </SelectTrigger>
@@ -149,10 +200,10 @@ export default function BasicSettings() {
                         </Select>
                     </div>
 
-                    <div className='bg-white p-3 rounded-lg'>
+                    <div className='bg-gray-50 p-3 rounded-lg'>
                         <h2 className="text-lg font-semibold">MITARBEITER für Einlagenherstellung</h2>
                         <p className="text-sm text-gray-600">Select employees responsible for the production of insoles</p>
-                        <Select>
+                        <Select value={shippingSettings.employees} onValueChange={(value) => handleShippingSettingChange('employees', value)}>
                             <SelectTrigger className="w-[280px] mt-2">
                                 <SelectValue placeholder="Mitarbeiter auswählen" />
                             </SelectTrigger>
@@ -164,10 +215,10 @@ export default function BasicSettings() {
                         </Select>
                     </div>
 
-                    <div className='bg-white p-3 rounded-lg'>
+                    <div className='bg-gray-50 p-3 rounded-lg'>
                         <h2 className="text-lg font-semibold">PREISE für Einlagen</h2>
                         <p className="text-sm text-gray-600">Set standard prices for insole products</p>
-                        <Select>
+                        <Select value={shippingSettings.prices} onValueChange={(value) => handleShippingSettingChange('prices', value)}>
                             <SelectTrigger className="w-[280px] mt-2">
                                 <SelectValue placeholder="Standardpreis auswählen" />
                             </SelectTrigger>
@@ -180,10 +231,10 @@ export default function BasicSettings() {
                         </Select>
                     </div>
 
-                    <div className='bg-white p-3 rounded-lg'>
+                    <div className='bg-gray-50 p-3 rounded-lg'>
                         <h2 className="text-lg font-semibold">GESCHÄFTSSTANDORTE</h2>
                         <p className="text-sm text-gray-600">Manage and configure your different business locations</p>
-                        <Select>
+                        <Select value={shippingSettings.businessLocation} onValueChange={(value) => handleShippingSettingChange('businessLocation', value)}>
                             <SelectTrigger className="w-[280px] mt-2">
                                 <SelectValue placeholder="Standort auswählen" />
                             </SelectTrigger>
@@ -196,6 +247,18 @@ export default function BasicSettings() {
                         </Select>
                     </div>
                 </section>
+
+                {/* Action Buttons */}
+                <div className="flex gap-4 mt-8 pt-6 border-t">
+                    {hasChanges && (
+                        <Button onClick={handleSaveSettings} className="bg-blue-600 hover:bg-blue-700">
+                            Einstellungen speichern
+                        </Button>
+                    )}
+                    <Button onClick={handleResetSettings} variant="outline">
+                        Zurücksetzen
+                    </Button>
+                </div>
             </div>
         </div>
     )

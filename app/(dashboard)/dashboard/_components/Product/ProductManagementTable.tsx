@@ -19,6 +19,7 @@ import { IoTime } from 'react-icons/io5'
 import { Input } from '@/components/ui/input'
 import { IoCheckmark } from 'react-icons/io5'
 import { IoClose } from 'react-icons/io5'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 
 interface Product {
     id: number
@@ -54,6 +55,7 @@ interface ProductManagementTableProps {
     onShowHistory: (product: Product) => void
     hasLowStock: (product: Product) => boolean
     getLowStockSizes: (product: Product) => Array<{ size: string; quantity: number }>
+    onLagerortChange: (productId: number, newLagerort: string) => void
 }
 
 export default function ProductManagementTable({
@@ -68,7 +70,8 @@ export default function ProductManagementTable({
     onEditValueChange,
     onShowHistory,
     hasLowStock,
-    getLowStockSizes
+    getLowStockSizes,
+    onLagerortChange
 }: ProductManagementTableProps) {
 
     // Helper to get stock for a size
@@ -147,7 +150,18 @@ export default function ProductManagementTable({
                 {visibleProducts.map((product) => (
                     <TableRow key={product.id}>
                         <TableCell className="border-2 border-gray-500 p-2">
-                            {renderEditableCell(product, 'Lagerort')}
+                            {/* Lagerort as editable dropdown */}
+                            <Select value={product.Lagerort} onValueChange={(value) => onLagerortChange(product.id, value)}>
+                                <SelectTrigger className="w-40">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Alle Lagerorte">Alle Lagerorte</SelectItem>
+                                    <SelectItem value="Lager 1">Lager 1</SelectItem>
+                                    <SelectItem value="Lager 2">Lager 2</SelectItem>
+                                    <SelectItem value="Lager 3">Lager 3</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </TableCell>
                         <TableCell className="border-2 border-gray-500 p-2">
                             {renderEditableCell(product, 'Hersteller')}

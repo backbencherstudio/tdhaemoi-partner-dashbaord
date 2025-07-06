@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { RiArrowDownSLine } from 'react-icons/ri';
 import fxImg from '@/public/images/scanning/fax.png'
@@ -8,11 +8,13 @@ import folderImg from '@/public/images/scanning/folder.png'
 import userImg from '@/public/images/scanning/user.png'
 import shoesImg from '@/public/images/scanning/shoes.png'
 import emailImg from '@/public/images/scanning/email.png'
+import userload from '@/public/images/scanning/userload.png'
 import logoImg from '@/public/images/scanning/logo.png'
 import Link from 'next/link';
 import SacnningForm from '../../_components/Scanning/SacnningForm';
 import DataModal from '../../_components/Scanning/DataModal';
 import QuestionSection from '../../_components/Scanning/QuestionSection';
+
 
 interface ScanData {
     id: number;
@@ -41,6 +43,7 @@ export default function ScanningData() {
         "Rohling 339821769, mit Pelotte Nr. 10 und Micro Elastisch"
     );
 
+    const router = useRouter();
 
     // Add this state for the modal
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,6 +89,13 @@ export default function ScanningData() {
     if (loading) return <div>Loading...</div>;
     if (!scanData) return <div>Scan not found</div>;
 
+    // handle versorgungs page
+    const handleVersorgungsPage = (e: React.MouseEvent) => {
+        e.preventDefault();
+        router.push('/dashboard/versorgungs');
+    };
+
+
     return (
         <div className="p-4">
             <div className='flex flex-col md:flex-row justify-between items-start mb-6 gap-4'>
@@ -94,9 +104,33 @@ export default function ScanningData() {
                         <div className="font-bold text-xl">Benutzer {scanData.nameKunde}</div>
                     </div>
 
-                    <div className="mb-2 flex items-center gap-2">
-                        <span>Scan {scanData.createdAt}</span>
-                        <RiArrowDownSLine className='text-gray-900 text-2xl' />
+                    <div className='mb-10'>
+                        <div className="mb-2 flex items-center gap-2">
+                            <span>Scan {scanData.createdAt}</span>
+                            <RiArrowDownSLine className='text-gray-900 text-2xl' />
+                        </div>
+                        <div className="flex gap-8 mt-4">
+                            {/* Versorgung starten */}
+                            <div className="flex flex-col items-center">
+                                <button
+                                    onClick={handleVersorgungsPage}
+                                    className="p-5 flex items-center justify-center rounded-2xl border border-black bg-white hover:bg-gray-100 transition cursor-pointer"
+                                >
+                                    <Image src={userload} alt="Versorgung starten" width={70} height={70} />
+                                </button>
+                                <span className="mt-2 text-center text-sm font-normal">Versorgung starten</span>
+                            </div>
+                            {/* Kundendaten -historie */}
+                            <div className="flex flex-col items-center">
+                                <Link
+                                    href={`/dashboard/customer-history/${scanData.id}`}
+                                    className="p-5 cursor-pointer flex items-center justify-center rounded-2xl border border-black bg-white hover:bg-gray-100 transition"
+                                >
+                                    <Image src={userImg} alt="Kundendaten -historie" width={60} height={60} />
+                                </Link>
+                                <span className="mt-2 text-center text-sm font-normal">Kundendaten -historie</span>
+                            </div>
+                        </div>
                     </div>
 
                     {/* image section */}

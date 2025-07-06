@@ -40,7 +40,7 @@ export default function NoteCalendar() {
     const [activeTab, setActiveTab] = useState<string>('Diagramm');
     const [showAddForm, setShowAddForm] = useState<boolean>(false);
     const [notes, setNotes] = useState<Notes>({});
-    const [selectedDate, setSelectedDate] = useState<string>('');
+    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
     const [noteText, setNoteText] = useState<string>('');
     const [noteCategory, setNoteCategory] = useState<CategoryType>('Notizen');
     const [hoveredNote, setHoveredNote] = useState<number | null>(null);

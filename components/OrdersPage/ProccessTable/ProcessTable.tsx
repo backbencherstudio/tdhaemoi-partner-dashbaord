@@ -21,7 +21,7 @@ export default function ProcessTable() {
     // Get the selected order's current step to show as active in the progress bar
     const getActiveStep = () => {
         if (!selectedOrderId) return -1; // No order selected
-        
+
         const selectedOrder = orders.find(order => order.id === selectedOrderId);
         return selectedOrder ? selectedOrder.currentStep : -1;
     };
@@ -51,7 +51,7 @@ export default function ProcessTable() {
             'bg-[#2196F3]',
             'bg-[#9C27B0]',
         ];
-        
+
         if (isActive) {
             return `font-bold ${colors[stepIndex] || 'text-black'}`;
         }
@@ -60,7 +60,7 @@ export default function ProcessTable() {
 
     return (
         <div className="mt-6 sm:mt-10 max-w-full overflow-x-auto">
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 sm:mb-6 gap-4">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 sm:mb-6 gap-4 border-b-2 border-gray-400 pb-4">
                 <div className="flex items-center w-full overflow-x-auto">
                     {steps.map((step, idx) => (
                         <React.Fragment key={step}>
@@ -105,9 +105,8 @@ export default function ProcessTable() {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className={`h-6 sm:h-8 px-1 sm:px-2 text-xs hover:bg-gray-200 flex items-center gap-1 min-w-fit ${
-                                            row.currentStep >= steps.length - 1 ? 'opacity-50 cursor-not-allowed' : ''
-                                        }`}
+                                        className={`h-6 sm:h-8 px-1 sm:px-2 text-xs hover:bg-gray-200 flex items-center gap-1 min-w-fit ${row.currentStep >= steps.length - 1 ? 'opacity-50 cursor-not-allowed' : ''
+                                            }`}
                                         onClick={() => handleNextStep(row.id)}
                                         disabled={row.currentStep >= steps.length - 1}
                                         title={row.currentStep >= steps.length - 1 ? "Bereits im letzten Schritt" : "Nächster Schritt"}
@@ -145,14 +144,13 @@ export default function ProcessTable() {
                             <TableCell className="font-medium text-xs sm:text-sm w-[80px] sm:w-[95px] min-w-[80px] max-w-[95px] whitespace-normal break-words overflow-hidden">{row.bestellnummer}</TableCell>
                             <TableCell className="text-xs sm:text-sm w-[90px] sm:w-[100px] min-w-[90px] max-w-[100px] whitespace-normal break-words overflow-hidden">{row.kundenname}</TableCell>
                             <TableCell className="text-xs sm:text-sm w-[140px] sm:w-[160px] min-w-[140px] max-w-[160px] whitespace-normal break-words overflow-hidden">
-                                <span className={`px-1 sm:px-2 py-1 rounded text-xs font-medium ${
-                                    row.currentStep === 0 ? 'bg-red-100 text-red-800' :
+                                <span className={`px-1 sm:px-2 py-1 rounded text-xs font-medium ${row.currentStep === 0 ? 'bg-red-100 text-red-800' :
                                     row.currentStep === 1 ? 'bg-orange-100 text-orange-800' :
-                                    row.currentStep === 2 ? 'bg-green-100 text-green-800' :
-                                    row.currentStep === 3 ? 'bg-emerald-100 text-emerald-800' :
-                                    row.currentStep === 4 ? 'bg-blue-100 text-blue-800' :
-                                    'bg-purple-100 text-purple-800'
-                                }`}>
+                                        row.currentStep === 2 ? 'bg-green-100 text-green-800' :
+                                            row.currentStep === 3 ? 'bg-emerald-100 text-emerald-800' :
+                                                row.currentStep === 4 ? 'bg-blue-100 text-blue-800' :
+                                                    'bg-purple-100 text-purple-800'
+                                    }`}>
                                     {row.status}
                                 </span>
                             </TableCell>

@@ -74,9 +74,9 @@ export default function HighPriorityCard() {
 
             <div className='relative px-2 sm:px-4'>
                 <div className="overflow-hidden" ref={emblaRef}>
-                    <div className="flex justify-center">
+                    <div className="flex lg:justify-center">
                         {prioritizedOrders.map((card, index) => (
-                            <div key={index} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_50%] lg:flex-[0_0_25%] p-1 sm:p-2">
+                            <div key={index} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_50%] lg:flex-[0_0_25%] p-2">
                                 <div
                                     className={"border-2 p-2 sm:p-3 flex flex-col gap-2 cursor-pointer transition-all duration-200"}
                                     onClick={() => handleCardClick(card.id)}

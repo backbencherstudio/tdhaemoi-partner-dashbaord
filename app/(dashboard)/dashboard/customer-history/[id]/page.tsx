@@ -36,6 +36,8 @@ export default function CustomerHistory() {
     const [customerData, setCustomerData] = useState<CustomerData | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    // Add state for active tab
+    const [activeTab, setActiveTab] = useState<'scans' | 'shoes' | 'versorgungen' | 'reviews'>('scans');
 
     useEffect(() => {
         const fetchCustomerData = async () => {
@@ -206,40 +208,11 @@ export default function CustomerHistory() {
                 </div>
             </div>
 
-            {/* The rest of your page remains unchanged */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-                {/* <div>
-                    <h3 className="font-semibold mb-2">Notizen</h3>
-                    <div className="border rounded-lg p-4 border-gray-500">
-                        <div className="h-32"></div>
-                    </div>
-                </div>
-                <div>
-                    <h3 className="font-semibold mb-2">Gesamt Auszufuhren</h3>
-                    <div className="border rounded-lg p-4 border-gray-500">
-                        <div className="h-32"></div>
-                    </div>
-                </div>
-                <div>
-                    <h3 className="font-semibold mb-2">Gesamt zu Verrechnen</h3>
-                    <div className="border rounded-lg p-4 border-gray-500">
-                        <div className="h-32"></div>
-                    </div>
-                </div>
-                <div>
-                    <h3 className="font-semibold mb-2">Nicht Bezahlte Rechnung</h3>
-                    <div className="border rounded-lg p-4 border-gray-500">
-                        <div className="h-32"></div>
-                    </div>
-                </div> */}
-            </div>
             {/* note Table */}
             <NoteAdd />
             {/* some link button */}
             <div>
                 <div className="mt-8  gap-10 flex text-center justify-center flex-wrap">
-
-
                     <div className="flex flex-col items-center">
                         <Link href="/dashboard/email" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full  relative transition-all duration-300">
                             <Image src={emailImg} alt="Kundenordner" width={50} height={50} className='w-11 h-auto' />
@@ -247,21 +220,6 @@ export default function CustomerHistory() {
                         </Link>
                         <span className="text-sm">Schuh reservieren</span>
                     </div>
-                    {/* <div className="flex flex-col items-center">
-                        <Link href="" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
-                            <Image src={shoesImg} alt="Kundenordner" width={50} height={50} className='w-11 h-auto' />
-
-                        </Link>
-                        <span className="text-sm">Schuh reservieren</span>
-                    </div> */}
-
-                    {/* <div className="flex flex-col items-center">
-                        <Link href="" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full  relative transition-all duration-300">
-                            <Image src={logo} alt="Kundendaten" width={50} height={50} className='w-10 h-auto' />
-                        </Link>
-                        <span className="text-sm">Zugang FeetF1rst App</span>
-                    </div> */}
-
                     <div className="flex flex-col items-center">
                         <Link href=" " className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full relative transition-all duration-300">
                             <Image src={folderImg} alt="Schuhfinder" width={50} height={50} className='w-11 h-auto' />
@@ -283,13 +241,48 @@ export default function CustomerHistory() {
 
             {/* ShoePurchasesMade  */}
 
-            <div>
 
-                <ShoePurchasesMade />
-                <ScansPromoted />
-                <TreatmentsCarriedOut />
-                <Reviews />
+            {/* Responsive Button Group */}
+            <div className="-mx-4">
+                <div className="overflow-x-auto flex-nowrap py-6 px-4 w-full min-w-0 scrollbar-hide">
+                    <div className="flex gap-4 min-w-max mx-auto md:justify-center">
+                        <button
+                            className={`min-w-[220px] cursor-pointer px-6 py-4 border border-black font-semibold text-center text-sm md:text-base rounded transition-all shadow-sm ${activeTab === 'scans' ? 'bg-white' : 'bg-gray-200'}`}
+                            onClick={() => setActiveTab('scans')}
+                        >
+                            DURCHGEFÜHRTE SCANS
+                        </button>
+                        <button
+                            className={`min-w-[220px] cursor-pointer px-6 py-4 border border-black font-semibold text-center text-sm md:text-base rounded transition-all ${activeTab === 'shoes' ? 'bg-white' : 'bg-gray-200'}`}
+                            onClick={() => setActiveTab('shoes')}
+                        >
+                            DURCHGEFÜHRTE SCHUHKÄUFE
+                        </button>
+                        <button
+                            className={`min-w-[220px] cursor-pointer px-6 py-4 border border-black font-semibold text-center text-sm md:text-base rounded transition-all ${activeTab === 'versorgungen' ? 'bg-white' : 'bg-gray-200'}`}
+                            onClick={() => setActiveTab('versorgungen')}
+                        >
+                            DURCHGEFÜHRTE VERSORGUNGEN
+                        </button>
+                        <button
+                            className={`min-w-[220px] cursor-pointer px-6 py-4 border border-black font-semibold text-center text-sm md:text-base rounded transition-all ${activeTab === 'reviews' ? 'bg-white' : 'bg-gray-200'}`}
+                            onClick={() => setActiveTab('reviews')}
+                        >
+                            BEWERTUNGEN
+                        </button>
+                        <div className="min-w-[16px]" />
+                    </div>
+                </div>
             </div>
+
+            {/* Tab content */}
+            <div>
+                {activeTab === 'scans' && <ScansPromoted />}
+                {activeTab === 'shoes' && <ShoePurchasesMade />}
+                {activeTab === 'versorgungen' && <TreatmentsCarriedOut />}
+                {activeTab === 'reviews' && <Reviews />}
+            </div>
+
 
         </div>
     )

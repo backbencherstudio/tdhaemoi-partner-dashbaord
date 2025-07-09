@@ -203,6 +203,16 @@ export default function NoteCalendar() {
                         </TableRow>
                     )}
 
+                    {/* Data not found row */}
+                    {getFilteredDates().filter(date => !isToday(date)).length === 0 &&
+                        !(activeTab === 'Diagramm' || notes[new Date().toISOString().split('T')[0]]?.some(note => note.category === activeTab)) && (
+                        <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8 text-gray-500 font-semibold">
+                                Data not found
+                            </TableCell>
+                        </TableRow>
+                    )}
+
                     {/* Date Rows */}
                     {getFilteredDates().filter(date => !isToday(date)).map((date) => (
                         <TableRow key={date}>

@@ -73,7 +73,7 @@ export default function TreatmentsCarriedOut() {
 
     return (
         <div className="flex flex-col gap-4 mt-10">
-            <h1 className="text-2xl font-bold">  DURCHGEFÜHRTE SCHUHKÄUFE</h1>
+            <h1 className="text-2xl font-bold"> DURCHGEFÜHRTE VERSORGUNGEN            </h1>
             <ReuseableCarousel
                 slides={slides}
                 options={{

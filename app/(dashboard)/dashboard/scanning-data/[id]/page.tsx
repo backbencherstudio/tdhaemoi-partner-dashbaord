@@ -14,8 +14,8 @@ import Link from 'next/link';
 import SacnningForm from '../../_components/Scanning/SacnningForm';
 import DataModal from '../../_components/Scanning/DataModal';
 import QuestionSection from '../../_components/Scanning/QuestionSection';
-
-
+import { TfiReload } from "react-icons/tfi";
+import { MdZoomOutMap } from "react-icons/md";
 interface ScanData {
     id: number;
     nameKunde: string;
@@ -72,7 +72,7 @@ export default function ScanningData() {
                 });
                 setLoading(false);
             } catch (error) {
-                console.error('Error fetching scan data:', error);
+                // console.error('Error fetching scan data:', error);
                 setLoading(false);
             }
         };
@@ -148,6 +148,14 @@ export default function ScanningData() {
                         </div>
 
                         <div className="flex-1 mx-2 ">
+                            <div className='flex items-center justify-center gap-5 mb-5'>
+                                <div className='border border-gray-500 rounded p-1 cursor-pointer hover:bg-gray-100 transition'>
+                                    <MdZoomOutMap className='text-gray-600 text-4xl' />
+                                </div>
+                                <div className='border border-gray-500 rounded p-1 cursor-pointer hover:bg-gray-100 transition'>
+                                    <TfiReload className='text-gray-600 text-4xl' />
+                                </div>
+                            </div>
                             <div className="grid grid-cols-2 gap-2 mx-2">
                                 <div>
                                     <div className="text-center text-gray-600 text-sm">Fusslänge</div>

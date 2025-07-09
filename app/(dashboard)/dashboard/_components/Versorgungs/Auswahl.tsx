@@ -354,7 +354,7 @@ export default function Auswahl() {
                             </select>
                         </div>
                         <DialogFooter>
-                            <button type="submit" className="bg-black text-white px-6 py-2 rounded-full text-lg">Abschließen</button>
+                            <button type="submit" className="bg-black cursor-pointer text-white px-6 py-2 rounded-full text-lg">Abschließen</button>
                         </DialogFooter>
                     </form>
                 </DialogContent>

@@ -1,26 +1,4 @@
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 'use client'
 import React, { useState } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
@@ -28,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import { IoIosArrowDown } from 'react-icons/io';
+import { BsFillQuestionCircleFill } from "react-icons/bs";
 
 interface AuswahlCard {
     id: number;
@@ -341,13 +320,16 @@ export default function Auswahl() {
                             required
                         />
                         <div>
-                            <label className="font-bold mb-1 block">Längenempfehlung</label>
+                            <div className='flex items-center gap-2'>
+                                <label className="font-bold mb-1 block">Längenempfehlung</label>
+                                <BsFillQuestionCircleFill className='text-gray-700' />
+                            </div>
                             <div className="flex gap-2">
                                 {laengen.map((l) => (
                                     <button
                                         type="button"
                                         key={l.value}
-                                        className={`border px-3 py-2 rounded ${form.laenge === l.value ? 'bg-black text-white' : ''}`}
+                                        className={`border cursor-pointer px-3 py-2 rounded ${form.laenge === l.value ? 'bg-black text-white' : ''}`}
                                         onClick={() => handleLaengeSelect(l.value)}
                                     >
                                         {l.value}

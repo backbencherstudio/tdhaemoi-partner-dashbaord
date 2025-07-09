@@ -1,7 +1,8 @@
 [
     {
       "id": 1,
-      "nameKunde": "Einkaufspreis",
+      "Geschlecht": "Mann",
+      "nameKunde": "Haidacher Damian",
       "createdAt": "2024-01-20",
       "datumDesAuftrags": "2025-01-01",
       "Wohnort": "Berlin",
@@ -28,6 +29,7 @@
     },
     {
       "id": 2,
+      "Geschlecht": "Mann",
       "nameKunde": "Verkaufspreis",
       "createdAt": "2024-01-20",
       "Geburtsdatum": "2004-05-20",
@@ -55,6 +57,7 @@
     },
     {
       "id": 3,
+      "Geschlecht": "Frau",
       "nameKunde": "Gewinn",
       "createdAt": "2023-01-20",
       "Geburtsdatum": "2003-05-25",
@@ -82,6 +85,7 @@
     },
     {
       "id": 4,
+      "Geschlecht": "Mann",
       "nameKunde": "Sonderpreis",
       "createdAt": "2023-01-20",
       "Geburtsdatum": "2002-05-15",
@@ -109,6 +113,7 @@
     },
     {
       "id": 5,
+      "Geschlecht": "Mann",
       "nameKunde": "Rabattkunde",
       "createdAt": "2023-01-20",
       "Geburtsdatum": "2001-05-30",
@@ -136,6 +141,7 @@
     },
     {
       "id": 6,
+      "Geschlecht": "Mann",
       "nameKunde": "Neukunde",
       "createdAt": "2023-01-20",
       "Geburtsdatum": "2000-05-15",
@@ -163,6 +169,7 @@
     },
     {
       "id": 7,
+      "Geschlecht": "Mann",
       "nameKunde": "Wiederholungskunde",
       "createdAt": "2025-01-20",
       "Geburtsdatum": "2005-05-15",
@@ -190,6 +197,7 @@
     },
     {
       "id": 8,
+      "Geschlecht": "Mann",
       "nameKunde": "Großauftrag",
       "createdAt": "2023-01-20",
       "Geburtsdatum": "2006-05-15",
@@ -217,6 +225,7 @@
     },
     {
       "id": 9,
+      "Geschlecht": "Mann",
       "nameKunde": "Expresskunde",
       "createdAt": "2023-01-20",
       "Geburtsdatum": "2007-05-15",
@@ -244,6 +253,7 @@
     },
     {
       "id": 10,
+      "Geschlecht": "Mann",
       "nameKunde": "Standardkunde",
       "createdAt": "2023-01-20",
       "Geburtsdatum": "2008-05-15",

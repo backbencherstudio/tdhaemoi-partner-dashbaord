@@ -240,14 +240,6 @@ export default function NoteCalendar() {
                         </TableRow>
                     ))}
 
-                    {/* Empty state */}
-                    {getFilteredDates().length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={7} className="border text-center text-gray-500 p-8">
-                                <p>No notes found for the selected category. Click &quot;Add Note&quot; to get started.</p>
-                            </TableCell>
-                        </TableRow>
-                    )}
                 </TableBody>
             </Table>
 

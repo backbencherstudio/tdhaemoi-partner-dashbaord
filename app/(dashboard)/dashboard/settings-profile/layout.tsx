@@ -37,11 +37,17 @@ const sidebarData = [
         label: "Backup Einstellungen",
         href: "/dashboard/settings-profile/backup"
     },
+    // {
+    //     id: "lager",
+    //     icon: Warehouse,
+    //     label: "Lager",
+    //     href: "/dashboard/settings-profile/lager"
+    // },
     {
-        id: "lager",
+        id: "werkstattzettel",
         icon: Warehouse,
-        label: "Lager",
-        href: "/dashboard/settings-profile/lager"
+        label: "Werkstattzettel",
+        href: "/dashboard/settings-profile/werkstattzettel"
     },
     {
         id: "notifications",

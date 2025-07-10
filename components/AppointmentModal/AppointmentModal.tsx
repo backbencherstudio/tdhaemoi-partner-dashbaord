@@ -5,12 +5,13 @@ import { Input } from "../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Switch } from "../ui/switch";
 import { Textarea } from "../ui/textarea";
-import { Calendar } from "../ui/calendar";
+
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { UseFormReturn } from "react-hook-form";
+import { Calendar } from "../ui/calendar";
 
 interface AppointmentFormData {
     isClientEvent: boolean;

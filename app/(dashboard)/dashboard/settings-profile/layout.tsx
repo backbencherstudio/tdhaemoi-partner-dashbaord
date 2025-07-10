@@ -49,11 +49,17 @@ const sidebarData = [
         label: "Benachrichtigungen",
         href: "/dashboard/settings-profile/notifications"
     },
+    // {
+    //     id: "scan",
+    //     icon: Scan,
+    //     label: "Scaneinstellungen",
+    //     href: "/dashboard/settings-profile/scan"
+    // },
     {
-        id: "scan",
+        id: "preisverwaltung",
         icon: Scan,
-        label: "Scaneinstellungen",
-        href: "/dashboard/settings-profile/scan"
+        label: "Preisverwaltung",
+        href: "/dashboard/settings-profile/preisverwaltung"
     },
     {
         id: "software-scanstation",

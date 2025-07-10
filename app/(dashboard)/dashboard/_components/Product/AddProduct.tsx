@@ -4,14 +4,23 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 
+interface NewProduct {
+    Produktname: string;
+    Hersteller: string;
+    Produktkürzel: string;
+    Lagerort: string;
+    minStockLevel: number;
+    sizeQuantities: { [key: string]: number };
+}
+
 interface AddProductProps {
-    onAddProduct: (product: any) => void;
+    onAddProduct: (product: NewProduct) => void;
     sizeColumns: string[];
 }
 
 export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProps) {
     const [showAddProductModal, setShowAddProductModal] = useState(false);
-    const [newProduct, setNewProduct] = useState({
+    const [newProduct, setNewProduct] = useState<NewProduct>({
         Produktname: '',
         Hersteller: '',
         Produktkürzel: '',
@@ -20,7 +29,7 @@ export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProp
         sizeQuantities: Object.fromEntries(sizeColumns.map(size => [size, 0]))
     });
 
-    const handleNewProductChange = (field: string, value: any) => {
+    const handleNewProductChange = (field: keyof NewProduct, value: string | number) => {
         setNewProduct(prev => ({ ...prev, [field]: value }));
     };
     const handleNewProductSizeChange = (size: string, value: string) => {

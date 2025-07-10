@@ -1,8 +1,8 @@
 'use client'
 import React, { useState } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
-import { useRouter } from 'next/navigation';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus } from 'lucide-react';
 import { BsFillQuestionCircleFill } from 'react-icons/bs';
 
@@ -51,7 +51,6 @@ const initialCards: AlltagseinlagenCard[] = [
 ];
 
 export default function Alltagseinlagen() {
-    const router = useRouter();
     const [emblaRef, emblaApi] = useEmblaCarousel({
         slidesToScroll: 1,
         align: 'start',

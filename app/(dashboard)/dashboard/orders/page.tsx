@@ -25,7 +25,7 @@ const chartData = [
 // const formatEuro = (amount: number) =>
 //     amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u202F€';
 
-const totalRevenue = chartData.reduce((sum, d) => sum + d.value, 0);
+
 
 // Mock orders data
 const mockOrders = [
@@ -44,7 +44,7 @@ type SearchForm = {
 };
 
 function AuftragssucheCard() {
-    const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<SearchForm>();
+    const { register, handleSubmit, watch } = useForm<SearchForm>();
     const [results, setResults] = React.useState<Auftrag[] | null>(null);
     const [searched, setSearched] = React.useState(false);
 

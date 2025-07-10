@@ -1,4 +1,4 @@
-// @ts-ignore: No types for html2pdf.js
+// @ts-expect-error: No types for html2pdf.js
 import html2pdf from 'html2pdf.js';
 import React, { useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';

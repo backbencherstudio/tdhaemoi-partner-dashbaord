@@ -47,6 +47,15 @@ interface Product {
     }>
 }
 
+interface NewProduct {
+    Produktname: string
+    Produktkürzel: string
+    Hersteller: string
+    Lagerort: string
+    minStockLevel: number
+    sizeQuantities: { [key: string]: number }
+}
+
 // Define the size columns
 const sizeColumns = [
     "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49"
@@ -92,14 +101,14 @@ export default function Lager() {
 
     // Stock level helpers
     const hasLowStock = (product: Product) => {
-        return Object.entries(product.sizeQuantities).some(([size, quantity]) =>
+        return Object.entries(product.sizeQuantities).some(([, quantity]) =>
             quantity <= product.minStockLevel && quantity > 0
         );
     }
 
     const getLowStockSizes = (product: Product) => {
         return Object.entries(product.sizeQuantities)
-            .filter(([size, quantity]) => quantity <= product.minStockLevel && quantity > 0)
+            .filter(([, quantity]) => quantity <= product.minStockLevel && quantity > 0)
             .map(([size, quantity]) => ({ size, quantity }));
     }
 
@@ -194,7 +203,7 @@ export default function Lager() {
     };
 
     // Add product handler
-    const handleAddProduct = (newProduct: any) => {
+    const handleAddProduct = (newProduct: NewProduct) => {
         const id = Math.max(0, ...productsData.map(p => p.id)) + 1;
         setProductsData(prev => [
             ...prev,

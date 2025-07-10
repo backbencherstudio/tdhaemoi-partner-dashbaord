@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { BiSolidEdit } from 'react-icons/bi';
-import { RiArrowDownSLine } from 'react-icons/ri';
 import { ImSpinner2 } from 'react-icons/im';
 
 const diagnosisOptions = [

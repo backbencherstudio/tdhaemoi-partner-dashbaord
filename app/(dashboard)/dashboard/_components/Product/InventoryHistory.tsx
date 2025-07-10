@@ -31,7 +31,7 @@ export interface InventoryHistoryRef {
 }
 
 const InventoryHistory = forwardRef<InventoryHistoryRef, InventoryHistoryProps>(
-  ({ productsData }, ref) => {
+  (_, ref) => {
     const [showHistoryDialog, setShowHistoryDialog] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -151,5 +151,7 @@ const InventoryHistory = forwardRef<InventoryHistoryRef, InventoryHistoryProps>(
     </>
   );
 });
+
+InventoryHistory.displayName = 'InventoryHistory';
 
 export default InventoryHistory;

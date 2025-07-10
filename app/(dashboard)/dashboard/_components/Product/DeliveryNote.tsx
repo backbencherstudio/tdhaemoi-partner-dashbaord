@@ -24,6 +24,15 @@ interface Product {
   }>;
 }
 
+interface ScannedData {
+  productName: string;
+  manufacturer: string;
+  articleNumber: string;
+  sizeQuantities: { [key: string]: number };
+  deliveryDate: string;
+  supplier: string;
+}
+
 interface DeliveryNoteProps {
   productsData: Product[];
   onDeliveryNoteAdd: (products: Product[]) => void;
@@ -32,23 +41,16 @@ interface DeliveryNoteProps {
 
 export default function DeliveryNote({ productsData, onDeliveryNoteAdd, showButton = true }: DeliveryNoteProps) {
   const [showScanDialog, setShowScanDialog] = useState(false);
-  const [scannedData, setScannedData] = useState<{
-    productName: string;
-    manufacturer: string;
-    articleNumber: string;
-    sizeQuantities: { [key: string]: number };
-    deliveryDate: string;
-    supplier: string;
-  } | null>(null);
+  const [scannedData, setScannedData] = useState<ScannedData | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Simulate OCR processing
-  const processDeliveryNote = (file: File) => {
+  const processDeliveryNote = () => {
     setIsProcessing(true);
     setTimeout(() => {
       // Mock extracted data
-      const mockExtractedData = {
+      const mockExtractedData: ScannedData = {
         productName: 'New Balance 580',
         manufacturer: 'New Balance',
         articleNumber: 'NB-580-2024',
@@ -70,7 +72,7 @@ export default function DeliveryNote({ productsData, onDeliveryNoteAdd, showButt
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      processDeliveryNote(file);
+      processDeliveryNote();
     }
   };
 
@@ -83,7 +85,7 @@ export default function DeliveryNote({ productsData, onDeliveryNoteAdd, showButt
   };
 
   // Apply scanned data to existing product
-  const applyToExistingProduct = (product: Product, scannedData: any) => {
+  const applyToExistingProduct = (product: Product, scannedData: ScannedData) => {
     const updatedProducts = productsData.map(p => {
       if (p.id === product.id) {
         const updatedSizeQuantities = { ...p.sizeQuantities };
@@ -96,7 +98,7 @@ export default function DeliveryNote({ productsData, onDeliveryNoteAdd, showButt
           id: `hist_${Date.now()}`,
           date: new Date().toISOString(),
           type: 'delivery',
-          quantity: Object.values(scannedData.sizeQuantities).reduce((sum: number, qty: any) => sum + qty, 0),
+          quantity: Object.values(scannedData.sizeQuantities).reduce((sum: number, qty: number) => sum + qty, 0),
           size: 'multiple',
           previousStock: Object.values(p.sizeQuantities).reduce((sum: number, qty: number) => sum + qty, 0),
           newStock: Object.values(updatedSizeQuantities).reduce((sum: number, qty: number) => sum + qty, 0),
@@ -115,7 +117,7 @@ export default function DeliveryNote({ productsData, onDeliveryNoteAdd, showButt
   };
 
   // Create new product from scanned data
-  const createNewProduct = (scannedData: any) => {
+  const createNewProduct = (scannedData: ScannedData) => {
     const newProduct: Product = {
       id: Math.max(0, ...productsData.map(p => p.id)) + 1,
       Produktname: scannedData.productName,
@@ -129,10 +131,10 @@ export default function DeliveryNote({ productsData, onDeliveryNoteAdd, showButt
           id: `hist_${Date.now()}`,
           date: new Date().toISOString(),
           type: 'delivery',
-          quantity: Object.values(scannedData.sizeQuantities).reduce((sum: number, qty: any) => sum + qty, 0),
+          quantity: Object.values(scannedData.sizeQuantities).reduce((sum: number, qty: number) => sum + qty, 0),
           size: 'multiple',
           previousStock: 0,
-          newStock: Object.values(scannedData.sizeQuantities).reduce((sum: number, qty: any) => sum + qty, 0),
+          newStock: Object.values(scannedData.sizeQuantities).reduce((sum: number, qty: number) => sum + qty, 0),
           user: 'admin',
           notes: `Initial delivery from scan: ${scannedData.supplier}`,
         },
@@ -240,7 +242,7 @@ export default function DeliveryNote({ productsData, onDeliveryNoteAdd, showButt
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <h4 className="font-medium text-blue-900 mb-2">🔄 Passendes Produkt gefunden!</h4>
                         <p className="text-sm text-blue-800 mb-3">
-                          "{matchingProduct.Produktname}" wird mit den neuen Mengen aktualisiert.
+                          &quot;{matchingProduct.Produktname}&quot; wird mit den neuen Mengen aktualisiert.
                         </p>
                         <Button
                           onClick={() => {

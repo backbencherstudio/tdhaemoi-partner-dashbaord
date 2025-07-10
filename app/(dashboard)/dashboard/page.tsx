@@ -62,7 +62,7 @@ export default function Dashboard() {
     setDefaultOptions({ locale: de });
     const [appointments, setAppointments] = useState<DayAppointments[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+
     const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetail | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDetailLoading, setIsDetailLoading] = useState(false);
@@ -74,7 +74,6 @@ export default function Dashboard() {
     const fetchAppointments = async () => {
         try {
             setIsLoading(true);
-            setError(null);
             const response = await getMyAppointments({
                 page: 1,
                 limit: 100
@@ -122,7 +121,6 @@ export default function Dashboard() {
             }
         } catch (error) {
             console.error('Failed to load appointments:', error);
-            setError('Netzwerkfehler beim Laden der Termine');
             // Even on error, show the structure with empty appointments
             const daysOfWeek = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
             const emptyAppointments = daysOfWeek.map(day => ({

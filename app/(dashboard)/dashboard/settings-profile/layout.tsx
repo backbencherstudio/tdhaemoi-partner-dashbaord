@@ -14,7 +14,7 @@ import {
     ClipboardList,
     FootprintsIcon,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import SettingsLayout from "@/components/Settings/SettingsLayout";
 
@@ -114,17 +114,17 @@ export default function SettingsProfileLayout({
     const router = useRouter();
 
     // Determine active tab based on current path
-    const getActiveTab = () => {
+    const getActiveTab = useCallback(() => {
         const path = pathname.split('/').pop();
         if (path === 'settings-profile') return 'dashboard';
         return path || 'dashboard';
-    };
+    }, [pathname]);
 
     const [activeTab, setActiveTab] = useState(getActiveTab());
 
     useEffect(() => {
         setActiveTab(getActiveTab());
-    }, [pathname]);
+    }, [pathname, getActiveTab]);
 
     const handleTabChange = (tabId: string) => {
         setActiveTab(tabId);

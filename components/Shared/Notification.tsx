@@ -1,7 +1,7 @@
 'use client'
 import React, { useState } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { IoNotificationsOutline } from 'react-icons/io5'
 import { HiCheck, HiX } from 'react-icons/hi'
 

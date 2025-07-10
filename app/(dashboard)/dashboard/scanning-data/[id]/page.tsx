@@ -39,7 +39,7 @@ export default function ScanningData() {
     const params = useParams();
     const [scanData, setScanData] = useState<ScanData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [supply, setSupply] = useState(
+    const [supply] = useState(
         "Rohling 339821769, mit Pelotte Nr. 10 und Micro Elastisch"
     );
 
@@ -71,7 +71,7 @@ export default function ScanningData() {
                     Zehentyp2: "Griechisch"
                 });
                 setLoading(false);
-            } catch (error) {
+            } catch {
                 // console.error('Error fetching scan data:', error);
                 setLoading(false);
             }

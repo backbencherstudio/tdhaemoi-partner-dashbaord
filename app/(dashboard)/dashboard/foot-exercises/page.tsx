@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { getAllExercises } from "@/apis/exercisesApis";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { CheckIcon, MailIcon, PrinterIcon, SearchIcon } from "lucide-react";
@@ -8,35 +8,29 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
 
-// user data 
-const data = [
-    {
-        name: "John Doe",
-        email: "john.doe@example.com",
-        phone: "+49 123 456 789",
-        address: "123 Main St, Anytown, USA",
-        city: "Anytown",
-    },
-    {
-        name: "Anna Müller",
-        email: "anna.mueller@example.com",
-        phone: "+49 123 456 789",
-        address: "Musterstraße 123",
-        city: "Musterstadt",
-    },
-]
+
+
+interface Exercise {
+    id: number;
+    title: string;
+    sub_title: string;
+    category: string;
+    duration: string;
+    image: string;
+    instructions: string[];
+}
 
 // Helper to paginate exercises
-function paginate(array: any[], pageSize: number) {
+function paginate<T>(array: T[], pageSize: number): T[][] {
     return array.reduce((acc, val, i) => {
         if (i % pageSize === 0) acc.push([]);
         acc[acc.length - 1].push(val);
         return acc;
-    }, [] as any[][]);
+    }, [] as T[][]);
 }
 
 export default function FootExercises() {
-    const [exercises, setExercises] = useState([]);
+    const [exercises, setExercises] = useState<Exercise[]>([]);
     const [selected, setSelected] = useState<number[]>([]);
     const [expanded, setExpanded] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -46,7 +40,7 @@ export default function FootExercises() {
     }, []);
 
     // Group by category
-    const categories = exercises.reduce((acc: Record<string, any[]>, ex: any) => {
+    const categories = exercises.reduce((acc: Record<string, Exercise[]>, ex: Exercise) => {
         acc[ex.category] = acc[ex.category] || [];
         acc[ex.category].push(ex);
         return acc;
@@ -78,7 +72,7 @@ export default function FootExercises() {
         setLoading(false);
     };
 
-    const selectedExercises = exercises.filter((ex: any) => selected.includes(ex.id));
+    const selectedExercises = exercises.filter((ex: Exercise) => selected.includes(ex.id));
     const pages = paginate(selectedExercises, 3);
 
     return (
@@ -104,7 +98,7 @@ export default function FootExercises() {
                 <div key={cat} className={`${catIdx !== 0 ? 'mt-20' : 'mt-10'}`}>
                     <h2 className="text-2xl font-bold text-center mb-8">{cat}</h2>
                     <Accordion type="single" collapsible value={expanded ?? undefined} onValueChange={setExpanded}>
-                        {items.map((ex: any) => (
+                        {items.map((ex: Exercise) => (
                             <div key={ex.id} className="relative flex items-stretch mb-4">
                                 <div className="flex-1">
                                     <AccordionItem
@@ -124,7 +118,7 @@ export default function FootExercises() {
                                                     <div className="font-bold text-xl mb-2">{ex.title}</div>
                                                     <div className="font-semibold text-base mb-2">Dauer: <span className="font-normal">{ex.duration}</span></div>
                                                     <div>
-                                                        <div className="font-bold mb-1">So geht's:</div>
+                                                        <div className="font-bold mb-1">So geht&apos;s:</div>
                                                         <ul className="list-disc ml-5 space-y-1 text-base">
                                                             {ex.instructions.map((ins: string, idx: number) => (
                                                                 <li key={idx}>{ins}</li>
@@ -152,7 +146,7 @@ export default function FootExercises() {
 
             {/* Hidden printable area */}
             <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-                {pages.map((page: any, pageIndex: number) => (
+                {pages.map((page: Exercise[], pageIndex: number) => (
                     <div
                         key={pageIndex}
                         id={`print-page-${pageIndex}`}
@@ -191,13 +185,13 @@ export default function FootExercises() {
                             bottom: '60px', 
                             overflow: 'hidden'
                         }}>
-                            {page.map((ex: any, idx: number) => (
+                            {page.map((ex: Exercise) => (
                                 <div key={ex.id} style={{ marginBottom: '30px', display: 'flex', alignItems: 'flex-start', gap: '20px' }}>
                                     <Image width={220} height={220} src={ex.image} alt={ex.title} style={{ width: '220px', height: '220px', objectFit: 'contain', borderRadius: '12px', background: '#fff', border: '1px solid #eee' }} />
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontWeight: 'bold', fontSize: '20px', marginBottom: '8px' }}>{ex.title}</div>
                                         <div style={{ fontWeight: 'bold', fontSize: '15px', marginBottom: '8px' }}>Dauer: <span style={{ fontWeight: 'normal' }}>{ex.duration}</span></div>
-                                        <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>So geht's:</div>
+                                        <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>So geht&apos;s:</div>
                                         <ul style={{ marginLeft: '20px', fontSize: '15px' }}>
                                             {ex.instructions.map((ins: string, idx: number) => (
                                                 <li key={idx}>{ins}</li>

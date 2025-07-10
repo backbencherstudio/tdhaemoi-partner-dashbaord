@@ -5,8 +5,6 @@ import NoteAdd from '@/components/CustomerHistory/NoteAdd/NoteAdd';
 import Link from 'next/link';
 import Image from 'next/image';
 import emailImg from '@/public/CustomerHistory/email.png';
-import shoesImg from '@/public/CustomerHistory/shoes.png';
-import logo from '@/public/CustomerHistory/logo.png';
 import folderImg from '@/public/CustomerHistory/folder.png';
 import LegImg from '@/public/CustomerHistory/leg.png';
 import ShoePurchasesMade from '@/components/CustomerHistory/ShoePurchasesMade/ShoePurchasesMade';
@@ -56,14 +54,7 @@ export default function CustomerHistory() {
         fetchCustomerData();
     }, [params.id]);
 
-    const handleInputChange = (key: keyof CustomerData, value: string) => {
-        if (customerData) {
-            setCustomerData({
-                ...customerData,
-                [key]: value
-            });
-        }
-    };
+
 
     // Helper to split nameKunde into first and last name
     function splitName(fullName: string) {

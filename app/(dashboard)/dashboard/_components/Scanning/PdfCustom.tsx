@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import React from 'react'
 
 export default function PdfCustom() {
@@ -17,7 +18,7 @@ export default function PdfCustom() {
                 boxSizing: 'border-box',
                 zIndex: 10
             }}>
-                <img src="/images/pdfLogo.png" alt="Logo" style={{ width: 60, marginRight: 16 }} />
+                <Image width={60} height={60} src="/images/pdfLogo.png" alt="Logo" style={{ width: 60, marginRight: 16 }} />
                 <div>
                     <div style={{ fontWeight: 600, fontSize: 20 }}>Brugger Theo</div>
                     <div style={{ fontSize: 14 }}>KdNr: 10500</div>

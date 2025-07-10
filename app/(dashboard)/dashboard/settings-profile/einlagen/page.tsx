@@ -1,5 +1,12 @@
 "use client";
 import React, { useState } from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const modules = [
   { id: "einlagenfinder", label: "Einlagenfinder" },
@@ -7,9 +14,28 @@ const modules = [
   { id: "shoefinder", label: "Shoe Finder" },
 ];
 
+const questions = [
+  { value: "einsatz", label: "Für welchen Einsatz sollen die Einlagen verwendet werden?" },
+  { value: "sportschuh", label: "Für welchen Sportschuh verwenden Sie die Einlagen?" },
+  { value: "aktivitaet", label: "Welches Aktivitätslevel trifft am besten auf Sie zu?" },
+  { value: "gesundheit", label: "Haben Sie gesundheitliche Probleme (z. B. Diabetes), die Ihre Fußgesundheit beeinflussen?" },
+  { value: "gewicht", label: "Wie viel wiegen Sie ungefähr?" },
+  { value: "schmerzen3d", label: "Haben Sie Schmerzen? Wenn ja, markieren Sie bitte die betroffenen Bereiche auf dem 3D-Modell." },
+  { value: "weitere_beschwerden", label: "Haben Sie weitere relevante Beschwerden oder Schmerzen?" },
+  { value: "gleichgewicht", label: "Haben Sie Probleme mit Gleichgewicht, Gang oder Beweglichkeit?" },
+  { value: "erwartungen", label: "Welche Erwartungen oder Ziele haben Sie mit den Einlagen?" },
+  { value: "farbe", label: "Haben Sie eine bevorzugte Farbe für den Überzug Ihrer Einlagen?" },
+];
+
+const languages = [
+  { value: "de", label: "Deutsch" },
+  // { value: "en", label: "Englisch" },
+];
+
 export default function EinlagenPage() {
   const [selectedModules, setSelectedModules] = useState<string[]>(["einlagenfinder"]);
-  const [dropdownValue, setDropdownValue] = useState("");
+  const [selectedQuestion, setSelectedQuestion] = useState<string>("");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("de");
 
   const handleModuleChange = (id: string) => {
     setSelectedModules((prev) =>
@@ -20,59 +46,59 @@ export default function EinlagenPage() {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: "40px auto", fontFamily: "inherit" }}>
-      <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>
-        Scanstation – Softwaremodul
-      </h1>
-      <p style={{ marginBottom: 32 }}>
+    <div className="max-w-3xl  mx-auto mt-10 font-sans">
+      <h1 className="text-3xl font-bold mb-2">Scanstation – Softwaremodul</h1>
+      <p className="mb-8">
         Verwalten Sie hier die Einstellungen Ihrer Scanstation Software.
       </p>
-      <div style={{ marginBottom: 24 }}>
-        <b>Sichtbare Module auswählen</b>
-        <div style={{ display: "flex", flexDirection: "row", gap: 32, marginTop: 16 }}>
+      <div className="mb-6">
+        <b className="block mb-2">Sichtbare Module auswählen</b>
+        <div className="flex flex-row gap-8 mt-4">
           {modules.map((mod) => (
-            <label key={mod.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <label key={mod.id} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={selectedModules.includes(mod.id)}
                 onChange={() => handleModuleChange(mod.id)}
-                style={{ width: 24, height: 24 }}
+                className="w-6 h-6 accent-black"
               />
               {mod.label}
             </label>
           ))}
         </div>
       </div>
-      <div style={{ marginBottom: 24 }}>
-        <label htmlFor="question-dropdown" style={{ fontWeight: 500, marginBottom: 8, display: "block" }}>
+      <div className="mb-6">
+        <label className="font-medium mb-2 block">
           Fragen für den Einlagenfinder auswählen
         </label>
-        <select
-          id="question-dropdown"
-          value={dropdownValue}
-          onChange={(e) => setDropdownValue(e.target.value)}
-          style={{ width: "100%", padding: 8 }}
-        >
-          <option value="">Bitte wählen…</option>
-          <option value="einsatz">Für welchen Einsatz sollen die Einlagen verwendet werden?</option>
-          <option value="sportschuh">Für welchen Sportschuh verwenden Sie die Einlagen?</option>
-          <option value="aktivitaet">Welches Aktivitätslevel trifft am besten auf Sie zu?</option>
-          <option value="gesundheit">Haben Sie gesundheitliche Probleme (z. B. Diabetes), die Ihre Fußgesundheit beeinflussen?</option>
-          <option value="gewicht">Wie viel wiegen Sie ungefähr?</option>
-          <option value="schmerzen3d">Haben Sie Schmerzen? Wenn ja, markieren Sie bitte die betroffenen Bereiche auf dem 3D-Modell.</option>
-          <option value="weitere_beschwerden">Haben Sie weitere relevante Beschwerden oder Schmerzen?</option>
-          <option value="gleichgewicht">Haben Sie Probleme mit Gleichgewicht, Gang oder Beweglichkeit?</option>
-          <option value="erwartungen">Welche Erwartungen oder Ziele haben Sie mit den Einlagen?</option>
-          <option value="farbe">Haben Sie eine bevorzugte Farbe für den Überzug Ihrer Einlagen?</option>
-        </select>
+        <Select value={selectedQuestion} onValueChange={setSelectedQuestion}>
+          <SelectTrigger>
+            <SelectValue placeholder="Bitte wählen…" />
+          </SelectTrigger>
+          <SelectContent>
+            {questions.map((question) => (
+              <SelectItem key={question.value} value={question.value}>
+                {question.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <div style={{ marginBottom: 24 }}>
-        <b>Sprache wählen</b>
-        <div style={{ marginTop: 8 }}>
-          <select style={{ width: "100%", padding: 8 }} defaultValue="de">
-            <option value="de">Deutsch</option>
-            <option value="en">Englisch</option>
-          </select>
+      <div className="mb-6">
+        <b className="block mb-2">Sprache wählen</b>
+        <div className="mt-2">
+          <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((language) => (
+                <SelectItem key={language.value} value={language.value}>
+                  {language.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

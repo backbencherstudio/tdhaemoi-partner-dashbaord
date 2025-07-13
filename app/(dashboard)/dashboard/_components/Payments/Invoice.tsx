@@ -59,7 +59,7 @@ const Invoice = forwardRef(({ onDownload, customerName = '', model = '' }: Invoi
 
                     </div>
                     <div className="text-xs text-right">
-                        <div className="font-semibold">DATA DELL'ORDINE#</div>
+
                         <div>Auftragsdatum: {formattedDate}</div>
                     </div>
                 </div>

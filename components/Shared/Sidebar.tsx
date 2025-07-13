@@ -21,6 +21,7 @@ import { FaMoneyCheckAlt } from 'react-icons/fa';
 import { TbDashboardFilled } from 'react-icons/tb';
 import { GiFootprint } from 'react-icons/gi';
 import { FaShoePrints } from 'react-icons/fa';
+import { HiDocumentText } from 'react-icons/hi';
 
 
 interface SidebarProps {
@@ -76,7 +77,8 @@ export default function Sidebar({ onClose }: SidebarProps) {
             label: 'Individuelle Kundenversorgung',
             items: [
                 { icon: FaShoePrints, label: 'Maßschäfte', href: '/dashboard/custom-shafts' },
-                { icon: GiFootprint, label: 'Fußübungen', href: '/dashboard/foot-exercises' }
+                { icon: GiFootprint, label: 'Fußübungen', href: '/dashboard/foot-exercises' },
+                { icon: HiDocumentText, label: 'Musterzettel', href: '/dashboard/musterzettel' }
             ]
         },
         {

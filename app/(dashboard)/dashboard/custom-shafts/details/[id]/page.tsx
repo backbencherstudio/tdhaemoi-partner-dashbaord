@@ -95,20 +95,22 @@ export default function DetailsPage() {
       {/* Bottom: Image and Info */}
       <div className="flex flex-col md:flex-row gap-10 items-center justify-center">
         {/* Image */}
-        <div className="w-full md:w-1/2 flex justify-center">
+        <div className="w-full md:w-1/2 flex justify-center my-10">
           <div
             className="cursor-pointer w-full h-full"
             onClick={() => fileInputRef.current?.click()}
             title="Bild ändern"
           >
-            <Image
-              src={uploadedImage || shaft.image}
-              alt={shaft.name}
-              width={1000}
-              height={1000}
-              className="w-full h-full object-cover"
-              priority
-            />
+            <div className='w-full h-full'>
+              <Image
+                src={uploadedImage || shaft.image}
+                alt={shaft.name}
+                width={1000}
+                height={1000}
+                className="w-[550px] h-full object-cover"
+                priority
+              />
+            </div>
           </div>
           <input
             type="file"

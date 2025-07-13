@@ -22,8 +22,8 @@ function UploadDropdown() {
 
 export default function MusterzettelPage() {
     return (
-        <div className="">
-            <div className=" w-full px-4 py-8">
+        <>
+            <div className=" w-full px-4 ">
                 {/* Musterzettel Section */}
                 <h2 className="text-2xl font-bold mb-4">Musterzettel</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-4">
@@ -95,6 +95,6 @@ export default function MusterzettelPage() {
                     </div>
                 </div>
             </footer>
-        </div>
+        </>
     );
 }

@@ -3015,6 +3015,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"es6-promise@npm:^4.2.5":
+  version: 4.2.8
+  resolution: "es6-promise@npm:4.2.8"
+  checksum: 10c0/2373d9c5e9a93bdd9f9ed32ff5cb6dd3dd785368d1c21e9bbbfd07d16345b3774ae260f2bd24c8f836a6903f432b4151e7816a7fa8891ccb4e1a55a028ec42c3
+  languageName: node
+  linkType: hard
+
 "escape-string-regexp@npm:^4.0.0":
   version: 4.0.0
   resolution: "escape-string-regexp@npm:4.0.0"
@@ -3672,13 +3679,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"html2canvas@npm:^1.0.0-rc.5, html2canvas@npm:^1.4.1":
+"html2canvas@npm:^1.0.0, html2canvas@npm:^1.0.0-rc.5, html2canvas@npm:^1.4.1":
   version: 1.4.1
   resolution: "html2canvas@npm:1.4.1"
   dependencies:
     css-line-break: "npm:^2.1.0"
     text-segmentation: "npm:^1.0.3"
   checksum: 10c0/6de86f75762b00948edf2ea559f16da0a1ec3facc4a8a7d3f35fcec59bb0c5970463478988ae3d9082152e0173690d46ebf4082e7ac803dd4817bae1d355c0db
+  languageName: node
+  linkType: hard
+
+"html2pdf.js@npm:^0.10.3":
+  version: 0.10.3
+  resolution: "html2pdf.js@npm:0.10.3"
+  dependencies:
+    es6-promise: "npm:^4.2.5"
+    html2canvas: "npm:^1.0.0"
+    jspdf: "npm:^3.0.0"
+  checksum: 10c0/ed4339602dbb7f55bafafcaa56e2790cfed97547b1f72e84106e4ce206000b84e4bd60083ba24d7c107f48beefa41df0d9cc7a5effd842833f15db41f3209b05
   languageName: node
   linkType: hard
 
@@ -4076,7 +4094,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jspdf@npm:^3.0.1":
+"jspdf@npm:^3.0.0, jspdf@npm:^3.0.1":
   version: 3.0.1
   resolution: "jspdf@npm:3.0.1"
   dependencies:
@@ -5569,6 +5587,7 @@ __metadata:
     eslint: "npm:^9"
     eslint-config-next: "npm:15.3.2"
     html2canvas: "npm:^1.4.1"
+    html2pdf.js: "npm:^0.10.3"
     input-otp: "npm:^1.4.2"
     jspdf: "npm:^3.0.1"
     lucide-react: "npm:^0.511.0"

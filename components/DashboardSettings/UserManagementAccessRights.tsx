@@ -28,7 +28,9 @@ export function ProfileAvatar({ logo, onLogoChange }: { logo: string | null, onL
       title="Logo hochladen"
     >
       {logo ? (
-        <img
+        <Image
+          width={100}
+          height={100}
           src={logo}
           alt="Logo Preview"
           className="w-full h-full object-cover"

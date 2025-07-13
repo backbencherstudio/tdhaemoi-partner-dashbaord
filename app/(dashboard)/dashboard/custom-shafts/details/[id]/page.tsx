@@ -11,9 +11,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useParams } from 'next/navigation';
 import { customShaftsData } from '@/lib/customShaftsData';
 import { BsQuestionCircleFill } from 'react-icons/bs';
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import colorPlate from '@/public/images/color.png';
+import toast from 'react-hot-toast';
+import Invoice from '@/app/(dashboard)/dashboard/_components/Payments/Invoice';
 
 
 export default function DetailsPage() {
@@ -22,6 +24,10 @@ export default function DetailsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [nahtfarbeOption, setNahtfarbeOption] = useState('default');
   const [customNahtfarbe, setCustomNahtfarbe] = useState('');
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [userBalance, setUserBalance] = useState(200.00);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const invoiceComponentRef = useRef<any>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -32,6 +38,21 @@ export default function DetailsPage() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleOrderConfirmation = () => {
+    const orderPrice = 150.99;
+
+    if (userBalance < orderPrice) {
+      toast.error("Nicht genügend Balance. Bitte laden Sie Ihr Konto auf, um die Bestellung abzuschließen.");
+      return;
+    }
+
+    setUserBalance(prev => prev - orderPrice);
+
+    setShowSuccessMessage(true);
+    setShowConfirmationModal(false);
+
   };
 
   const params = useParams();
@@ -47,6 +68,9 @@ export default function DetailsPage() {
   }, [shaftId, shaft]);
 
   if (!shaft) return <div>Produkt nicht gefunden</div>;
+
+  const orderPrice = 150.99;
+  const hasEnoughBalance = userBalance >= orderPrice;
 
   return (
     <div className="px-2 md:px-6 py-8 w-full ">
@@ -108,7 +132,6 @@ export default function DetailsPage() {
           </div>
         </div>
       </div>
-
 
       {/* Bottom Section: Configurator */}
       <TooltipProvider>
@@ -283,10 +306,96 @@ export default function DetailsPage() {
           </div>
           {/* Submit Button */}
           <div className="flex justify-center mt-4">
-            <Button className="w-full md:w-1/3 px-8 py-5 rounded-full bg-black text-white hover:bg-gray-800 text-base font-semibold">Abschließen</Button>
+            <Button
+              onClick={() => setShowConfirmationModal(true)}
+              className="w-full cursor-pointer  md:w-1/3 px-8 py-5 rounded-full bg-black text-white hover:bg-gray-800 text-base font-semibold"
+            >
+              Abschließen
+            </Button>
           </div>
         </div>
       </TooltipProvider>
+
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-green-600 mb-2">Bestellung erfolgreich abgeschlossen</h3>
+            <p className="text-gray-700 mb-4">
+              Ihre Bestellung für {orderPrice.toFixed(2)}€ wurde erfolgreich abgeschlossen.
+            </p>
+            <Button
+              onClick={async () => {
+                setShowSuccessMessage(false);
+                if (invoiceComponentRef.current && invoiceComponentRef.current.downloadInvoice) {
+                  await invoiceComponentRef.current.downloadInvoice();
+                }
+              }}
+              className="w-full cursor-pointer bg-green-600 hover:bg-green-700"
+            >
+              OK
+            </Button>
+          </div>
+        </div>
+      )}
+      {/* Hidden Invoice component for PDF generation */}
+      <Invoice ref={invoiceComponentRef} customerName="" model="" />
+
+      {/* Global style override for html2canvas compatibility */}
+      <style jsx global>{`
+        .invoice-pdf *, .invoice-pdf {
+          background: none !important;
+          background-color: rgb(255,255,255) !important;
+          color: rgb(0,0,0) !important;
+        }
+        .invoice-pdf .text-white, .invoice-pdf [style*="color: white"] {
+          color: rgb(255,255,255) !important;
+        }
+        .invoice-pdf [style*="background: rgb(122,194,154)"] {
+          background: rgb(122,194,154) !important;
+        }
+      `}</style>
+
+      {/* Confirmation Modal */}
+      <Dialog open={showConfirmationModal} onOpenChange={setShowConfirmationModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogTitle className="text-xl font-semibold">
+            Bestellung abschließen
+          </DialogTitle>
+          <div className="space-y-4">
+            <p className="text-base">
+              Möchtest du die Bestellung dieses Maßschaftes für {orderPrice.toFixed(2)}€ abschließen?
+            </p>
+            <p className="text-sm text-gray-600">
+              Das Geld wird vorerst von deinem FeetF1rst Balance abgezogen.
+            </p>
+            {!hasEnoughBalance && (
+              <p className="text-sm text-red-600 font-medium">
+                Nicht genügend Balance. Bitte aufladen.
+              </p>
+            )}
+            <p className="text-xs text-gray-500">
+              Nach dem Abschließen kann die Bestellung nicht mehr bearbeitet werden.
+            </p>
+          </div>
+          <DialogFooter className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirmationModal(false)}
+              className="flex-1 cursor-pointer"
+            >
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handleOrderConfirmation}
+              disabled={!hasEnoughBalance}
+              className={`flex-1 cursor-pointer ${hasEnoughBalance ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'}`}
+            >
+              Ja, abschließen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

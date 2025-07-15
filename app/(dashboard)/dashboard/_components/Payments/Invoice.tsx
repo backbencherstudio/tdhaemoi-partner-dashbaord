@@ -66,7 +66,7 @@ const Invoice = forwardRef(({ onDownload, customerName = '', model = '' }: Invoi
                 {/* Shoe Image and Info */}
                 <div className="flex gap-6 mb-4 mt-14">
                     <div className="border rounded-md p-2 flex flex-col items-center w-40 h-40 justify-center">
-                        <img src="/images/products/shoes.png" alt="Shoe" width={128} height={128} className="w-32 h-32 object-contain" />
+                        <Image src="/images/products/shoes.png" alt="Shoe" width={128} height={128} className="w-32 h-32 object-contain" />
                         <span className="font-bold text-lg -mt-5">500 D</span>
                     </div>
                     <div className="flex-1 flex flex-col justify-center">
@@ -127,5 +127,7 @@ const Invoice = forwardRef(({ onDownload, customerName = '', model = '' }: Invoi
         </div>
     );
 });
+
+Invoice.displayName = 'Invoice';
 
 export default Invoice;

@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'td.signalsmind.com',
+        hostname: 'backend.feetf1rst.tech',
       },
       {
         // local host

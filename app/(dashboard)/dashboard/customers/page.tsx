@@ -10,6 +10,8 @@ import scanner3D from '@/public/Kunden/3d.png'
 import userImg from '@/public/Kunden/user.png'
 import LastScans from '@/components/LastScans/LastScans'
 import { useRouter } from 'next/navigation'
+import { HiPlus } from 'react-icons/hi'
+import AddCustomerModal from '@/components/AddCustomerModal/AddCustomerModal'
 
 
 interface CustomerData {
@@ -29,6 +31,7 @@ export default function Customers() {
     const [selectedCustomer, setSelectedCustomer] = useState<CustomerData | null>(null);
     const [notFound, setNotFound] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isAddCustomerModalOpen, setIsAddCustomerModalOpen] = useState(false);
     const router = useRouter();
 
     // Fetch customer data
@@ -80,11 +83,47 @@ export default function Customers() {
         router.push(`/dashboard/scanning-data/${id}`);
     }
 
+    // handle add customer modal
+    const handleAddCustomerClick = () => {
+        setIsAddCustomerModalOpen(true);
+    }
+
+    // handle customer submission
+    const handleCustomerSubmit = async (customerData: any) => {
+        try {
+            // Create new customer object for local state
+            const newCustomer: CustomerData = {
+                id: Date.now(), // Generate unique ID
+                nameKunde: `${customerData.vorname} ${customerData.nachname}`,
+                Telefon: customerData.telefon || '',
+                Geburtsdatum: '', // Not provided in form
+                Geschäftstandort: customerData.wohnort || '',
+                createdAt: new Date().toISOString(),
+            };
+
+            // Add to customers list
+            setCustomers(prev => [newCustomer, ...prev]);
+
+            // Close modal
+            setIsAddCustomerModalOpen(false);
+        } catch (error) {
+            console.error('Error adding customer:', error);
+        }
+    }
+
     return (
         <div className="">
-            <h1 className="text-2xl font-bold mb-6">Kunden & Scans</h1>
+            <div className='flex items-center justify-between gap-2 mb-6'>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center justify-center">
+                <h1 className="text-2xl font-bold">Kunden & Scans</h1>
+                <div className='flex items-center gap-2 cursor-pointer' onClick={handleAddCustomerClick}>
+                    <h1 className='text-xl font-semibold'>Manually Add a Customer</h1>
+                    <HiPlus className='text-4xl font-semibold text-black border border-gray-500 rounded-full p-1' />
+                </div>
+            </div>
+
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 justify-center items-center">
                 {/* Left side - Search form */}
                 <div className="space-y-5">
                     <div>
@@ -134,48 +173,58 @@ export default function Customers() {
 
                 </div>
 
-                {/* Right side - Customer details card */}
-                {selectedCustomer ? (
-                    <Card className="relative shadow-none border border-gray-500 bg-transparent">
-                        <button className="absolute cursor-pointer right-2 top-2" onClick={() => setSelectedCustomer(null)}>
-                            <X className="h-4 w-4" />
-                        </button>
-                        <CardContent className="pt-6 text-center">
-                            <div className="flex justify-center mb-4">
-                                <Image
-                                    src={legsImg}
-                                    alt="Foot scan"
-                                    width={200}
-                                    height={100}
-                                    className="object-contain"
-                                />
-                            </div>
-                            <h2 className="text-xl font-semibold text-green-600 mb-4">{selectedCustomer.nameKunde}</h2>
-                            <div className="space-y-2 mb-6">
-                                <p>Erstellt am: {new Date(selectedCustomer.createdAt).toLocaleDateString()}</p>
-                                <p>Ort: {selectedCustomer.Geschäftstandort}</p>
-                            </div>
-                            <div className="flex justify-center gap-4">
-                                <Button onClick={() => handleScanView(selectedCustomer.id)} variant="outline" className="flex items-center gap-2 cursor-pointer">
-                                    <Image src={scanner3D} alt="Scan" width={20} height={20} />
-                                    <span>Scan ansehen</span>
-                                </Button>
-                                <Button variant="outline" className="flex items-center gap-2 cursor-pointer">
-                                    <Image src={userImg} alt="User" width={20} height={20} />
-                                    <span>Kundeninfo</span>
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ) : notFound ? (
-                    <div className="text-center text-red-500">
-                        Keine Ergebnisse gefunden
-                    </div>
-                ) : null}  
+                <div>
+
+                    {/* Right side - Customer details card */}
+                    {selectedCustomer ? (
+                        <Card className="relative shadow-none border border-gray-500 bg-transparent">
+                            <button className="absolute cursor-pointer right-2 top-2" onClick={() => setSelectedCustomer(null)}>
+                                <X className="h-4 w-4" />
+                            </button>
+                            <CardContent className="pt-6 text-center">
+                                <div className="flex justify-center mb-4">
+                                    <Image
+                                        src={legsImg}
+                                        alt="Foot scan"
+                                        width={200}
+                                        height={100}
+                                        className="object-contain"
+                                    />
+                                </div>
+                                <h2 className="text-xl font-semibold text-green-600 mb-4">{selectedCustomer.nameKunde}</h2>
+                                <div className="space-y-2 mb-6">
+                                    <p>Erstellt am: {new Date(selectedCustomer.createdAt).toLocaleDateString()}</p>
+                                    <p>Ort: {selectedCustomer.Geschäftstandort}</p>
+                                </div>
+                                <div className="flex justify-center gap-4">
+                                    <Button onClick={() => handleScanView(selectedCustomer.id)} variant="outline" className="flex items-center gap-2 cursor-pointer">
+                                        <Image src={scanner3D} alt="Scan" width={20} height={20} />
+                                        <span>Scan ansehen</span>
+                                    </Button>
+                                    <Button variant="outline" className="flex items-center gap-2 cursor-pointer">
+                                        <Image src={userImg} alt="User" width={20} height={20} />
+                                        <span>Kundeninfo</span>
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ) : notFound ? (
+                        <div className="text-center text-red-500">
+                            Keine Ergebnisse gefunden
+                        </div>
+                    ) : null}
+                </div>
             </div>
 
             {/* last scans component */}
             <LastScans />
+
+            {/* Add Customer Modal */}
+            <AddCustomerModal
+                isOpen={isAddCustomerModalOpen}
+                onClose={() => setIsAddCustomerModalOpen(false)}
+                onSubmit={handleCustomerSubmit}
+            />
         </div>
     )
 }

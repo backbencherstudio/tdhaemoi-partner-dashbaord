@@ -1,3 +1,4 @@
+
 import React from 'react'
 import Alltagseinlagen from '../_components/Versorgungs/Alltagseinlagen'
 import Sporteinlagen from '../_components/Versorgungs/Sporteinlagen'

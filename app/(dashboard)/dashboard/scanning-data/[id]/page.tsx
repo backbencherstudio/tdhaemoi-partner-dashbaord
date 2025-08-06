@@ -224,7 +224,7 @@ export default function ScanningData() {
                             </div>
 
                             <div className="mt-8">
-                                <div className="mb-6">
+                                {/* <div className="mb-6">
                                     <div className="text-xs text-center mb-1 flex justify-between">
                                         <span>Left</span>
                                         <span>Right</span>
@@ -240,9 +240,9 @@ export default function ScanningData() {
                                         <div className="bg-amber-600 flex-1"></div>
                                         <div className="bg-red-600 flex-1"></div>
                                     </div>
-                                </div>
+                                </div> */}
 
-                                <div>
+                                {/* <div>
                                     <div className="text-xs text-center mb-1 flex justify-between">
                                         <span>Left</span>
                                         <span>Right</span>
@@ -258,7 +258,7 @@ export default function ScanningData() {
                                         <div className="bg-amber-600 flex-1"></div>
                                         <div className="bg-red-600 flex-1"></div>
                                     </div>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
 

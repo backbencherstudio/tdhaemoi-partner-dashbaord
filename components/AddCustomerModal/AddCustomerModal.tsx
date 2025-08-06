@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { useForm } from 'react-hook-form'
 import { X, Upload, FileImage, File, FileText } from 'lucide-react'
-import { addCustomer } from '@/apis/addcustomerApis'
+import { addCustomer } from '@/apis/customerApis'
 
 interface CustomerFormData {
     vorname: string

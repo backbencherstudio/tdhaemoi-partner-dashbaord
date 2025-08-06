@@ -3,12 +3,14 @@ import useEmblaCarousel from 'embla-carousel-react'
 import legsImg from '@/public/Kunden/legs.png'
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { getAllCustomers } from '@/apis/customerApis';
 
 interface LastScan {
     id: number;
-    nameKunde: string;
+    vorname: string;
+    nachname: string;
     createdAt: string;
-    Geschäftstandort: string;
+    wohnort: string;
 }
 
 
@@ -24,9 +26,8 @@ export default function LastScans() {
 
     const fetchLastScans = async () => {
         try {
-            const response = await fetch('/data/userData.json');
-            const data = await response.json();
-            setLastScans(data);
+            const response = await getAllCustomers(1, 8);
+            setLastScans(response.data);
         } catch (error) {
             console.error('Error fetching last scans:', error);
         }
@@ -57,6 +58,11 @@ export default function LastScans() {
         router.push(`/dashboard/scanning-data/${id}`);
     }
 
+    // date format
+    const formatDate = (date: string) => {
+        return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
     return (
 
         <div className='flex flex-col gap-4 mt-10'>
@@ -70,13 +76,13 @@ export default function LastScans() {
                                     <div className='flex justify-center items-center'>
                                         <Image src={legsImg} alt='legs' className='w-48 h-48' />
                                     </div>
-                                    <h2 className='text-xl font-semibold'>{scan.nameKunde}</h2>
-                                    <p>Erstellt am: {scan.createdAt}</p>
-                                    <p>Ort: {scan.Geschäftstandort}</p>
+                                    <h2 className='text-xl capitalize font-semibold'>{scan?.vorname} {scan?.nachname}</h2>
+                                    <p>Erstellt am: {formatDate(scan.createdAt)}</p>
+                                    <p>Ort: {scan?.wohnort}</p>
 
                                     <div className='flex flex-col gap-2 z-50'>
                                         <button onClick={() => handleScanView(scan.id)} className='bg-[#62A07C] cursor-pointer hover:bg-[#62a07c98] transform duration-300 text-white px-4 py-2 rounded-md'>Scansadas ansehen</button>
-                                        <button  className='bg-[#62A07C]  text-white px-4 py-2 rounded-md'>Kundeninfo</button>
+                                        <button className='bg-[#62A07C]  text-white px-4 py-2 rounded-md'>Kundeninfo</button>
                                     </div>
                                 </div>
                             </div>

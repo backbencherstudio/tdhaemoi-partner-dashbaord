@@ -384,7 +384,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                     </div>
                 </div>
                 <div className='w-full md:w-5/12'>
-                    <QuestionSection />
+                    <QuestionSection customer={scanData} />
                 </div>
             </div>
 

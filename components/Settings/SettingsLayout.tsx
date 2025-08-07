@@ -4,7 +4,7 @@ import Link from "next/link";
 
 interface SidebarItem {
   id: string;
-  icon: React.ElementType;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   label: string;
   href?: string;
 }

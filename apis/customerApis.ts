@@ -54,3 +54,24 @@ export const addCustomerVersorgung = async (customerId: string, versorgungId: st
         throw error;
     }
 }
+
+
+// add customer question
+export const addCustomerQuestion = async (questionData: any) => {
+    try {
+        const response = await axiosClient.post('/einlagen-finder', questionData);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// get customer question options 
+export const getCustomerQuestionOptions = async (customerId: string) => {
+    try {
+        const response = await axiosClient.get(`/einlagen-finder/answer/${customerId}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

@@ -95,7 +95,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
     const fetchVersorgungData = async (status: string) => {
         setLoadingVersorgung(true);
         try {
-            const response = await getAllVersorgungen(status, 1, 10);
+            const response = await getAllVersorgungen(status, 1, 10, '');
             setVersorgungData(response.data || []);
             setHasDataLoaded(true);
         } catch (error) {
@@ -231,7 +231,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                         <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold">Versorgung</h3>
                             <div className='flex items-center justify-center'>
-                                <button 
+                                <button
                                     type="button"
                                     onClick={handleSupplyDropdownToggle}
                                     className='cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors'
@@ -247,7 +247,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                                 </button>
                             </div>
                         </div>
-                        
+
                         {/* Supply Dropdown */}
                         {showSupplyDropdown && (
                             <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-auto mb-2">
@@ -256,7 +256,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                                         {selectedEinlage} Optionen {hasDataLoaded && `(${versorgungData.length} gefunden)`}
                                     </div>
                                 </div>
-                                
+
                                 {loadingVersorgung ? (
                                     <div className="p-8 text-center">
                                         <ImSpinner2 className="animate-spin text-2xl text-gray-500 mx-auto mb-2" />
@@ -269,11 +269,10 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                                         return (
                                             <div
                                                 key={item.id || index}
-                                                className={`p-4 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
-                                                    isSelected 
-                                                        ? 'bg-blue-50 border-l-4 border-l-blue-500 shadow-sm' 
+                                                className={`p-4 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 ${isSelected
+                                                        ? 'bg-blue-50 border-l-4 border-l-blue-500 shadow-sm'
                                                         : 'hover:bg-gray-50'
-                                                }`}
+                                                    }`}
                                                 onClick={() => handleVersorgungCardSelect(item)}
                                             >
                                                 <div className={`font-semibold mb-2 ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>

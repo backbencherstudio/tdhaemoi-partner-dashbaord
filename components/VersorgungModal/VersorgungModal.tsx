@@ -24,6 +24,9 @@ export interface VersorgungModalProps {
     category: 'alltagseinlagen' | 'sporteinlagen' | 'businesseinlagen'
     editingCard: VersorgungCard | null
     onSubmit: (formData: Omit<VersorgungCard, 'id'>) => void
+    isAuswahl?: boolean
+    onCategoryChange?: (category: 'alltagseinlagen' | 'sporteinlagen' | 'businesseinlagen') => void
+    selectedDiagnosis?: string
 }
 
 // Constants
@@ -50,6 +53,8 @@ const CATEGORY_TITLES = {
     businesseinlagen: 'Businesseinlagen',
 } as const
 
+
+
 const INITIAL_FORM_STATE = {
     name: '',
     rohlingHersteller: '',
@@ -65,7 +70,10 @@ export default function VersorgungModal({
     onOpenChange,
     category,
     editingCard,
-    onSubmit
+    onSubmit,
+    isAuswahl = false,
+    onCategoryChange,
+    selectedDiagnosis
 }: VersorgungModalProps) {
 
     const [form, setForm] = useState(INITIAL_FORM_STATE)
@@ -112,7 +120,7 @@ export default function VersorgungModal({
     }, [editingCard])
 
     // Event Handlers
-    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
     }
 
@@ -152,7 +160,8 @@ export default function VersorgungModal({
                 versorgung: form.versorgung,
                 material: form.materialien,
                 langenempfehlung,
-                status: getCategoryStatus()
+                status: getCategoryStatus(),
+                ...(isAuswahl && { diagnosis_status: selectedDiagnosis })
             }
 
             let response
@@ -160,9 +169,8 @@ export default function VersorgungModal({
                 // Update existing versorgung
                 response = await updateVersorgung({ ...apiData, id: editingCard.id })
             } else {
-                // Create new versorgung
+                // Create new versorgung (works for both regular versorgung and diagnosis)
                 response = await createVersorgung(apiData)
-
             }
 
             toast.dismiss(loadingToastId)
@@ -344,7 +352,7 @@ export default function VersorgungModal({
                         />
                     </div>
 
-                  
+
 
                     {/* Description Fields */}
                     <textarea
@@ -364,6 +372,28 @@ export default function VersorgungModal({
                         className="border p-2 rounded"
                         required
                     />
+
+                    {/* Category Dropdown - Only for Auswahl */}
+                    {isAuswahl && (
+                        <div>
+                            <label className="font-bold mb-1 block">Kategorie</label>
+                            <select
+                                name="category"
+                                value={category}
+                                onChange={(e) => {
+                                    if (onCategoryChange) {
+                                        onCategoryChange(e.target.value as 'alltagseinlagen' | 'sporteinlagen' | 'businesseinlagen');
+                                    }
+                                }}
+                                className="border p-2 rounded w-full"
+                                required
+                            >
+                                <option value="alltagseinlagen">Alltagseinlagen</option>
+                                <option value="sporteinlagen">Sporteinlagen</option>
+                                <option value="businesseinlagen">Businesseinlagen</option>
+                            </select>
+                        </div>
+                    )}
 
                     {/* Length Recommendation */}
                     {renderLengthCarousel()}

@@ -58,7 +58,7 @@ export default function Alltagseinlagen() {
         try {
             setLoading(true);
             setError(null);
-            const response = await getAllVersorgungen('Alltagseinlagen', 1, 1000);
+            const response = await getAllVersorgungen('Alltagseinlagen', 1, 1000, '');
 
             if (response.data && Array.isArray(response.data)) {
                 const transformedData = response.data.map((item: any) => ({

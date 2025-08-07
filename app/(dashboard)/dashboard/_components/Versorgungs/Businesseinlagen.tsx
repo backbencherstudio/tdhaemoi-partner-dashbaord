@@ -7,7 +7,7 @@ import VersorgungModal, { VersorgungCard } from '@/components/VersorgungModal/Ve
 import { getAllVersorgungen, deleteVersorgung } from '@/apis/versorgungApis';
 import toast from 'react-hot-toast';
 
-interface BusinesseinlagenCard extends VersorgungCard {}
+interface BusinesseinlagenCard extends VersorgungCard { }
 
 export default function Businesseinlagen() {
     const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -60,8 +60,8 @@ export default function Businesseinlagen() {
         try {
             setLoading(true);
             setError(null);
-            const response = await getAllVersorgungen('Businesseinlagen', 1, 1000); // Fetch all items
-            
+            const response = await getAllVersorgungen('Businesseinlagen', 1, 1000, ''); 
+
             if (response.data && Array.isArray(response.data)) {
                 const transformedData = response.data.map((item: any) => ({
                     id: item._id || item.id,
@@ -102,8 +102,8 @@ export default function Businesseinlagen() {
     const handleModalSubmit = (formData: Omit<VersorgungCard, 'id'>) => {
         if (editingCard) {
             // Update existing card
-            setCards(cards.map(card => 
-                card.id === editingCard.id 
+            setCards(cards.map(card =>
+                card.id === editingCard.id
                     ? { ...card, ...formData }
                     : card
             ));
@@ -173,7 +173,7 @@ export default function Businesseinlagen() {
                 <div className='flex items-center justify-center min-h-[300px]'>
                     <div className="text-red-500">
                         <p>Error: {error}</p>
-                        <button 
+                        <button
                             onClick={fetchVersorgungen}
                             className="mt-2 bg-black text-white px-4 py-2 rounded-full"
                         >
@@ -197,7 +197,7 @@ export default function Businesseinlagen() {
                                     <h2 className='text-xl xl:text-2xl font-bold mb-2'>{card.name}</h2>
                                     <div className='flex flex-col gap-3'>
                                         <p className='font-bold'>Hersteller: <span className='font-normal'>{card.rohlingHersteller}</span></p>
-                                       
+
                                         <p className='font-bold'>Versorgung: <span className='font-normal'>{card.versorgung}</span></p>
                                     </div>
                                 </div>
@@ -259,14 +259,13 @@ export default function Businesseinlagen() {
                         <DialogTitle>Willst du wirklich diese Versorgung aus deinem Sortiment löschen?</DialogTitle>
                     </DialogHeader>
                     <div className="flex gap-4 justify-end mt-6">
-                        <button 
-                            onClick={handleConfirmDelete} 
+                        <button
+                            onClick={handleConfirmDelete}
                             disabled={deleting}
-                            className={`px-6 py-2 rounded-full cursor-pointer ${
-                                deleting 
-                                    ? 'bg-gray-400 text-white cursor-not-allowed' 
+                            className={`px-6 py-2 rounded-full cursor-pointer ${deleting
+                                    ? 'bg-gray-400 text-white cursor-not-allowed'
                                     : 'bg-black text-white'
-                            }`}
+                                }`}
                         >
                             {deleting ? 'Deleting...' : 'Ja'}
                         </button>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { useForm } from 'react-hook-form'
 import { X, Upload, FileImage, File, FileText } from 'lucide-react'
-import { addCustomer } from '@/apis/customerApis'
+import { addCustomer, getSingleCustomer, updateSingleCustomer } from '@/apis/customerApis'
 
 interface CustomerFormData {
     vorname: string
@@ -38,21 +38,86 @@ interface AddCustomerModalProps {
     isOpen: boolean
     onClose: () => void
     onSubmit: (data: CustomerFormData) => void
+    mode?: 'add' | 'update'
+    customerId?: string
+    initialData?: Partial<CustomerFormData>
 }
 
-export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCustomerModalProps) {
+export default function AddCustomerModal({ isOpen, onClose, onSubmit, mode = 'add', customerId, initialData }: AddCustomerModalProps) {
     const [filePreviews, setFilePreviews] = useState<FilePreview[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [loadingCustomerData, setLoadingCustomerData] = useState(false)
+    const [existingFiles, setExistingFiles] = useState<Record<string, string>>({})
 
     const form = useForm<CustomerFormData>({
         defaultValues: {
-            vorname: '',
-            nachname: '',
-            email: '',
-            telefon: '',
-            wohnort: '',
+            vorname: initialData?.vorname || '',
+            nachname: initialData?.nachname || '',
+            email: initialData?.email || '',
+            telefon: initialData?.telefon || '',
+            wohnort: initialData?.wohnort || '',
         },
     })
+
+    // Load customer data when in update mode
+    useEffect(() => {
+        const loadCustomerData = async () => {
+            if (mode === 'update' && customerId && isOpen) {
+                setLoadingCustomerData(true)
+                try {
+                    const response = await getSingleCustomer(customerId)
+                    // Access data from the response structure
+                    const customerData = response.data || response
+
+                    // console.log('Loaded customer data:', customerData)
+
+                    // Update form with customer data
+                    form.reset({
+                        vorname: customerData.vorname || '',
+                        nachname: customerData.nachname || '',
+                        email: customerData.email || '',
+                        telefon: customerData.telefonnummer || '',
+                        wohnort: customerData.wohnort || '',
+                    })
+
+                    // Store existing file URLs
+                    const fileUrls: Record<string, string> = {}
+                    if (customerData.picture_10) fileUrls.picture_10 = customerData.picture_10
+                    if (customerData.picture_11) fileUrls.picture_11 = customerData.picture_11
+                    if (customerData.picture_16) fileUrls.picture_16 = customerData.picture_16
+                    if (customerData.picture_17) fileUrls.picture_17 = customerData.picture_17
+                    if (customerData.picture_23) fileUrls.picture_23 = customerData.picture_23
+                    if (customerData.picture_24) fileUrls.picture_24 = customerData.picture_24
+                    if (customerData.threed_model_left) fileUrls.threed_model_left = customerData.threed_model_left
+                    if (customerData.threed_model_right) fileUrls.threed_model_right = customerData.threed_model_right
+
+                    setExistingFiles(fileUrls)
+                } catch (error) {
+                    // console.error('Error loading customer data:', error)
+                } finally {
+                    setLoadingCustomerData(false)
+                }
+            }
+        }
+
+        loadCustomerData()
+    }, [mode, customerId, isOpen, form])
+
+    // Reset form and file previews when modal opens/closes
+    useEffect(() => {
+        if (!isOpen) {
+            // Clear form and file previews when modal closes
+            form.reset({
+                vorname: '',
+                nachname: '',
+                email: '',
+                telefon: '',
+                wohnort: '',
+            })
+            setFilePreviews([])
+            setExistingFiles({})
+        }
+    }, [isOpen, form])
 
     const handleFileUpload = (fieldName: keyof CustomerFormData, event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0]
@@ -83,6 +148,12 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
     const removeFile = (fieldName: keyof CustomerFormData) => {
         form.setValue(fieldName, undefined)
         setFilePreviews(prev => prev.filter(p => p.fieldName !== fieldName))
+        // Also remove from existing files if it exists
+        setExistingFiles(prev => {
+            const updated = { ...prev }
+            delete updated[fieldName]
+            return updated
+        })
     }
 
     const getFileIcon = (fileName: string) => {
@@ -145,14 +216,14 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
         try {
             // Create FormData to handle file uploads
             const formData = new FormData();
-            
+
             // Add customer information
             formData.append('vorname', data.vorname);
             formData.append('nachname', data.nachname);
             formData.append('email', data.email);
             formData.append('telefon', data.telefon || '');
             formData.append('wohnort', data.wohnort || '');
-            
+
             // Add files if they exist
             if (data.picture_10) {
                 formData.append('picture_10', data.picture_10);
@@ -182,18 +253,24 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
                 formData.append('csvFile', data.csvFile);
             }
 
-            // Call the API directly from modal
-            const response = await addCustomer(formData);
-            console.log('API Response:', response);
+            // Call the appropriate API based on mode
+            let response;
+            if (mode === 'update' && customerId) {
+                response = await updateSingleCustomer(customerId, formData);
+                // console.log('Update API Response:', response);
+            } else {
+                response = await addCustomer(formData);
+                // console.log('Add API Response:', response);
+            }
 
             // Call the parent onSubmit for any additional handling
             await onSubmit(data)
-            
+
             form.reset()
             setFilePreviews([])
             onClose()
         } catch (error) {
-            console.error('Error submitting customer:', error)
+            // console.error('Error submitting customer:', error)
             // You might want to show an error message to the user here
         } finally {
             setIsSubmitting(false)
@@ -219,7 +296,9 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold">Manually Add a Customer</DialogTitle>
+                    <DialogTitle className="text-xl font-semibold">
+                        {mode === 'update' ? 'Update Customer' : 'Manually Add a Customer'}
+                    </DialogTitle>
                 </DialogHeader>
 
                 <Form {...form}>
@@ -329,12 +408,13 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
                                     {threeDModelFields.map((fieldName) => {
                                         const preview = filePreviews.find(p => p.fieldName === fieldName)
                                         const fieldValue = form.watch(fieldName) as File | undefined
+                                        const existingFileUrl = existingFiles[fieldName]
 
                                         return (
                                             <div key={fieldName} className="space-y-2">
                                                 <Label className="text-sm font-medium">{getFileLabel(fieldName)}</Label>
 
-                                                {!fieldValue ? (
+                                                {!fieldValue && !existingFileUrl ? (
                                                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
                                                         <input
                                                             type="file"
@@ -361,14 +441,43 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
                                                         <div className="flex items-center space-x-2">
                                                             {getFileIcon(fieldName)}
                                                             <div className="flex-1 min-w-0">
-                                                                <p className="text-xs font-medium truncate">
-                                                                    {fieldValue.name}
-                                                                </p>
-                                                                <p className="text-xs text-gray-500">
-                                                                    {(fieldValue.size / 1024 / 1024).toFixed(2)} MB
-                                                                </p>
+                                                                {fieldValue ? (
+                                                                    <>
+                                                                        <p className="text-xs font-medium truncate">
+                                                                            {fieldValue.name}
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-500">
+                                                                            {(fieldValue.size / 1024 / 1024).toFixed(2)} MB
+                                                                        </p>
+                                                                    </>
+                                                                ) : existingFileUrl ? (
+                                                                    <>
+                                                                        <p className="text-xs font-medium truncate">
+                                                                            Existing {getFileLabel(fieldName)}
+                                                                        </p>
+                                                                        <p className="text-xs text-blue-600 truncate">
+                                                                            {existingFileUrl}
+                                                                        </p>
+                                                                    </>
+                                                                ) : null}
                                                             </div>
                                                         </div>
+
+                                                        {/* Replace file option */}
+                                                        {existingFileUrl && (
+                                                            <div className="mt-2">
+                                                                <input
+                                                                    type="file"
+                                                                    accept={getFileAccept(fieldName)}
+                                                                    onChange={(e) => handleFileUpload(fieldName, e)}
+                                                                    className="hidden"
+                                                                    id={`file-replace-${fieldName}`}
+                                                                />
+                                                                <label htmlFor={`file-replace-${fieldName}`} className="text-xs text-blue-600 cursor-pointer hover:underline">
+                                                                    Replace file
+                                                                </label>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -384,12 +493,13 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
                                     {fileFields.map((fieldName) => {
                                         const preview = filePreviews.find(p => p.fieldName === fieldName)
                                         const fieldValue = form.watch(fieldName) as File | undefined
+                                        const existingFileUrl = existingFiles[fieldName]
 
                                         return (
                                             <div key={fieldName} className="space-y-2">
                                                 <Label className="text-sm font-medium">{getFileLabel(fieldName)}</Label>
 
-                                                {!fieldValue ? (
+                                                {!fieldValue && !existingFileUrl ? (
                                                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
                                                         <input
                                                             type="file"
@@ -416,23 +526,60 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
                                                         <div className="flex items-center space-x-2">
                                                             {getFileIcon(fieldName)}
                                                             <div className="flex-1 min-w-0">
-                                                                <p className="text-xs font-medium truncate">
-                                                                    {fieldValue.name}
-                                                                </p>
-                                                                <p className="text-xs text-gray-500">
-                                                                    {(fieldValue.size / 1024 / 1024).toFixed(2)} MB
-                                                                </p>
+                                                                {fieldValue ? (
+                                                                    <>
+                                                                        <p className="text-xs font-medium truncate">
+                                                                            {fieldValue.name}
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-500">
+                                                                            {(fieldValue.size / 1024 / 1024).toFixed(2)} MB
+                                                                        </p>
+                                                                    </>
+                                                                ) : existingFileUrl ? (
+                                                                    <>
+                                                                        <p className="text-xs font-medium truncate">
+                                                                            Existing {getFileLabel(fieldName)}
+                                                                        </p>
+                                                                        <p className="text-xs text-blue-600 truncate">
+                                                                            {existingFileUrl.split('/').pop()}
+                                                                        </p>
+                                                                    </>
+                                                                ) : null}
                                                             </div>
                                                         </div>
 
                                                         {/* Image Preview */}
-                                                        {preview?.preview && (
+                                                        {preview?.preview ? (
                                                             <div className="mt-2">
                                                                 <img
                                                                     src={preview.preview}
                                                                     alt="Preview"
                                                                     className="w-full h-20 object-cover rounded border"
                                                                 />
+                                                            </div>
+                                                        ) : existingFileUrl && fieldName.includes('picture') ? (
+                                                            <div className="mt-2">
+                                                                <img
+                                                                    src={existingFileUrl}
+                                                                    alt="Existing Preview"
+                                                                    className="w-full h-20 object-cover rounded border"
+                                                                />
+                                                            </div>
+                                                        ) : null}
+
+                                                        {/* Replace file option */}
+                                                        {existingFileUrl && !fieldValue && (
+                                                            <div className="mt-2">
+                                                                <input
+                                                                    type="file"
+                                                                    accept={getFileAccept(fieldName)}
+                                                                    onChange={(e) => handleFileUpload(fieldName, e)}
+                                                                    className="hidden"
+                                                                    id={`file-replace-${fieldName}`}
+                                                                />
+                                                                <label htmlFor={`file-replace-${fieldName}`} className="text-xs text-blue-600 cursor-pointer hover:underline">
+                                                                    Replace file
+                                                                </label>
                                                             </div>
                                                         )}
                                                     </div>
@@ -456,7 +603,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
                             </Button>
                             <Button
                                 type="submit"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || loadingCustomerData}
                                 className="bg-green-600 hover:bg-green-700"
                             >
                                 {isSubmitting ? (
@@ -465,10 +612,18 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
                                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                                         </svg>
-                                        Speichern...
+                                        {mode === 'update' ? 'Updating...' : 'Speichern...'}
+                                    </>
+                                ) : loadingCustomerData ? (
+                                    <>
+                                        <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                        </svg>
+                                        Loading...
                                     </>
                                 ) : (
-                                    'Kunde hinzufügen'
+                                    mode === 'update' ? 'Update Customer' : 'Kunde hinzufügen'
                                 )}
                             </Button>
                         </div>

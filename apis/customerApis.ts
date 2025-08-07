@@ -25,9 +25,19 @@ export const getAllCustomers = async (page: number, limit: number) => {
 }
 
 // get single customer
-export const getSingleCustomer = async (id: number) => {
+export const getSingleCustomer = async (id: string) => {
     try {
         const response = await axiosClient.get(`/customers/${id}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// update customers
+export const updateSingleCustomer = async (id: string, customerData: FormData) => {
+    try {
+        const response = await axiosClient.patch(`/customers/${id}`, customerData);
         return response.data;
     } catch (error) {
         throw error;

@@ -86,7 +86,7 @@ export default function QuestionSection({ customer }: { customer: any }) {
                 }
             }
         } catch (error) {
-            console.error('Error loading customer answers:', error);
+            // console.error('Error loading customer answers:', error);
         }
     };
 
@@ -95,15 +95,15 @@ export default function QuestionSection({ customer }: { customer: any }) {
 
         loadedAnswers.forEach((item: any) => {
             const questionId = item.questionId;
-            console.log('Processing item:', item);
+            // console.log('Processing item:', item);
 
             if (Array.isArray(item.answer)) {
                 // Handle nested questions (ID 6 - pain details)
-                console.log('Found nested answers for question', questionId, ':', item.answer);
+                // console.log('Found nested answers for question', questionId, ':', item.answer);
                 item.answer.forEach((subAnswer: any) => {
                     const key = `${questionId}-0_${subAnswer.questionId}`;
                     formattedAnswers[key] = subAnswer.selected;
-                    console.log('Setting nested answer:', key, '=', subAnswer.selected);
+                    // console.log('Setting nested answer:', key, '=', subAnswer.selected);
                 });
 
                 // Also store the raw nested data for readonly display
@@ -112,11 +112,11 @@ export default function QuestionSection({ customer }: { customer: any }) {
                 // Handle regular questions
                 const key = `${questionId}-0`;
                 formattedAnswers[key] = item.answer;
-                console.log('Setting regular answer:', key, '=', item.answer);
+                // console.log('Setting regular answer:', key, '=', item.answer);
             }
         });
 
-        console.log('Final formatted answers for state:', formattedAnswers);
+        // console.log('Final formatted answers for state:', formattedAnswers);
         return formattedAnswers;
     };
 

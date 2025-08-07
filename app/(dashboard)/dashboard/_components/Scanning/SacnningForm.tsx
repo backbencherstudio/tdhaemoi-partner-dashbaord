@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BiSolidEdit } from 'react-icons/bi';
 import { ImSpinner2 } from 'react-icons/im';
 import { TiArrowSortedDown } from "react-icons/ti";
@@ -22,6 +22,25 @@ const diagnosisOptions = [
     "Stressfrakturen im Fußbereich",
     "Diabetisches Fußsyndrom"
 ];
+
+// Mapping from display names to API values for diagnosis
+const diagnosisMapping: { [key: string]: string } = {
+    "Plantarfasziitis": "PLANTARFASZIITIS",
+    "Fersensporn": "FERSENSPORN",
+    "Spreizfuß": "SPREIZFUSS",
+    "Senkfuß": "SENKFUSS",
+    "Plattfuß": "PLATTFUSS",
+    "Hohlfuß": "HOHLFUSS",
+    "Knickfuß": "KNICKFUSS",
+    "Knick-Senkfuß": "KNICK_SENKFUSS",
+    "Hallux valgus": "HALLUX_VALGUS",
+    "Hallux rigidus": "HALLUX_RIGIDUS",
+    "Hammerzehen / Krallenzehen": "HAMMERZEHEN_KRALLENZEHEN",
+    "Morton-Neurom": "MORTON_NEUROM",
+    "Fußarthrose": "FUSSARTHROSE",
+    "Stressfrakturen im Fußbereich": "STRESSFRAKTUREN_IM_FUSS",
+    "Diabetisches Fußsyndrom": "DIABETISCHES_FUSSSYNDROM"
+};
 
 
 
@@ -59,7 +78,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
     const [editingSupply, setEditingSupply] = useState(false);
 
     // Button section
-    const [selectedEinlage, setSelectedEinlage] = useState<'Alltagseinlage' | 'Sporteinlage' | 'Businesseinlage'>('Sporteinlage');
+    const [selectedEinlage, setSelectedEinlage] = useState<'Alltagseinlage' | 'Sporteinlage' | 'Businesseinlage'>('Alltagseinlage');
 
     // Checkboxes
     const [manualEntry, setManualEntry] = useState(false);
@@ -68,10 +87,32 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
     // Loading state
     const [isSaving, setIsSaving] = useState(false);
 
+    // Load default data when component mounts
+    useEffect(() => {
+        // Load default Alltagseinlage data on component mount
+        const statusMap = {
+            'Alltagseinlage': 'Alltagseinlagen',
+            'Sporteinlage': 'Sporteinlagen',
+            'Businesseinlage': 'Businesseinlagen'
+        };
+        fetchVersorgungData(statusMap[selectedEinlage]);
+    }, []); // Empty dependency array means this runs only once on mount
+
     // Handlers
     const handleDiagnosisSelect = (diagnosis: string) => {
         setSelectedDiagnosis(diagnosis);
         setShowDiagnosisDropdown(false);
+        
+        // Automatically fetch versorgung data based on diagnosis and current button selection
+        if (diagnosis && diagnosisMapping[diagnosis]) {
+            const statusMap = {
+                'Alltagseinlage': 'Alltagseinlagen',
+                'Sporteinlage': 'Sporteinlagen',
+                'Businesseinlage': 'Businesseinlagen'
+            };
+            // Fetch with both diagnosis and current status
+            fetchVersorgungDataByDiagnosis(diagnosisMapping[diagnosis], statusMap[selectedEinlage]);
+        }
     };
 
 
@@ -106,16 +147,40 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
         }
     };
 
+    const fetchVersorgungDataByDiagnosis = async (diagnosisStatus: string, status: string = '') => {
+        setLoadingVersorgung(true);
+        try {
+            // Fetch data based on diagnosis_status and optionally status (combined filtering)
+            const response = await getAllVersorgungen(status, 1, 10, diagnosisStatus);
+            setVersorgungData(response.data || []);
+            setHasDataLoaded(true);
+        } catch (error) {
+            console.error('Error fetching versorgung data by diagnosis:', error);
+            setVersorgungData([]);
+        } finally {
+            setLoadingVersorgung(false);
+        }
+    };
+
     const handleEinlageButtonClick = (einlageType: 'Alltagseinlage' | 'Sporteinlage' | 'Businesseinlage') => {
         setSelectedEinlage(einlageType);
         setSelectedVersorgungId(null); // Reset selection when changing category
+        
         // Map button types to API status values
         const statusMap = {
             'Alltagseinlage': 'Alltagseinlagen',
             'Sporteinlage': 'Sporteinlagen',
             'Businesseinlage': 'Businesseinlagen'
         };
-        fetchVersorgungData(statusMap[einlageType]);
+        
+        // Check if diagnosis is selected
+        if (selectedDiagnosis && diagnosisMapping[selectedDiagnosis]) {
+            // If diagnosis is selected, fetch by BOTH diagnosis_status AND status (combined filtering)
+            fetchVersorgungDataByDiagnosis(diagnosisMapping[selectedDiagnosis], statusMap[einlageType]);
+        } else {
+            // If no diagnosis selected, fetch by status only (default behavior)
+            fetchVersorgungData(statusMap[einlageType]);
+        }
     };
     const handleDiagnosisEdit = () => setEditingDiagnosis(true);
     const handleDiagnosisBlur = () => setEditingDiagnosis(false);
@@ -141,25 +206,43 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
     return (
         <div>
             <div className='mt-10'>
-                <div className="flex flex-col md:flex-row justify-between items-center mb-10 w-full">
+                <div className="flex flex-col lg:flex-row gap-6 lg:justify-between lg:items-center mb-10 w-full">
                     {/* Diagnosis Dropdown */}
-                    <div className=" w-full md:w-1/2">
+                    <div className="w-full lg:w-1/2">
                         <div className="relative">
                             <div
-                                className="p-2 border border-gray-300 rounded cursor-pointer flex justify-between items-center"
+                                className="p-3 sm:p-2 border border-gray-300 rounded cursor-pointer flex justify-between items-center min-h-[44px]"
                                 onClick={() => setShowDiagnosisDropdown(!showDiagnosisDropdown)}
                             >
-                                <span className={selectedDiagnosis ? '' : 'text-gray-400'}>{selectedDiagnosis || "Diagnose auswählen"}</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                                </svg>
+                                <span className={`text-sm sm:text-base truncate pr-2 ${selectedDiagnosis ? '' : 'text-gray-400'}`}>
+                                    {selectedDiagnosis || "Diagnose auswählen"}
+                                </span>
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    {selectedDiagnosis && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedDiagnosis("");
+                                                setVersorgungData([]);
+                                                setHasDataLoaded(false);
+                                            }}
+                                            className="text-gray-400 hover:text-gray-600 text-sm p-1 hover:bg-gray-100 rounded"
+                                            title="Diagnose löschen"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
                             </div>
                             {showDiagnosisDropdown && (
-                                <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-auto">
+                                <div className="absolute z-20 mt-1 w-full bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-auto">
                                     {diagnosisOptions.map((option, index) => (
                                         <div
                                             key={index}
-                                            className="p-2 hover:bg-gray-100 cursor-pointer"
+                                            className="p-3 sm:p-2 hover:bg-gray-100 cursor-pointer text-sm sm:text-base border-b border-gray-100 last:border-b-0"
                                             onClick={() => handleDiagnosisSelect(option)}
                                         >
                                             {option}
@@ -171,28 +254,31 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                     </div>
 
                     {/* button section */}
-                    <div className="w-full md:w-1/2">
-                        <div className="flex space-x-4 justify-end">
+                    <div className="w-full lg:w-1/2">
+                        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 lg:justify-end">
                             <button
                                 type="button"
-                                className={`border cursor-pointer border-gray-400 px-6 py-2 rounded text-sm font-semibold hover:bg-gray-100 ${selectedEinlage === 'Alltagseinlage' ? 'bg-gray-200' : 'bg-white'}`}
+                                className={`border cursor-pointer border-gray-400 px-3 sm:px-4 lg:px-6 py-2 sm:py-2 rounded text-xs sm:text-sm font-semibold hover:bg-gray-100 transition-colors min-h-[44px] flex-1 sm:flex-none ${selectedEinlage === 'Alltagseinlage' ? 'bg-gray-200 border-gray-600' : 'bg-white'}`}
                                 onClick={() => handleEinlageButtonClick('Alltagseinlage')}
                             >
-                                Alltagseinlage
+                                <span className="sm:hidden">Alltag</span>
+                                <span className="hidden sm:inline">Alltagseinlage</span>
                             </button>
                             <button
                                 type="button"
-                                className={`border cursor-pointer border-gray-400 px-6 py-2 rounded text-sm font-semibold hover:bg-gray-100 ${selectedEinlage === 'Sporteinlage' ? 'bg-gray-200' : 'bg-white'}`}
+                                className={`border cursor-pointer border-gray-400 px-3 sm:px-4 lg:px-6 py-2 sm:py-2 rounded text-xs sm:text-sm font-semibold hover:bg-gray-100 transition-colors min-h-[44px] flex-1 sm:flex-none ${selectedEinlage === 'Sporteinlage' ? 'bg-gray-200 border-gray-600' : 'bg-white'}`}
                                 onClick={() => handleEinlageButtonClick('Sporteinlage')}
                             >
-                                Sporteinlage
+                                <span className="sm:hidden">Sport</span>
+                                <span className="hidden sm:inline">Sporteinlage</span>
                             </button>
                             <button
                                 type="button"
-                                className={`border cursor-pointer border-gray-400 px-6 py-2 rounded text-sm font-semibold hover:bg-gray-100 ${selectedEinlage === 'Businesseinlage' ? 'bg-gray-200' : 'bg-white'}`}
+                                className={`border cursor-pointer border-gray-400 px-3 sm:px-4 lg:px-6 py-2 sm:py-2 rounded text-xs sm:text-sm font-semibold hover:bg-gray-100 transition-colors min-h-[44px] flex-1 sm:flex-none ${selectedEinlage === 'Businesseinlage' ? 'bg-gray-200 border-gray-600' : 'bg-white'}`}
                                 onClick={() => handleEinlageButtonClick('Businesseinlage')}
                             >
-                                Businesseinlage
+                                <span className="sm:hidden">Business</span>
+                                <span className="hidden sm:inline">Businesseinlage</span>
                             </button>
                         </div>
                     </div>
@@ -200,6 +286,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
 
                 {/* Diagnosis and Supply Editable Fields */}
                 <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Versorgung */}
                     <div className="relative">
                         <div className="flex items-center mb-2">
                             <h3 className="text-lg font-semibold">Ausführliche Diagnose</h3>
@@ -253,8 +340,16 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                             <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-auto mb-2">
                                 <div className="p-3 bg-gray-50 border-b border-gray-200">
                                     <div className="text-sm font-semibold text-gray-700">
-                                        {selectedEinlage} Optionen {hasDataLoaded && `(${versorgungData.length} gefunden)`}
+                                        {selectedDiagnosis ? 
+                                            `${selectedDiagnosis} - ${selectedEinlage}` : 
+                                            `${selectedEinlage} Optionen`
+                                        } {hasDataLoaded && `(${versorgungData.length} gefunden)`}
                                     </div>
+                                    {selectedDiagnosis && (
+                                        <div className="text-xs text-blue-600 mt-1">
+                                            Diagnosebasierte Auswahl für {selectedEinlage}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {loadingVersorgung ? (

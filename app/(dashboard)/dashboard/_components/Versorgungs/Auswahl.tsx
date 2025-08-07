@@ -12,47 +12,14 @@ import toast from 'react-hot-toast';
 
 interface AuswahlCard extends VersorgungCard {
     kategorie: string;
+    status?: string;
 }
 
-const initialCards: AuswahlCard[] = [
-    {
-        id: 1,
-        name: 'Dünne Standard Einlage',
-        rohlingHersteller: 'FeetFirst',
-        artikelHersteller: 'FeetFirst',
-        artNr: '2145644633',
-        versorgung: 'Versorgung mit Pelotte, Kork-Längsstütze & Zehensteg',
-        materialien: 'Kork, Leder',
-        laenge: '270',
-        kategorie: 'Knickfuß',
-    },
-    {
-        id: 2,
-        name: 'Dünne Standard Einlage',
-        rohlingHersteller: 'FeetFirst',
-        artikelHersteller: 'FeetFirst',
-        artNr: '2145644633',
-        versorgung: 'Versorgung mit Pelotte, Kork-Längsstütze & Zehensteg',
-        materialien: 'Kork, Leder',
-        laenge: '275',
-        kategorie: 'Knickfuß',
-    },
-    {
-        id: 3,
-        name: 'Dünne Standard Einlage',
-        rohlingHersteller: 'FeetFirst',
-        artikelHersteller: 'FeetFirst',
-        artNr: '2145644633',
-        versorgung: 'Versorgung mit Pelotte, Kork-Längsstütze & Zehensteg',
-        materialien: 'Kork, Leder',
-        laenge: '280',
-        kategorie: 'Plattfuß',
-    },
-];
+
 
 const filterCategories = [
     "Plantarfasziitis",
-    "Fersensporn", 
+    "Fersensporn",
     "Spreizfuß",
     "Senkfuß",
     "Plattfuß",
@@ -128,7 +95,7 @@ export default function Auswahl() {
                     name: item.name || 'Unnamed Versorgung',
                     rohlingHersteller: item.rohlingHersteller || 'N/A',
                     artikelHersteller: item.artikelHersteller || 'N/A',
-                    artNr: item.artNr || 'N/A',
+                    status: item.status || 'N/A',
                     versorgung: item.versorgung || 'N/A',
                     materialien: item.material || 'N/A',
                     laenge: item.laenge || 'N/A',
@@ -286,9 +253,10 @@ export default function Auswahl() {
                                 <div className='border border-gray-900 p-5 flex flex-col gap-1 rounded-xl min-h-[260px] w-full'>
                                     <h2 className='text-2xl font-bold mb-2'>{card.name}</h2>
                                     <div className='flex flex-col gap-3'>
-                                        <p className='font-bold'>Hersteller: <span className='font-normal'>{card.rohlingHersteller}</span></p>
-                                  
-                                        <p className='font-bold'>Versorgung: <span className='font-normal'>{card.versorgung}</span></p>
+                                        <p className='font-bold'>Hersteller: <span className='font-normal'>{card?.rohlingHersteller}</span></p>
+
+                                        <p className='font-bold'>Versorgung: <span className='font-normal'>{card?.versorgung}</span></p>
+                                        <p className='font-bold'>Status: <span className='font-normal'>{card?.status}</span></p>
                                     </div>
                                 </div>
                                 <div className='flex flex-col gap-2 mt-3 w-full items-center'>

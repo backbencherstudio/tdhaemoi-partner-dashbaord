@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { BiSolidEdit } from 'react-icons/bi';
 import { ImSpinner2 } from 'react-icons/im';
-
+import { TiArrowSortedDown } from "react-icons/ti";
+import { getAllVersorgungen } from '@/apis/versorgungApis';
+import { addCustomerVersorgung } from '@/apis/customerApis';
+import toast from 'react-hot-toast';
 const diagnosisOptions = [
     "Plantarfasziitis",
     "Fersensporn",
@@ -20,10 +23,30 @@ const diagnosisOptions = [
     "Diabetisches Fußsyndrom"
 ];
 
-export default function SacnningForm() {
+
+
+interface Customer {
+    id: string;
+    vorname?: string;
+    nachname?: string;
+    email?: string;
+}
+
+interface ScanningFormProps {
+    customer?: Customer;
+}
+
+export default function SacnningForm({ customer }: ScanningFormProps) {
     // Dropdown
     const [showDiagnosisDropdown, setShowDiagnosisDropdown] = useState(false);
     const [selectedDiagnosis, setSelectedDiagnosis] = useState("");
+    const [showSupplyDropdown, setShowSupplyDropdown] = useState(false);
+
+    // API State
+    const [versorgungData, setVersorgungData] = useState<any[]>([]);
+    const [loadingVersorgung, setLoadingVersorgung] = useState(false);
+    const [hasDataLoaded, setHasDataLoaded] = useState(false);
+    const [selectedVersorgungId, setSelectedVersorgungId] = useState<string | null>(null);
 
     // Editable fields
     const [diagnosis, setDiagnosis] = useState(
@@ -50,10 +73,55 @@ export default function SacnningForm() {
         setSelectedDiagnosis(diagnosis);
         setShowDiagnosisDropdown(false);
     };
+
+
+    const handleVersorgungCardSelect = async (item: any) => {
+        setSupply(item.versorgung);
+        setSelectedVersorgungId(item.id);
+        setShowSupplyDropdown(false);
+
+        // Auto-save to customer if customer data is provided
+        if (customer?.id && item.id) {
+            try {
+                await addCustomerVersorgung(customer.id, item.id);
+                toast.success(`Versorgung zu ${customer.vorname || 'Kunde'} hinzugefügt`);
+            } catch (error) {
+                console.error('Error assigning versorgung to customer:', error);
+                toast.error('Fehler beim Zuweisen der Versorgung');
+            }
+        }
+    };
+
+    const fetchVersorgungData = async (status: string) => {
+        setLoadingVersorgung(true);
+        try {
+            const response = await getAllVersorgungen(status, 1, 10);
+            setVersorgungData(response.data || []);
+            setHasDataLoaded(true);
+        } catch (error) {
+            console.error('Error fetching versorgung data:', error);
+            setVersorgungData([]);
+        } finally {
+            setLoadingVersorgung(false);
+        }
+    };
+
+    const handleEinlageButtonClick = (einlageType: 'Alltagseinlage' | 'Sporteinlage' | 'Businesseinlage') => {
+        setSelectedEinlage(einlageType);
+        setSelectedVersorgungId(null); // Reset selection when changing category
+        // Map button types to API status values
+        const statusMap = {
+            'Alltagseinlage': 'Alltagseinlagen',
+            'Sporteinlage': 'Sporteinlagen',
+            'Businesseinlage': 'Businesseinlagen'
+        };
+        fetchVersorgungData(statusMap[einlageType]);
+    };
     const handleDiagnosisEdit = () => setEditingDiagnosis(true);
     const handleDiagnosisBlur = () => setEditingDiagnosis(false);
     const handleSupplyEdit = () => setEditingSupply(true);
     const handleSupplyBlur = () => setEditingSupply(false);
+    const handleSupplyDropdownToggle = () => setShowSupplyDropdown(!showSupplyDropdown);
 
     const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -72,7 +140,7 @@ export default function SacnningForm() {
 
     return (
         <div>
-            <form className='mt-10' onSubmit={handleFormSubmit}>
+            <div className='mt-10'>
                 <div className="flex flex-col md:flex-row justify-between items-center mb-10 w-full">
                     {/* Diagnosis Dropdown */}
                     <div className=" w-full md:w-1/2">
@@ -108,21 +176,21 @@ export default function SacnningForm() {
                             <button
                                 type="button"
                                 className={`border cursor-pointer border-gray-400 px-6 py-2 rounded text-sm font-semibold hover:bg-gray-100 ${selectedEinlage === 'Alltagseinlage' ? 'bg-gray-200' : 'bg-white'}`}
-                                onClick={() => setSelectedEinlage('Alltagseinlage')}
+                                onClick={() => handleEinlageButtonClick('Alltagseinlage')}
                             >
                                 Alltagseinlage
                             </button>
                             <button
                                 type="button"
                                 className={`border cursor-pointer border-gray-400 px-6 py-2 rounded text-sm font-semibold hover:bg-gray-100 ${selectedEinlage === 'Sporteinlage' ? 'bg-gray-200' : 'bg-white'}`}
-                                onClick={() => setSelectedEinlage('Sporteinlage')}
+                                onClick={() => handleEinlageButtonClick('Sporteinlage')}
                             >
                                 Sporteinlage
                             </button>
                             <button
                                 type="button"
                                 className={`border cursor-pointer border-gray-400 px-6 py-2 rounded text-sm font-semibold hover:bg-gray-100 ${selectedEinlage === 'Businesseinlage' ? 'bg-gray-200' : 'bg-white'}`}
-                                onClick={() => setSelectedEinlage('Businesseinlage')}
+                                onClick={() => handleEinlageButtonClick('Businesseinlage')}
                             >
                                 Businesseinlage
                             </button>
@@ -160,16 +228,87 @@ export default function SacnningForm() {
                     </div>
 
                     <div className="relative">
-                        <div className="flex items-center mb-2">
+                        <div className="flex items-center justify-between mb-2">
                             <h3 className="text-lg font-semibold">Versorgung</h3>
-                            <button
-                                type="button"
-                                onClick={handleSupplyEdit}
-                                className="ml-3 cursor-pointer"
-                            >
-                                <BiSolidEdit className='text-gray-900 text-xl' />
-                            </button>
+                            <div className='flex items-center justify-center'>
+                                <button 
+                                    type="button"
+                                    onClick={handleSupplyDropdownToggle}
+                                    className='cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors'
+                                >
+                                    <TiArrowSortedDown className={`text-gray-900 text-3xl transition-transform ${showSupplyDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSupplyEdit}
+                                    className="ml-3 cursor-pointer hover:bg-gray-100 p-1 rounded transition-colors"
+                                >
+                                    <BiSolidEdit className='text-gray-900 text-xl' />
+                                </button>
+                            </div>
                         </div>
+                        
+                        {/* Supply Dropdown */}
+                        {showSupplyDropdown && (
+                            <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-auto mb-2">
+                                <div className="p-3 bg-gray-50 border-b border-gray-200">
+                                    <div className="text-sm font-semibold text-gray-700">
+                                        {selectedEinlage} Optionen {hasDataLoaded && `(${versorgungData.length} gefunden)`}
+                                    </div>
+                                </div>
+                                
+                                {loadingVersorgung ? (
+                                    <div className="p-8 text-center">
+                                        <ImSpinner2 className="animate-spin text-2xl text-gray-500 mx-auto mb-2" />
+                                        <div className="text-sm text-gray-500">Lade Daten...</div>
+                                    </div>
+                                ) : hasDataLoaded && versorgungData.length > 0 ? (
+                                    // Show API Data
+                                    versorgungData.map((item, index) => {
+                                        const isSelected = selectedVersorgungId === item.id;
+                                        return (
+                                            <div
+                                                key={item.id || index}
+                                                className={`p-4 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 ${
+                                                    isSelected 
+                                                        ? 'bg-blue-50 border-l-4 border-l-blue-500 shadow-sm' 
+                                                        : 'hover:bg-gray-50'
+                                                }`}
+                                                onClick={() => handleVersorgungCardSelect(item)}
+                                            >
+                                                <div className={`font-semibold mb-2 ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>
+                                                    {item.name}
+                                                    {isSelected && (
+                                                        <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                            Ausgewählt
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-2">
+                                                    <div><span className="font-medium">Rohling:</span> {item.rohlingHersteller}</div>
+                                                    <div><span className="font-medium">Artikel:</span> {item.artikelHersteller}</div>
+                                                </div>
+                                                <div className={`text-sm mb-1 ${isSelected ? 'text-blue-700' : 'text-gray-700'}`}>
+                                                    <span className="font-medium">Versorgung:</span> {item.versorgung}
+                                                </div>
+                                                <div className="text-xs text-gray-500">
+                                                    <span className="font-medium">Material:</span> {item.material}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                ) : hasDataLoaded && versorgungData.length === 0 ? (
+                                    <div className="p-8 text-center text-gray-500">
+                                        <div className="text-sm">Keine Daten für {selectedEinlage} gefunden</div>
+                                    </div>
+                                ) : (
+                                    <div className="p-8 text-center text-gray-500">
+                                        <div className="text-sm">Bitte wählen Sie eine Einlage-Kategorie aus</div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {editingSupply ? (
                             <textarea
                                 value={supply}
@@ -223,7 +362,8 @@ export default function SacnningForm() {
                         </button>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
     );
 }
+

@@ -15,6 +15,8 @@ import { updateSingleCustomer } from '@/apis/customerApis';
 import toast from 'react-hot-toast';
 import { User2 } from 'lucide-react';
 import AddCustomerModal from '@/components/AddCustomerModal/AddCustomerModal';
+import leftImage from '@/public/images/left.png';
+import rightImage from '@/public/images/right.png';
 interface ScanData {
     id: string;
     vorname: string;
@@ -169,7 +171,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                 </DialogContent>
             </Dialog>
             <div className='flex items-center justify-end mb-8'>
-                <button 
+                <button
                     onClick={handleUpdateUser}
                     className='bg-[#4A8A6A] cursor-pointer flex items-center justify-center gap-1 text-white px-2 py-1 rounded hover:bg-[#4A8A6A]/80 transition text-sm'
                 >
@@ -217,7 +219,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                         <div className="flex-1 mb-6 lg:mb-0 flex flex-col items-center">
                             <div className="w-50 max-w-sm">
                                 <Image
-                                    src="/images/left.png"
+                                    src={leftImage}
                                     alt="Left foot scan"
                                     width={300}
                                     height={500}
@@ -371,7 +373,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                         <div className="flex-1 mb-6 lg:mb-0 flex flex-col items-center">
                             <div className="w-50 max-w-sm">
                                 <Image
-                                    src="/images/right.png"
+                                    src={rightImage}
                                     alt="Right foot scan"
                                     width={300}
                                     height={500}

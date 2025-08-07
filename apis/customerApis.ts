@@ -43,3 +43,14 @@ export const updateSingleCustomer = async (id: string, customerData: FormData) =
         throw error;
     }
 }
+
+
+// add customer versorgung 
+export const addCustomerVersorgung = async (customerId: string, versorgungId: string) => {
+    try {
+        const response = await axiosClient.post(`/customers/assign-versorgungen/${customerId}/${versorgungId}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

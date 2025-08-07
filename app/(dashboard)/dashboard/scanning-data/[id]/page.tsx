@@ -63,7 +63,7 @@ export default function ScanningData() {
         const fetchScanData = async () => {
             try {
                 const data = await getSingleCustomer(String(params.id));
-                setScanData(data.data); // Only set the customer object
+                setScanData(data.data);
                 setLoading(false);
             } catch (error) {
                 setLoading(false);
@@ -89,7 +89,7 @@ export default function ScanningData() {
             <ScannningDataPage scanData={scanData} />
             <hr className='my-10 border-gray-500' />
             {/*  form section */}
-            <SacnningForm />
+            <SacnningForm customer={scanData} />
             {/* Bottom Action Links */}
             <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center mb-20">
                 <div className="flex flex-col items-center">

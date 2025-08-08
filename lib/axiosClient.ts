@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosClient = axios.create({
-  baseURL: "https://later-cellular-input-schema.trycloudflare.com", 
+  baseURL: process.env.NEXT_PUBLIC_API_ENDPOINT, 
 });
 
 axiosClient.interceptors.request.use(

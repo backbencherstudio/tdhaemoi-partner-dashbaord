@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'date-advanced-electrical-hypothetical.trycloudflare.com',
+        hostname: 'later-cellular-input-schema.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

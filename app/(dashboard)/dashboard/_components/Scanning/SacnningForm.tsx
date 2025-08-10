@@ -100,25 +100,21 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingDiagnosis, setIsSavingDiagnosis] = useState(false);
 
-    // Load default data when component mounts
     useEffect(() => {
-        // Load default Alltagseinlage data on component mount
         const statusMap = {
             'Alltagseinlage': 'Alltagseinlagen',
             'Sporteinlage': 'Sporteinlagen',
             'Businesseinlage': 'Businesseinlagen'
         };
         fetchVersorgungData(statusMap[selectedEinlage]);
-    }, []); // Empty dependency array means this runs only once on mount
+    }, []); 
 
-    // Initialize diagnosis field from customer prop data
     useEffect(() => {
         if (customer?.ausfuhrliche_diagnose) {
             setDiagnosis(customer.ausfuhrliche_diagnose);
         }
     }, [customer?.ausfuhrliche_diagnose]);
 
-    // Helper function to find matching versorgung from customer data
     const findMatchingVersorgung = (buttonType: 'Alltagseinlage' | 'Sporteinlage' | 'Businesseinlage', diagnosisStatus?: string) => {
         if (!customer?.versorgungen) return null;
 
@@ -130,15 +126,12 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
 
         const targetStatus = statusMap[buttonType];
 
-        // Find versorgung that matches status and optionally diagnosis_status
         return customer.versorgungen.find(versorgung => {
             const statusMatches = versorgung.status === targetStatus;
             
             if (diagnosisStatus) {
-                // If diagnosis is selected, match both status and diagnosis_status
                 return statusMatches && versorgung.diagnosis_status === diagnosisStatus;
             } else {
-                // If no diagnosis selected, just match status
                 return statusMatches;
             }
         });
@@ -166,7 +159,6 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
         setSelectedDiagnosis(diagnosis);
         setShowDiagnosisDropdown(false);
 
-        // Check if we have customer versorgung data and update supply accordingly
         if (customer?.versorgungen) {
             const diagnosisStatus = diagnosisMapping[diagnosis];
             const matchingVersorgung = findMatchingVersorgung(selectedEinlage, diagnosisStatus);
@@ -175,7 +167,6 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                 setSupply(matchingVersorgung.versorgung);
                 setSelectedVersorgungId(matchingVersorgung.id);
             } else {
-                // Clear supply if no matching versorgung found
                 setSupply("");
                 setSelectedVersorgungId(null);
             }

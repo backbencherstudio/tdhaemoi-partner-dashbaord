@@ -75,3 +75,14 @@ export const getCustomerQuestionOptions = async (customerId: string) => {
         throw error;
     }
 }
+
+
+
+export const searchCustomers = async (searchData: any, page: number, limit: number, name: string, email: string, phone: string) => {
+    try {
+        const response = await axiosClient.get(`/customers/search?limit=${limit}&search=${searchData}&location=${searchData}&email=${email}&phone=${phone}&location=${searchData}&name=${name}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

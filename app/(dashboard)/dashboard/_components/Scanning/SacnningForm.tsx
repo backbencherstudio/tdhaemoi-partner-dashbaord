@@ -50,6 +50,19 @@ interface Customer {
     nachname?: string;
     email?: string;
     ausfuhrliche_diagnose?: any;
+    versorgungen?: Array<{
+        id: string;
+        name: string;
+        rohlingHersteller: string;
+        artikelHersteller: string;
+        versorgung: string;
+        material: string;
+        status: string;
+        diagnosis_status: string | null;
+        customerId: string;
+        createdAt: string;
+        updatedAt: string;
+    }>;
 }
 
 interface ScanningFormProps {
@@ -72,7 +85,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
     const [diagnosis, setDiagnosis] = useState("");
     const [editingDiagnosis, setEditingDiagnosis] = useState(false);
     const [supply, setSupply] = useState(
-        "Rohling 339821769, mit Pelotte Nr. 10 und Micro Elastisch"
+        ""
     );
     const [editingSupply, setEditingSupply] = useState(false);
 
@@ -105,11 +118,69 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
         }
     }, [customer?.ausfuhrliche_diagnose]);
 
+    // Helper function to find matching versorgung from customer data
+    const findMatchingVersorgung = (buttonType: 'Alltagseinlage' | 'Sporteinlage' | 'Businesseinlage', diagnosisStatus?: string) => {
+        if (!customer?.versorgungen) return null;
+
+        const statusMap = {
+            'Alltagseinlage': 'Alltagseinlagen',
+            'Sporteinlage': 'Sporteinlagen',
+            'Businesseinlage': 'Businesseinlagen'
+        };
+
+        const targetStatus = statusMap[buttonType];
+
+        // Find versorgung that matches status and optionally diagnosis_status
+        return customer.versorgungen.find(versorgung => {
+            const statusMatches = versorgung.status === targetStatus;
+            
+            if (diagnosisStatus) {
+                // If diagnosis is selected, match both status and diagnosis_status
+                return statusMatches && versorgung.diagnosis_status === diagnosisStatus;
+            } else {
+                // If no diagnosis selected, just match status
+                return statusMatches;
+            }
+        });
+    };
+
+    // Update supply textarea when customer versorgung data changes or button selection changes
+    useEffect(() => {
+        if (customer?.versorgungen) {
+            const currentDiagnosisStatus = selectedDiagnosis ? diagnosisMapping[selectedDiagnosis] : undefined;
+            const matchingVersorgung = findMatchingVersorgung(selectedEinlage, currentDiagnosisStatus);
+            
+            if (matchingVersorgung) {
+                setSupply(matchingVersorgung.versorgung);
+                setSelectedVersorgungId(matchingVersorgung.id);
+            } else {
+                // Clear supply if no matching versorgung found
+                setSupply("");
+                setSelectedVersorgungId(null);
+            }
+        }
+    }, [customer?.versorgungen, selectedEinlage, selectedDiagnosis]);
+
     // Handlers
     const handleDiagnosisSelect = (diagnosis: string) => {
         setSelectedDiagnosis(diagnosis);
         setShowDiagnosisDropdown(false);
-        
+
+        // Check if we have customer versorgung data and update supply accordingly
+        if (customer?.versorgungen) {
+            const diagnosisStatus = diagnosisMapping[diagnosis];
+            const matchingVersorgung = findMatchingVersorgung(selectedEinlage, diagnosisStatus);
+            
+            if (matchingVersorgung) {
+                setSupply(matchingVersorgung.versorgung);
+                setSelectedVersorgungId(matchingVersorgung.id);
+            } else {
+                // Clear supply if no matching versorgung found
+                setSupply("");
+                setSelectedVersorgungId(null);
+            }
+        }
+
         // Automatically fetch versorgung data based on diagnosis and current button selection
         if (diagnosis && diagnosisMapping[diagnosis]) {
             const statusMap = {
@@ -147,7 +218,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
             setVersorgungData(response.data || []);
             setHasDataLoaded(true);
         } catch (error) {
-            console.error('Error fetching versorgung data:', error);
+            // console.error('Error fetching versorgung data:', error);
             setVersorgungData([]);
         } finally {
             setLoadingVersorgung(false);
@@ -162,7 +233,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
             setVersorgungData(response.data || []);
             setHasDataLoaded(true);
         } catch (error) {
-            console.error('Error fetching versorgung data by diagnosis:', error);
+            // console.error('Error fetching versorgung data by diagnosis:', error);
             setVersorgungData([]);
         } finally {
             setLoadingVersorgung(false);
@@ -171,7 +242,6 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
 
     const handleEinlageButtonClick = (einlageType: 'Alltagseinlage' | 'Sporteinlage' | 'Businesseinlage') => {
         setSelectedEinlage(einlageType);
-        setSelectedVersorgungId(null); // Reset selection when changing category
         
         // Map button types to API status values
         const statusMap = {
@@ -179,8 +249,26 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
             'Sporteinlage': 'Sporteinlagen',
             'Businesseinlage': 'Businesseinlagen'
         };
-        
-        // Check if diagnosis is selected
+
+        // Check if we have customer versorgung data
+        if (customer?.versorgungen) {
+            const currentDiagnosisStatus = selectedDiagnosis ? diagnosisMapping[selectedDiagnosis] : undefined;
+            const matchingVersorgung = findMatchingVersorgung(einlageType, currentDiagnosisStatus);
+            
+            if (matchingVersorgung) {
+                setSupply(matchingVersorgung.versorgung);
+                setSelectedVersorgungId(matchingVersorgung.id);
+            } else {
+                // Clear supply if no matching versorgung found in customer data
+                setSupply("");
+                setSelectedVersorgungId(null);
+            }
+        } else {
+            // Reset selection when changing category (original behavior for when no customer data)
+            setSelectedVersorgungId(null);
+        }
+
+        // Check if diagnosis is selected for API fetching
         if (selectedDiagnosis && diagnosisMapping[selectedDiagnosis]) {
             // If diagnosis is selected, fetch by BOTH diagnosis_status AND status (combined filtering)
             fetchVersorgungDataByDiagnosis(diagnosisMapping[selectedDiagnosis], statusMap[einlageType]);
@@ -190,10 +278,10 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
         }
     };
     const handleDiagnosisEdit = () => setEditingDiagnosis(true);
-    
+
     const handleDiagnosisBlur = async () => {
         setEditingDiagnosis(false);
-        
+
         // Auto-save diagnosis if customer exists
         if (customer?.id && diagnosis.trim()) {
             setIsSavingDiagnosis(true);
@@ -376,8 +464,8 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                             <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-80 overflow-auto mb-2">
                                 <div className="p-3 bg-gray-50 border-b border-gray-200">
                                     <div className="text-sm font-semibold text-gray-700">
-                                        {selectedDiagnosis ? 
-                                            `${selectedDiagnosis} - ${selectedEinlage}` : 
+                                        {selectedDiagnosis ?
+                                            `${selectedDiagnosis} - ${selectedEinlage}` :
                                             `${selectedEinlage} Optionen`
                                         } {hasDataLoaded && `(${versorgungData.length} gefunden)`}
                                     </div>
@@ -401,8 +489,8 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                                             <div
                                                 key={item.id || index}
                                                 className={`p-4 cursor-pointer border-b border-gray-100 last:border-b-0 transition-all duration-200 ${isSelected
-                                                        ? 'bg-blue-50 border-l-4 border-l-blue-500 shadow-sm'
-                                                        : 'hover:bg-gray-50'
+                                                    ? 'bg-blue-50 border-l-4 border-l-blue-500 shadow-sm'
+                                                    : 'hover:bg-gray-50'
                                                     }`}
                                                 onClick={() => handleVersorgungCardSelect(item)}
                                             >

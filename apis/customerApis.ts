@@ -85,4 +85,25 @@ export const searchCustomers = async (searchData: any, page: number, limit: numb
     } catch (error) {
         throw error;
     }
+
 }
+
+
+// details diagnosis add and update 
+export const detailsDiagnosis = async (id: string, ausfuhrliche_diagnose: any) => {
+    try {
+        const formData = new FormData();
+        formData.append('ausfuhrliche_diagnose', ausfuhrliche_diagnose);
+        
+        const response = await axiosClient.patch(`/customers/${id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+

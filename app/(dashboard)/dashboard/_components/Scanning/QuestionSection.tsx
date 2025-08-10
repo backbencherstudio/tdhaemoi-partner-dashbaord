@@ -65,7 +65,7 @@ export default function QuestionSection({ customer }: { customer: any }) {
     const loadCustomerAnswers = async () => {
         try {
             const response = await getCustomerQuestionOptions(customer.id);
-            console.log('Loaded customer answers:', response);
+            // console.log('Loaded customer answers:', response);
 
             if (response.success && response.data) {
                 const customerData = response.data;
@@ -305,7 +305,7 @@ export default function QuestionSection({ customer }: { customer: any }) {
     };
 
     const renderReadonlyOptions = (options: string[] | SubQuestion[], questionId: string, selectedAnswer: any) => {
-        console.log('Rendering readonly options:', { questionId, selectedAnswer, currentAnswers: answers });
+        // console.log('Rendering readonly options:', { questionId, selectedAnswer, currentAnswers: answers });
 
         // Handle nested questions (ID 6 - pain details)
         if (options.length > 0 && typeof options[0] === 'object' && 'id' in options[0]) {

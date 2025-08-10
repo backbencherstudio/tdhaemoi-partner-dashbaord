@@ -137,13 +137,13 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
     // handle customer update submission
     const handleCustomerUpdate = async (customerData: any) => {
         try {
-            console.log('Customer updated:', customerData);
+            // console.log('Customer updated:', customerData);
             toast.success('Customer updated successfully!');
             setIsUpdateModalOpen(false);
             // Optionally refresh the page or update the scanData
             window.location.reload();
         } catch (error) {
-            console.error('Error updating customer:', error);
+            // console.error('Error updating customer:', error);
             toast.error('Failed to update customer');
         }
     };

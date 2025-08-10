@@ -3,7 +3,7 @@ import { BiSolidEdit } from 'react-icons/bi';
 import { ImSpinner2 } from 'react-icons/im';
 import { TiArrowSortedDown } from "react-icons/ti";
 import { getAllVersorgungen } from '@/apis/versorgungApis';
-import { addCustomerVersorgung } from '@/apis/customerApis';
+import { addCustomerVersorgung, detailsDiagnosis } from '@/apis/customerApis';
 import toast from 'react-hot-toast';
 const diagnosisOptions = [
     "Plantarfasziitis",
@@ -49,6 +49,7 @@ interface Customer {
     vorname?: string;
     nachname?: string;
     email?: string;
+    ausfuhrliche_diagnose?: any;
 }
 
 interface ScanningFormProps {
@@ -68,9 +69,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
     const [selectedVersorgungId, setSelectedVersorgungId] = useState<string | null>(null);
 
     // Editable fields
-    const [diagnosis, setDiagnosis] = useState(
-        "Der Kunde hat eine starken Unterschied der Fusslänge zwischen beiden Füßen. Dazu rechts eine stärkere Fersenneigung. Der Index der Plantarsohle ist etwas zu niedrig und es tendiert zu einem leichten Hohlfuss."
-    );
+    const [diagnosis, setDiagnosis] = useState("");
     const [editingDiagnosis, setEditingDiagnosis] = useState(false);
     const [supply, setSupply] = useState(
         "Rohling 339821769, mit Pelotte Nr. 10 und Micro Elastisch"
@@ -86,6 +85,7 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
 
     // Loading state
     const [isSaving, setIsSaving] = useState(false);
+    const [isSavingDiagnosis, setIsSavingDiagnosis] = useState(false);
 
     // Load default data when component mounts
     useEffect(() => {
@@ -97,6 +97,13 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
         };
         fetchVersorgungData(statusMap[selectedEinlage]);
     }, []); // Empty dependency array means this runs only once on mount
+
+    // Initialize diagnosis field from customer prop data
+    useEffect(() => {
+        if (customer?.ausfuhrliche_diagnose) {
+            setDiagnosis(customer.ausfuhrliche_diagnose);
+        }
+    }, [customer?.ausfuhrliche_diagnose]);
 
     // Handlers
     const handleDiagnosisSelect = (diagnosis: string) => {
@@ -183,7 +190,24 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
         }
     };
     const handleDiagnosisEdit = () => setEditingDiagnosis(true);
-    const handleDiagnosisBlur = () => setEditingDiagnosis(false);
+    
+    const handleDiagnosisBlur = async () => {
+        setEditingDiagnosis(false);
+        
+        // Auto-save diagnosis if customer exists
+        if (customer?.id && diagnosis.trim()) {
+            setIsSavingDiagnosis(true);
+            try {
+                await detailsDiagnosis(customer.id, diagnosis);
+                toast.success('Diagnose erfolgreich gespeichert');
+            } catch (error) {
+                console.error('Error saving diagnosis:', error);
+                toast.error('Fehler beim Speichern der Diagnose');
+            } finally {
+                setIsSavingDiagnosis(false);
+            }
+        }
+    };
     const handleSupplyEdit = () => setEditingSupply(true);
     const handleSupplyBlur = () => setEditingSupply(false);
     const handleSupplyDropdownToggle = () => setShowSupplyDropdown(!showSupplyDropdown);
@@ -294,9 +318,16 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                                 type="button"
                                 onClick={handleDiagnosisEdit}
                                 className="ml-3 cursor-pointer"
+                                disabled={isSavingDiagnosis}
                             >
                                 <BiSolidEdit className='text-gray-900 text-xl' />
                             </button>
+                            {isSavingDiagnosis && (
+                                <div className="ml-2 flex items-center">
+                                    <ImSpinner2 className="animate-spin text-blue-500 text-sm" />
+                                    <span className="ml-1 text-sm text-blue-600">Speichern...</span>
+                                </div>
+                            )}
                         </div>
                         {editingDiagnosis ? (
                             <textarea
@@ -305,11 +336,16 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                                 onBlur={handleDiagnosisBlur}
                                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 rows={4}
+                                placeholder="Geben Sie hier die ausführliche Diagnose ein..."
                                 autoFocus
                             />
                         ) : (
-                            <div className="p-2 border border-gray-300 rounded min-h-[100px]">
-                                {diagnosis}
+                            <div className="p-2 border border-gray-300 rounded min-h-[100px] cursor-pointer" onClick={handleDiagnosisEdit}>
+                                {diagnosis || (
+                                    <span className="text-gray-400 italic">
+                                        Klicken Sie hier oder auf das Bearbeiten-Symbol, um eine ausführliche Diagnose hinzuzufügen...
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>

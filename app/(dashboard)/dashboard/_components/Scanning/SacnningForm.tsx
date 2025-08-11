@@ -3,7 +3,7 @@ import { BiSolidEdit } from 'react-icons/bi';
 import { ImSpinner2 } from 'react-icons/im';
 import { TiArrowSortedDown } from "react-icons/ti";
 import { getAllVersorgungen } from '@/apis/versorgungApis';
-import { addCustomerVersorgung, detailsDiagnosis } from '@/apis/customerApis';
+import { addCustomerVersorgung, detailsDiagnosis, getSingleCustomer } from '@/apis/customerApis';
 import toast from 'react-hot-toast';
 import ManualEntryModal from './ManualEntryModal';
 import FeetFirstInventoryModal from './FeetFirstInventoryModal';
@@ -84,9 +84,10 @@ interface FeetFirstInventoryData {
 
 interface ScanningFormProps {
     customer?: Customer;
+    onCustomerUpdate?: (updatedCustomer: Customer) => void;
 }
 
-export default function SacnningForm({ customer }: ScanningFormProps) {
+export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFormProps) {
     // Dropdown
     const [showDiagnosisDropdown, setShowDiagnosisDropdown] = useState(false);
     const [selectedDiagnosis, setSelectedDiagnosis] = useState("");
@@ -136,6 +137,20 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [isSavingDiagnosis, setIsSavingDiagnosis] = useState(false);
 
+    // Function to refresh customer data
+    const refreshCustomerData = async () => {
+        if (customer?.id) {
+            try {
+                const response = await getSingleCustomer(customer.id);
+                if (response?.data && onCustomerUpdate) {
+                    onCustomerUpdate(response.data);
+                }
+            } catch (error) {
+                console.error('Error refreshing customer data:', error);
+            }
+        }
+    };
+
     useEffect(() => {
         const statusMap = {
             'Alltagseinlage': 'Alltagseinlagen',
@@ -166,9 +181,11 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
             const statusMatches = versorgung.status === targetStatus;
             
             if (diagnosisStatus) {
+                // If diagnosis is selected, match both status and diagnosis_status
                 return statusMatches && versorgung.diagnosis_status === diagnosisStatus;
             } else {
-                return statusMatches;
+                // If no diagnosis is selected, match status and diagnosis_status should be null
+                return statusMatches && versorgung.diagnosis_status === null;
             }
         });
     };
@@ -231,6 +248,9 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
             try {
                 await addCustomerVersorgung(customer.id, item.id);
                 toast.success(`Versorgung zu ${customer.vorname || 'Kunde'} hinzugefügt`);
+                
+                // Refresh customer data to get the latest versorgung data
+                await refreshCustomerData();
             } catch (error) {
                 console.error('Error assigning versorgung to customer:', error);
                 toast.error('Fehler beim Zuweisen der Versorgung');
@@ -286,9 +306,16 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                 setSupply(matchingVersorgung.versorgung);
                 setSelectedVersorgungId(matchingVersorgung.id);
             } else {
-                // Clear supply if no matching versorgung found in customer data
-                setSupply("");
-                setSelectedVersorgungId(null);
+                // If no exact match found, try to find any versorgung with just the status
+                // This is for fallback when no diagnosis matches but status matches
+                const fallbackVersorgung = customer.versorgungen.find(v => v.status === statusMap[einlageType]);
+                if (fallbackVersorgung) {
+                    setSupply(fallbackVersorgung.versorgung);
+                    setSelectedVersorgungId(fallbackVersorgung.id);
+                } else {
+                    setSupply("");
+                    setSelectedVersorgungId(null);
+                }
             }
         } else {
             // Reset selection when changing category (original behavior for when no customer data)
@@ -315,6 +342,9 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
             try {
                 await detailsDiagnosis(customer.id, diagnosis);
                 toast.success('Diagnose erfolgreich gespeichert');
+                
+                // Refresh customer data to get the latest diagnosis
+                await refreshCustomerData();
             } catch (error) {
                 console.error('Error saving diagnosis:', error);
                 toast.error('Fehler beim Speichern der Diagnose');

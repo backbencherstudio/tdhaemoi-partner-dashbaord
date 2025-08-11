@@ -62,6 +62,7 @@ export default function Dashboard() {
     setDefaultOptions({ locale: de });
     const [appointments, setAppointments] = useState<DayAppointments[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetail | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -74,6 +75,11 @@ export default function Dashboard() {
     const fetchAppointments = async () => {
         try {
             setIsLoading(true);
+            
+            // Add minimum loading time to prevent flash and improve UX
+            const startTime = Date.now();
+            const minLoadingTime = 800; // 800ms minimum loading time
+            
             const response = await getMyAppointments({
                 page: 1,
                 limit: 100
@@ -109,7 +115,15 @@ export default function Dashboard() {
                     appointments: (groupedByDay[day]?.appointments || [])
                 }));
 
-                setAppointments(finalAppointments);
+                // Ensure minimum loading time for better UX
+                const elapsedTime = Date.now() - startTime;
+                const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
+                
+                setTimeout(() => {
+                    setAppointments(finalAppointments);
+                    setIsLoading(false);
+                    setIsInitialLoad(false);
+                }, remainingTime);
             } else {
                 // If no data, still show the structure with empty appointments
                 const daysOfWeek = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
@@ -117,7 +131,15 @@ export default function Dashboard() {
                     day: day,
                     appointments: []
                 }));
-                setAppointments(emptyAppointments);
+                
+                const elapsedTime = Date.now() - startTime;
+                const remainingTime = Math.max(0, minLoadingTime - elapsedTime);
+                
+                setTimeout(() => {
+                    setAppointments(emptyAppointments);
+                    setIsLoading(false);
+                    setIsInitialLoad(false);
+                }, remainingTime);
             }
         } catch (error) {
             console.error('Failed to load appointments:', error);
@@ -127,9 +149,12 @@ export default function Dashboard() {
                 day: day,
                 appointments: []
             }));
-            setAppointments(emptyAppointments);
-        } finally {
-            setIsLoading(false);
+            
+            setTimeout(() => {
+                setAppointments(emptyAppointments);
+                setIsLoading(false);
+                setIsInitialLoad(false);
+            }, 300);
         }
     };
 
@@ -156,32 +181,64 @@ export default function Dashboard() {
         }
     };
 
+    // Skeleton Components
+    const HeaderSkeleton = () => (
+        <div className='flex flex-col gap-3 mb-6'>
+            <div className='h-9 bg-gray-200 rounded-lg w-3/4 animate-pulse'></div>
+            <div className='h-6 bg-gray-200 rounded-lg w-1/2 animate-pulse'></div>
+        </div>
+    );
+
+    const AppointmentCardSkeleton = () => (
+        <div className="p-3 rounded bg-gray-200 animate-pulse">
+            <div className="h-3 bg-gray-300 rounded mb-2 w-1/3"></div>
+            <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+        </div>
+    );
+
+    const DayCardSkeleton = () => (
+        <div className="border rounded-[20px] p-4 h-[400px] flex flex-col bg-white">
+            <div className="h-8 bg-gray-200 rounded mb-4 w-2/3 animate-pulse"></div>
+            <div className="space-y-3 overflow-y-auto flex-1">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <AppointmentCardSkeleton key={i} />
+                ))}
+            </div>
+        </div>
+    );
+
+
+
     return (
         <div className='p-4'>
-            <div className='flex flex-col gap-3 mb-6'>
-                <h1 className='text-3xl font-bold'>WELCOME BACK ORTHOPÄDIE PUTZER</h1>
-                <p className='text-lg text-gray-500'>{format(new Date(), 'EEEE, d. MMMM yyyy')}</p>
-            </div>
 
 
+            {isInitialLoad ? <HeaderSkeleton /> : (
+                <div className='flex flex-col gap-3 mb-6'>
+                    <h1 className='text-3xl font-bold'>WELCOME BACK ORTHOPÄDIE PUTZER</h1>
+                    <p className='text-lg text-gray-500'>{format(new Date(), 'EEEE, d. MMMM yyyy')}</p>
+                </div>
+            )}
+
+
+            {/* Appointment Carousel */}
             <div className="relative">
                 <div className="overflow-hidden" ref={emblaRef}>
                     <div className="flex">
-                        {
+                        {isLoading ? (
+                            // Show skeleton for all days during loading
+                            Array.from({ length: 7 }).map((_, index) => (
+                                <div key={index} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_50%] lg:flex-[0_0_25%] p-2">
+                                    <DayCardSkeleton />
+                                </div>
+                            ))
+                        ) : (
                             appointments.map((day, index) => (
                                 <div key={index} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_50%] lg:flex-[0_0_25%] p-2">
-                                    <div className="border rounded-[20px] p-4 h-[400px] flex flex-col">
+                                    <div className="border rounded-[20px] p-4 h-[400px] flex flex-col bg-white transition-all duration-500 hover:shadow-lg">
                                         <h2 className="text-xl font-semibold mb-4 bg-gray-100 p-2 rounded">{day?.day}</h2>
                                         <div className="space-y-3 overflow-y-auto flex-1">
-                                            {isLoading ? (
-                                                // Loading skeleton
-                                                Array.from({ length: 3 }).map((_, i) => (
-                                                    <div key={i} className="p-3 rounded bg-gray-200 animate-pulse">
-                                                        <div className="h-3 bg-gray-300 rounded mb-2"></div>
-                                                        <div className="h-4 bg-gray-300 rounded"></div>
-                                                    </div>
-                                                ))
-                                            ) : day.appointments.length > 0 ? (
+                                            {day.appointments.length > 0 ? (
                                                 // Actual appointments
                                                 day.appointments.map((apt: AppointmentItem, aptIndex: number) => (
                                                     <div
@@ -207,7 +264,7 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             ))
-                        }
+                        )}
                     </div>
                 </div>
 
@@ -291,42 +348,38 @@ export default function Dashboard() {
             )}
 
             {/* Navigation Links */}
-            <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 items-center  w-full mt-10'>
+            <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 items-center w-full mt-10'>
                 <Link href="/dashboard/overview" className="flex flex-col items-center text-center">
-                    <div className=" bg-white px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg transition-all mb-2 hover:bg-gray-200  duration-300">
+                    <div className="bg-white px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg transition-all mb-2 hover:bg-gray-200 duration-300">
                         <Image src={dashboard} alt='dashboard' width={100} height={100} className='w-[130px] h-[130px]' />
                     </div>
                     <span className="text-md font-semibold">IHR ÜBERBLICK</span>
                 </Link>
 
                 <Link href="/dashboard/customers" className="flex flex-col items-center text-center">
-                    <div className=" bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2 ">
+                    <div className="bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2">
                         <Image src={users} alt='users' width={200} height={200} className='w-[130px] h-[130px] p-7' />
-
                     </div>
                     <span className="text-md font-semibold">KUNDENSUCHE</span>
                 </Link>
 
                 <Link href="/dashboard/calendar" className="flex flex-col items-center text-center">
-                    <div className=" bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2 ">
+                    <div className="bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2">
                         <Image src={date} alt='calendar' width={100} height={100} className='w-[130px] h-[130px] p-7' />
-
                     </div>
                     <span className="text-md font-semibold">TERMINKALENDER</span>
                 </Link>
 
                 <Link href="/dashboard/settings" className="flex flex-col items-center text-center">
-                    <div className=" bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2 ">
+                    <div className="bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2">
                         <Image src={settings} alt='settings' width={100} height={100} className='w-[130px] h-[130px] p-7' />
-
                     </div>
                     <span className="text-md font-semibold">EINSTELLUNGEN</span>
                 </Link>
 
                 <Link href="/dashboard/products" className="flex flex-col items-center text-center">
-                    <div className=" bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2 ">
+                    <div className="bg-white transition-all duration-300 hover:bg-gray-200 px-5 border border-gray-400 rounded-[40px] shadow-md hover:shadow-lg mb-2">
                         <Image src={home} alt='products' width={100} height={100} className='w-[130px] h-[130px] p-7' />
-
                     </div>
                     <span className="text-md font-semibold">PRODUKTVERWALTUNG</span>
                 </Link>

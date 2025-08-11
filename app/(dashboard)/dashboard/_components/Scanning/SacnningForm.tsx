@@ -200,9 +200,27 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 setSupply(matchingVersorgung.versorgung);
                 setSelectedVersorgungId(matchingVersorgung.id);
             } else {
-                // Clear supply if no matching versorgung found
-                setSupply("");
-                setSelectedVersorgungId(null);
+                // Only use fallback when NO diagnosis is selected
+                if (!selectedDiagnosis) {
+                    // If no diagnosis selected, try to find any versorgung with just the status
+                    const statusMap = {
+                        'Alltagseinlage': 'Alltagseinlagen',
+                        'Sporteinlage': 'Sporteinlagen',
+                        'Businesseinlage': 'Businesseinlagen'
+                    };
+                    const fallbackVersorgung = customer.versorgungen.find(v => v.status === statusMap[selectedEinlage]);
+                    if (fallbackVersorgung) {
+                        setSupply(fallbackVersorgung.versorgung);
+                        setSelectedVersorgungId(fallbackVersorgung.id);
+                    } else {
+                        setSupply("");
+                        setSelectedVersorgungId(null);
+                    }
+                } else {
+                    // If diagnosis is selected but no matching data found, clear the supply
+                    setSupply("");
+                    setSelectedVersorgungId(null);
+                }
             }
         }
     }, [customer?.versorgungen, selectedEinlage, selectedDiagnosis]);
@@ -220,6 +238,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 setSupply(matchingVersorgung.versorgung);
                 setSelectedVersorgungId(matchingVersorgung.id);
             } else {
+                // If diagnosis is selected but no matching data found, clear the supply
                 setSupply("");
                 setSelectedVersorgungId(null);
             }
@@ -306,13 +325,20 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 setSupply(matchingVersorgung.versorgung);
                 setSelectedVersorgungId(matchingVersorgung.id);
             } else {
-                // If no exact match found, try to find any versorgung with just the status
-                // This is for fallback when no diagnosis matches but status matches
-                const fallbackVersorgung = customer.versorgungen.find(v => v.status === statusMap[einlageType]);
-                if (fallbackVersorgung) {
-                    setSupply(fallbackVersorgung.versorgung);
-                    setSelectedVersorgungId(fallbackVersorgung.id);
+                // Only use fallback when NO diagnosis is selected
+                // If a diagnosis is selected but no match found, don't show any data
+                if (!selectedDiagnosis) {
+                    // If no diagnosis selected and no exact match found, try to find any versorgung with just the status
+                    const fallbackVersorgung = customer.versorgungen.find(v => v.status === statusMap[einlageType]);
+                    if (fallbackVersorgung) {
+                        setSupply(fallbackVersorgung.versorgung);
+                        setSelectedVersorgungId(fallbackVersorgung.id);
+                    } else {
+                        setSupply("");
+                        setSelectedVersorgungId(null);
+                    }
                 } else {
+                    // If diagnosis is selected but no matching data found, clear the supply
                     setSupply("");
                     setSelectedVersorgungId(null);
                 }
@@ -438,6 +464,13 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                                                 setSelectedDiagnosis("");
                                                 setVersorgungData([]);
                                                 setHasDataLoaded(false);
+                                                // Refresh data for current category without diagnosis filter
+                                                const statusMap = {
+                                                    'Alltagseinlage': 'Alltagseinlagen',
+                                                    'Sporteinlage': 'Sporteinlagen',
+                                                    'Businesseinlage': 'Businesseinlagen'
+                                                };
+                                                fetchVersorgungData(statusMap[selectedEinlage]);
                                             }}
                                             className="text-gray-400 hover:text-gray-600 text-sm p-1 hover:bg-gray-100 rounded"
                                             title="Diagnose löschen"

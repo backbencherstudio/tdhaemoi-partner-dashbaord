@@ -5,6 +5,8 @@ import { TiArrowSortedDown } from "react-icons/ti";
 import { getAllVersorgungen } from '@/apis/versorgungApis';
 import { addCustomerVersorgung, detailsDiagnosis } from '@/apis/customerApis';
 import toast from 'react-hot-toast';
+import ManualEntryModal from './ManualEntryModal';
+import FeetFirstInventoryModal from './FeetFirstInventoryModal';
 const diagnosisOptions = [
     "Plantarfasziitis",
     "Fersensporn",
@@ -65,6 +67,21 @@ interface Customer {
     }>;
 }
 
+interface ManualEntryData {
+    marke: string;
+    modell: string;
+    kategorie: string;
+    grosse: string;
+}
+
+interface FeetFirstInventoryData {
+    kategorie: string;
+    marke: string;
+    modell: string;
+    grosse: string;
+    image?: string;
+}
+
 interface ScanningFormProps {
     customer?: Customer;
 }
@@ -95,6 +112,25 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
     // Checkboxes
     const [manualEntry, setManualEntry] = useState(false);
     const [fromFeetFirst, setFromFeetFirst] = useState(false);
+
+    // Manual Entry Modal
+    const [showManualEntryModal, setShowManualEntryModal] = useState(false);
+    const [manualEntryData, setManualEntryData] = useState<ManualEntryData>({
+        marke: '',
+        modell: '',
+        kategorie: '',
+        grosse: ''
+    });
+
+    // FeetFirst Inventory Modal
+    const [showFeetFirstModal, setShowFeetFirstModal] = useState(false);
+    const [feetFirstData, setFeetFirstData] = useState<FeetFirstInventoryData>({
+        kategorie: '',
+        marke: '',
+        modell: '',
+        grosse: '',
+        image: ''
+    });
 
     // Loading state
     const [isSaving, setIsSaving] = useState(false);
@@ -291,6 +327,48 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
     const handleSupplyBlur = () => setEditingSupply(false);
     const handleSupplyDropdownToggle = () => setShowSupplyDropdown(!showSupplyDropdown);
 
+    // Manual Entry Modal Handlers
+    const handleManualEntryClick = () => {
+        setShowManualEntryModal(true);
+        setManualEntry(true);
+    };
+
+    const handleManualEntryModalClose = () => {
+        setShowManualEntryModal(false);
+        // If no data was entered, uncheck the checkbox
+        if (!manualEntryData.marke && !manualEntryData.modell && !manualEntryData.kategorie && !manualEntryData.grosse) {
+            setManualEntry(false);
+        }
+    };
+
+    const handleManualEntryModalSave = (data: ManualEntryData) => {
+        setManualEntryData(data);
+        setManualEntry(true);
+        console.log('Manual entry data saved:', data);
+        toast.success('Schuhmodell manuell eingetragen');
+    };
+
+    // FeetFirst Inventory Modal Handlers
+    const handleFeetFirstClick = () => {
+        setShowFeetFirstModal(true);
+        setFromFeetFirst(true);
+    };
+
+    const handleFeetFirstModalClose = () => {
+        setShowFeetFirstModal(false);
+        // If no data was entered, uncheck the checkbox
+        if (!feetFirstData.kategorie && !feetFirstData.marke && !feetFirstData.modell && !feetFirstData.grosse) {
+            setFromFeetFirst(false);
+        }
+    };
+
+    const handleFeetFirstModalSave = (data: FeetFirstInventoryData) => {
+        setFeetFirstData(data);
+        setFromFeetFirst(true);
+        console.log('FeetFirst inventory data saved:', data);
+        toast.success('Schuhmodell aus FeetFirst-Bestand ausgewählt');
+    };
+
     const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
@@ -300,7 +378,9 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
             diagnosis,
             supply,
             manualEntry,
-            fromFeetFirst
+            manualEntryData: manualEntry ? manualEntryData : null,
+            fromFeetFirst,
+            feetFirstData: fromFeetFirst ? feetFirstData : null
         });
         await new Promise(res => setTimeout(res, 1500));
         setIsSaving(false);
@@ -541,16 +621,134 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                         Schuhmodell wählen (optional aber empfohlen)
                     </div>
                     <div className="flex flex-col space-y-3">
-                        <label className="flex items-center space-x-2">
-                            <input type="checkbox" className="w-5 h-5" checked={manualEntry} onChange={e => setManualEntry(e.target.checked)} />
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                className="w-5 h-5" 
+                                checked={manualEntry} 
+                                onChange={(e) => {
+                                    if (e.target.checked) {
+                                        handleManualEntryClick();
+                                    } else {
+                                        setManualEntry(false);
+                                        setManualEntryData({
+                                            marke: '',
+                                            modell: '',
+                                            kategorie: '',
+                                            grosse: ''
+                                        });
+                                    }
+                                }} 
+                            />
                             <span>Manuell eintragen (Marke + Modell + Größe)</span>
                         </label>
-                        <label className="flex items-center space-x-2">
-                            <input type="checkbox" className="w-5 h-5" checked={fromFeetFirst} onChange={e => setFromFeetFirst(e.target.checked)} />
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                className="w-5 h-5" 
+                                checked={fromFeetFirst} 
+                                onChange={(e) => {
+                                    if (e.target.checked) {
+                                        handleFeetFirstClick();
+                                    } else {
+                                        setFromFeetFirst(false);
+                                        setFeetFirstData({
+                                            kategorie: '',
+                                            marke: '',
+                                            modell: '',
+                                            grosse: '',
+                                            image: ''
+                                        });
+                                    }
+                                }} 
+                            />
                             <span>Aus FeetFirst Bestand wählen</span>
                         </label>
                     </div>
                 </div>
+
+                {/* Manual Entry Data Display */}
+                {manualEntry && (manualEntryData.marke || manualEntryData.modell || manualEntryData.kategorie || manualEntryData.grosse) && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-lg font-semibold text-blue-900">Manuell eingetragenes Schuhmodell</h4>
+                            <button
+                                onClick={() => setShowManualEntryModal(true)}
+                                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                                Bearbeiten
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                            <div>
+                                <span className="font-medium text-gray-700">Marke:</span>
+                                <div className="text-gray-900">{manualEntryData.marke || '-'}</div>
+                            </div>
+                            <div>
+                                <span className="font-medium text-gray-700">Modell:</span>
+                                <div className="text-gray-900">{manualEntryData.modell || '-'}</div>
+                            </div>
+                            <div>
+                                <span className="font-medium text-gray-700">Kategorie:</span>
+                                <div className="text-gray-900">{manualEntryData.kategorie || '-'}</div>
+                            </div>
+                            <div>
+                                <span className="font-medium text-gray-700">Größe:</span>
+                                <div className="text-gray-900">{manualEntryData.grosse || '-'}</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* FeetFirst Inventory Data Display */}
+                {fromFeetFirst && (feetFirstData.kategorie || feetFirstData.marke || feetFirstData.modell || feetFirstData.grosse) && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-lg font-semibold text-green-900">Aus FeetFirst-Bestand ausgewählt</h4>
+                            <button
+                                onClick={() => setShowFeetFirstModal(true)}
+                                className="text-green-600 hover:text-green-800 text-sm font-medium"
+                            >
+                                Bearbeiten
+                            </button>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            {feetFirstData.image && (
+                                <img
+                                    src={feetFirstData.image}
+                                    alt={feetFirstData.modell}
+                                    className="w-16 h-16 object-cover rounded-md"
+                                    onError={(e) => {
+                                        e.currentTarget.src = '/images/products/shoes.png';
+                                    }}
+                                />
+                            )}
+                            <div className="flex-1">
+                                <div className="text-lg font-semibold text-gray-900 mb-2">
+                                    {feetFirstData.kategorie} – {feetFirstData.marke} – {feetFirstData.modell} – Größe {feetFirstData.grosse}
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                    <div>
+                                        <span className="font-medium text-gray-700">Kategorie:</span>
+                                        <div className="text-gray-900">{feetFirstData.kategorie || '-'}</div>
+                                    </div>
+                                    <div>
+                                        <span className="font-medium text-gray-700">Marke:</span>
+                                        <div className="text-gray-900">{feetFirstData.marke || '-'}</div>
+                                    </div>
+                                    <div>
+                                        <span className="font-medium text-gray-700">Modell:</span>
+                                        <div className="text-gray-900">{feetFirstData.modell || '-'}</div>
+                                    </div>
+                                    <div>
+                                        <span className="font-medium text-gray-700">Größe:</span>
+                                        <div className="text-gray-900">{feetFirstData.grosse || '-'}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Checkbox and Save Button Section */}
                 <div className="my-16">
@@ -572,6 +770,21 @@ export default function SacnningForm({ customer }: ScanningFormProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Manual Entry Modal */}
+            <ManualEntryModal
+                isOpen={showManualEntryModal}
+                onClose={handleManualEntryModalClose}
+                onSave={handleManualEntryModalSave}
+                initialData={manualEntryData}
+            />
+
+            {/* FeetFirst Inventory Modal */}
+            <FeetFirstInventoryModal
+                isOpen={showFeetFirstModal}
+                onClose={handleFeetFirstModalClose}
+                onSave={handleFeetFirstModalSave}
+            />
         </div>
     );
 }

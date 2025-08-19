@@ -9,10 +9,10 @@ import userImg from '@/public/images/scanning/user.png'
 import { MdZoomOutMap } from 'react-icons/md';
 import { TfiReload } from 'react-icons/tfi';
 import QuestionSection from '../Scanning/QuestionSection';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import dynamic from 'next/dynamic';
 import { updateSingleCustomer } from '@/apis/customerApis';
 import toast from 'react-hot-toast';
+import ImagePreviewModal from '@/components/CustomerModal/ImagePreviewModal';
+import AddNewScanningModal from '@/components/CustomerModal/AddNewScanningModal';
 
 
 import { ScanData } from '@/types/scan';
@@ -24,7 +24,9 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
     const [modalTitle, setModalTitle] = useState<string>('');
     const [modalType, setModalType] = useState<'image' | 'stl' | null>(null);
     const [stlUrl, setStlUrl] = useState<string | null>(null);
-
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+    const [addScanningModalOpen, setAddScanningModalOpen] = useState(false);
 
     // State for editable scan data
     const [editableData, setEditableData] = useState({
@@ -56,9 +58,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
         }));
     };
 
-    // Handle save changes
-    const [saving, setSaving] = useState(false);
-    const [saveError, setSaveError] = useState<string | null>(null);
+
     const handleSaveChanges = async () => {
         setSaving(true);
         setSaveError(null);
@@ -98,10 +98,6 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
     };
 
 
-
-    const StlModelViewer = dynamic(() => import('@/components/StlModelViewer'), { ssr: false });
-
-    // Compute latest screener file entry (by updatedAt - most recent data)
     const latestScreener = useMemo(() => {
         if (Array.isArray(scanData.screenerFile) && scanData.screenerFile.length > 0) {
             return scanData.screenerFile.reduce((latest, item) => {
@@ -113,7 +109,6 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
         return null;
     }, [scanData.screenerFile]);
 
-    // Get the most recent date for display (either from latest screener or scan data)
     const scanDisplayDate = useMemo(() => {
         if (latestScreener?.updatedAt) {
             return new Date(latestScreener.updatedAt);
@@ -125,39 +120,47 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
         return null;
     }, [latestScreener, scanData]);
 
-    // Function to get the latest data for a specific field
     const getLatestData = (fieldName: keyof Pick<ScanData, 'picture_10' | 'picture_23' | 'picture_11' | 'picture_24' | 'threed_model_left' | 'threed_model_right' | 'picture_17' | 'picture_16'>) => {
-        // First try to get from latest screener file
         if (latestScreener && latestScreener[fieldName]) {
             return latestScreener[fieldName];
         }
-        // Fallback to scan data if available
         return scanData[fieldName] || null;
     };
 
     return (
         <>
-            {/* Modal for image or STL preview using shadcn Dialog */}
-            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-                <DialogContent className="max-w-md w-full">
-                    <DialogHeader>
-                        <DialogTitle className="text-lg font-bold mb-4">{modalTitle}</DialogTitle>
-                    </DialogHeader>
-                    {modalType === 'image' && (modalImg ? (
-                        <img src={modalImg} alt={modalTitle} className="max-w-full max-h-96 mx-auto" />
-                    ) : (
-                        <div className="w-full h-60 flex items-center justify-center text-gray-400 border border-dashed border-gray-300">No Preview</div>
-                    ))}
-                    {modalType === 'stl' && (stlUrl ? (
-                        <StlModelViewer url={stlUrl} />
-                    ) : (
-                        <div className="w-full h-60 flex items-center justify-center text-gray-400 border border-dashed border-gray-300">No 3D Preview</div>
-                    ))}
-                </DialogContent>
-            </Dialog>
+            {/* Image Preview Modal */}
+            <ImagePreviewModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                modalImg={modalImg}
+                modalTitle={modalTitle}
+                modalType={modalType}
+                stlUrl={stlUrl}
+            />
 
-            <div className='flex flex-col md:flex-row justify-between items-start mb-6 gap-4'>
-                <div className='w-full md:w-7/12'>
+            {/* Add New Scanning Modal */}
+            <AddNewScanningModal
+                isOpen={addScanningModalOpen}
+                onClose={() => setAddScanningModalOpen(false)}
+                customerId={scanData.id}
+                onSubmit={() => {
+                    // Refresh the page or update the data
+                    window.location.reload();
+                }}
+            />
+
+            <div className='flex justify-end mb-4'>
+                <button 
+                    onClick={() => setAddScanningModalOpen(true)}
+                    className='bg-[#62A07C] capitalize cursor-pointer text-white px-4 py-2 rounded hover:bg-[#62a07c98] transition text-sm'
+                >
+                    add scanning data
+                </button>
+            </div>
+
+            <div className='flex flex-col xl:flex-row justify-between items-start mb-6 gap-4'>
+                <div className='w-full xl:w-7/12'>
                     <div className="flex items-center mb-4 md:mb-0">
                         <div className="font-bold text-xl capitalize">{scanData.vorname} {scanData.nachname}</div>
                     </div>
@@ -191,7 +194,6 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                         </div>
                     </div>
 
-                    {/* image section */}
                     <div className="flex flex-col lg:flex-row justify-between items-center">
 
                         {/* left image section */}
@@ -379,7 +381,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
 
                         {/* right image section */}
                         <div className="flex-1 mb-6 lg:mb-0 flex flex-col items-center">
-                                <div className="w-60 max-w-md">
+                            <div className="w-60 max-w-md">
                                 {getLatestData('picture_24') ? (
                                     <Image
                                         src={getLatestData('picture_24')!}
@@ -397,7 +399,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                         </div>
                     </div>
                 </div>
-                <div className='w-full md:w-5/12'>
+                    <div className='w-full xl:w-5/12'>
                     <QuestionSection customer={scanData} />
                 </div>
             </div>

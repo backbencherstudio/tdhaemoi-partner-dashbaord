@@ -44,7 +44,7 @@ export const updateSingleCustomer = async (id: string, customerData: FormData) =
     }
 }
 
-// add new scanner file customers/screener-file/:customerId/:screenerId
+// add new scanner file 
 export const addNewScannerFile = async (customerId: string, scannerFileData: any) => {
     try {
         const response = await axiosClient.post(`/customers/screener-file/${customerId}`, scannerFileData, {

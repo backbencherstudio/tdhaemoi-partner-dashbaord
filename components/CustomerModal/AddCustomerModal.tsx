@@ -120,7 +120,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold">
+                    <DialogTitle className="text-xl font-semibold text-center">
                         Add Customer
                     </DialogTitle>
                 </DialogHeader>

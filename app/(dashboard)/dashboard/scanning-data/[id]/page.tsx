@@ -61,8 +61,8 @@ export default function ScanningData() {
             <ScannningDataPage scanData={scanData} />
             <hr className='my-10 border-gray-500' />
             {/*  form section */}
-            <SacnningForm 
-                customer={scanData} 
+            <SacnningForm
+                customer={scanData}
                 onCustomerUpdate={(updatedCustomer) => setScanData(updatedCustomer as any)}
             />
             {/* Bottom Action Links */}
@@ -115,7 +115,7 @@ export default function ScanningData() {
                 </div>
             </div>
 
-            {/* Add the Modal */}
+            {/* print werkstattzettel */}
             <DataModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} scanData={{
                 nameKunde: scanData ? `${scanData.vorname} ${scanData.nachname}` : '',
                 Geschäftstandort: scanData ? scanData.wohnort : ''

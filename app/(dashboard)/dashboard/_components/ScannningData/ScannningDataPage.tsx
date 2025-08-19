@@ -13,8 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import dynamic from 'next/dynamic';
 import { updateSingleCustomer } from '@/apis/customerApis';
 import toast from 'react-hot-toast';
-import { User2 } from 'lucide-react';
-import AddCustomerModal from '@/components/AddCustomerModal/AddCustomerModal';
+
 
 import { ScanData } from '@/types/scan';
 
@@ -25,7 +24,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
     const [modalTitle, setModalTitle] = useState<string>('');
     const [modalType, setModalType] = useState<'image' | 'stl' | null>(null);
     const [stlUrl, setStlUrl] = useState<string | null>(null);
-    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+
 
     // State for editable scan data
     const [editableData, setEditableData] = useState({
@@ -98,21 +97,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
         router.push('/dashboard/versorgungs');
     };
 
-    // handle update user modal
-    const handleUpdateUser = () => {
-        setIsUpdateModalOpen(true);
-    };
 
-    // handle customer update submission
-    const handleCustomerUpdate = async (customerData: any) => {
-        try {
-            toast.success('Customer updated successfully!');
-            setIsUpdateModalOpen(false);
-            window.location.reload();
-        } catch (error) {
-            toast.error('Failed to update customer');
-        }
-    };
 
     const StlModelViewer = dynamic(() => import('@/components/StlModelViewer'), { ssr: false });
 
@@ -170,15 +155,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                     ))}
                 </DialogContent>
             </Dialog>
-            <div className='flex items-center justify-end mb-8'>
-                <button
-                    onClick={handleUpdateUser}
-                    className='bg-[#4A8A6A] cursor-pointer flex items-center justify-center gap-1 text-white px-2 py-1 rounded hover:bg-[#4A8A6A]/80 transition text-sm'
-                >
-                    <User2 className='text-white' size={20} />
-                    Update User
-                </button>
-            </div>
+
             <div className='flex flex-col md:flex-row justify-between items-start mb-6 gap-4'>
                 <div className='w-full md:w-7/12'>
                     <div className="flex items-center mb-4 md:mb-0">
@@ -446,14 +423,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                 </div>
             </div>
 
-            {/* Update Customer Modal */}
-            <AddCustomerModal
-                isOpen={isUpdateModalOpen}
-                onClose={() => setIsUpdateModalOpen(false)}
-                onSubmit={handleCustomerUpdate}
-                mode="update"
-                customerId={scanData.id}
-            />
+
         </>
     )
 }

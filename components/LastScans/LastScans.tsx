@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import legsImg from '@/public/Kunden/legs.png'
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getAllCustomers } from '@/apis/customerApis';
+import toast from 'react-hot-toast';
 
 interface LastScan {
     id: number;
@@ -13,9 +14,14 @@ interface LastScan {
     wohnort: string;
 }
 
+export interface LastScansRef {
+    refreshData: () => void;
+}
 
-export default function LastScans() {
+const LastScans = forwardRef<LastScansRef>((props, ref) => {
     const [lastScans, setLastScans] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
     const router = useRouter();
     const [loadingId, setLoadingId] = useState<number | null>(null);
 
@@ -24,14 +30,35 @@ export default function LastScans() {
         fetchLastScans();
     }, []);
 
-    const fetchLastScans = async () => {
+    const fetchLastScans = async (isRefresh: boolean = false) => {
         try {
+            setIsLoading(true);
             const response = await getAllCustomers(1, 8);
             setLastScans(response.data);
+            
+            // No toast needed - just refresh silently
+            
+            // Mark initial load as complete after first fetch
+            if (isInitialLoad) {
+                setIsInitialLoad(false);
+            }
         } catch (error) {
             console.error('Error fetching last scans:', error);
+            if (isRefresh) {
+                toast.error('Fehler beim Laden der Scandaten');
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
+
+    // Expose refresh function to parent components
+    useImperativeHandle(ref, () => ({
+        refreshData: () => {
+            console.log('refreshData called - refreshing LastScans');
+            fetchLastScans(true); // Pass true to indicate this is a refresh
+        }
+    }));
 
 
     const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -70,7 +97,18 @@ export default function LastScans() {
     return (
 
         <div className='flex flex-col gap-4 mt-10'>
-            <h1 className='text-2xl font-bold'>Ihre Letzten Scans</h1>
+            <div className='flex items-center gap-3'>
+                <h1 className='text-2xl font-bold'>Ihre Letzten Scans</h1>
+                {isLoading && (
+                    <div className='flex items-center gap-2 text-sm text-gray-500'>
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                        </svg>
+                        Aktualisiere...
+                    </div>
+                )}
+            </div>
             {lastScans.length === 0 ? (
                 <div className='flex flex-col items-center justify-center py-20 text-gray-500'>
                     <div className='text-6xl mb-4'>📊</div>
@@ -139,4 +177,6 @@ export default function LastScans() {
         </div>
 
     )
-}
+})
+
+export default LastScans;

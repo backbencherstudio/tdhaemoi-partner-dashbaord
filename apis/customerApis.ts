@@ -44,6 +44,30 @@ export const updateSingleCustomer = async (id: string, customerData: FormData) =
     }
 }
 
+// add new scanner file customers/screener-file/:customerId/:screenerId
+export const addNewScannerFile = async (customerId: string, scannerFileData: any) => {
+    try {
+        const response = await axiosClient.post(`/customers/screener-file/${customerId}`, scannerFileData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// update single scanner file 
+export const updateSingleScannerFile = async (customerId: string, screenerId: string, scannerFileData: any) => {
+    try {
+        const response = await axiosClient.patch(`/customers/update-screener-file/${customerId}/${screenerId}`, scannerFileData);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
 
 // add customer versorgung 
 export const addCustomerVersorgung = async (customerId: string, versorgungId: string) => {
@@ -94,7 +118,7 @@ export const detailsDiagnosis = async (id: string, ausfuhrliche_diagnose: any) =
     try {
         const formData = new FormData();
         formData.append('ausfuhrliche_diagnose', ausfuhrliche_diagnose);
-        
+
         const response = await axiosClient.patch(`/customers/${id}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',

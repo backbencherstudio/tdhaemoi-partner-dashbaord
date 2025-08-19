@@ -13,36 +13,7 @@ import SacnningForm from '../../_components/Scanning/SacnningForm';
 import DataModal from '../../_components/Scanning/DataModal';
 import ScannningDataPage from '../../_components/ScannningData/ScannningDataPage';
 import { getSingleCustomer } from '@/apis/customerApis';
-interface ScanData {
-    id: string;
-    vorname: string;
-    nachname: string;
-    email: string;
-    telefonnummer: string;
-    wohnort: string;
-    picture_10: string;
-    picture_23: string;
-    threed_model_left: string;
-    picture_17: string;
-    picture_11: string;
-    picture_24: string;
-    threed_model_right: string;
-    picture_16: string;
-    fusslange1: string;
-    fusslange2: string;
-    fussbreite1: string;
-    fussbreite2: string;
-    kugelumfang1: string;
-    kugelumfang2: string;
-    rist1: string;
-    rist2: string;
-    zehentyp1: string;
-    zehentyp2: string;
-    archIndex1: string;
-    archIndex2: string;
-    createdAt: string;
-    updatedAt: string;
-}
+import { ScanData } from '@/types/scan';
 
 
 
@@ -62,8 +33,9 @@ export default function ScanningData() {
     useEffect(() => {
         const fetchScanData = async () => {
             try {
-                const data = await getSingleCustomer(String(params.id));
-                setScanData(data.data);
+                const response = await getSingleCustomer(String(params.id));
+                const payload = Array.isArray(response?.data) ? response.data[0] : response?.data;
+                setScanData(payload);
                 setLoading(false);
             } catch (error) {
                 setLoading(false);

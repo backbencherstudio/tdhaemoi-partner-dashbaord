@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { RiArrowDownSLine } from 'react-icons/ri';
 import userload from '@/public/images/scanning/userload.png'
 import userImg from '@/public/images/scanning/user.png'
@@ -15,38 +15,8 @@ import { updateSingleCustomer } from '@/apis/customerApis';
 import toast from 'react-hot-toast';
 import { User2 } from 'lucide-react';
 import AddCustomerModal from '@/components/AddCustomerModal/AddCustomerModal';
-import leftImage from '@/public/images/left.png';
-import rightImage from '@/public/images/right.png';
-interface ScanData {
-    id: string;
-    vorname: string;
-    nachname: string;
-    email: string;
-    telefonnummer: string;
-    wohnort: string;
-    picture_10: string;
-    picture_23: string;
-    threed_model_left: string;
-    picture_17: string;
-    picture_11: string;
-    picture_24: string;
-    threed_model_right: string;
-    picture_16: string;
-    fusslange1: string;
-    fusslange2: string;
-    fussbreite1: string;
-    fussbreite2: string;
-    kugelumfang1: string;
-    kugelumfang2: string;
-    rist1: string;
-    rist2: string;
-    zehentyp1: string;
-    zehentyp2: string;
-    archIndex1: string;
-    archIndex2: string;
-    createdAt: string;
-    updatedAt: string;
-}
+
+import { ScanData } from '@/types/scan';
 
 export default function ScannningDataPage({ scanData }: { scanData: ScanData }) {
     const router = useRouter();
@@ -59,16 +29,18 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
 
     // State for editable scan data
     const [editableData, setEditableData] = useState({
-        fusslange1: scanData.fusslange1,
-        fusslange2: scanData.fusslange2,
-        fussbreite1: scanData.fussbreite1,
-        fussbreite2: scanData.fussbreite2,
-        kugelumfang1: scanData.kugelumfang1,
-        kugelumfang2: scanData.kugelumfang2,
-        rist1: scanData.rist1,
-        rist2: scanData.rist2,
-        zehentyp1: scanData.zehentyp1,
-        zehentyp2: scanData.zehentyp2,
+        fusslange1: scanData.fusslange1 ?? '',
+        fusslange2: scanData.fusslange2 ?? '',
+        fussbreite1: scanData.fussbreite1 ?? '',
+        fussbreite2: scanData.fussbreite2 ?? '',
+        kugelumfang1: scanData.kugelumfang1 ?? '',
+        kugelumfang2: scanData.kugelumfang2 ?? '',
+        rist1: scanData.rist1 ?? '',
+        rist2: scanData.rist2 ?? '',
+        zehentyp1: scanData.zehentyp1 ?? '',
+        zehentyp2: scanData.zehentyp2 ?? '',
+        archIndex1: scanData.archIndex1 ?? '',
+        archIndex2: scanData.archIndex2 ?? '',
     });
 
     // Check if any field has changed
@@ -92,15 +64,12 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
         setSaving(true);
         setSaveError(null);
         try {
-            const formData = new FormData();
-            Object.entries(editableData).forEach(([key, value]) => {
-                formData.append(key, value);
-            });
-            await updateSingleCustomer(scanData.id, formData);
+            const payload = { ...editableData };
+            await updateSingleCustomer(scanData.id, payload as any);
             setOriginalData(editableData);
             toast.success('Scan data updated successfully!');
         } catch (err: any) {
-            setSaveError(err.message || 'Failed to save changes');
+            setSaveError(err?.response?.data?.message || err.message || 'Failed to save changes');
         } finally {
             setSaving(false);
         }
@@ -137,18 +106,49 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
     // handle customer update submission
     const handleCustomerUpdate = async (customerData: any) => {
         try {
-            // console.log('Customer updated:', customerData);
             toast.success('Customer updated successfully!');
             setIsUpdateModalOpen(false);
-            // Optionally refresh the page or update the scanData
             window.location.reload();
         } catch (error) {
-            // console.error('Error updating customer:', error);
             toast.error('Failed to update customer');
         }
     };
 
     const StlModelViewer = dynamic(() => import('@/components/StlModelViewer'), { ssr: false });
+
+    // Compute latest screener file entry (by updatedAt - most recent data)
+    const latestScreener = useMemo(() => {
+        if (Array.isArray(scanData.screenerFile) && scanData.screenerFile.length > 0) {
+            return scanData.screenerFile.reduce((latest, item) => {
+                const latestDate = new Date(latest.updatedAt);
+                const currentDate = new Date(item.updatedAt);
+                return currentDate > latestDate ? item : latest;
+            });
+        }
+        return null;
+    }, [scanData.screenerFile]);
+
+    // Get the most recent date for display (either from latest screener or scan data)
+    const scanDisplayDate = useMemo(() => {
+        if (latestScreener?.updatedAt) {
+            return new Date(latestScreener.updatedAt);
+        } else if (scanData.updatedAt) {
+            return new Date(scanData.updatedAt);
+        } else if (scanData.createdAt) {
+            return new Date(scanData.createdAt);
+        }
+        return null;
+    }, [latestScreener, scanData]);
+
+    // Function to get the latest data for a specific field
+    const getLatestData = (fieldName: keyof Pick<ScanData, 'picture_10' | 'picture_23' | 'picture_11' | 'picture_24' | 'threed_model_left' | 'threed_model_right' | 'picture_17' | 'picture_16'>) => {
+        // First try to get from latest screener file
+        if (latestScreener && latestScreener[fieldName]) {
+            return latestScreener[fieldName];
+        }
+        // Fallback to scan data if available
+        return scanData[fieldName] || null;
+    };
 
     return (
         <>
@@ -187,7 +187,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
 
                     <div className='mb-10'>
                         <div className="mb-2 flex items-center gap-2">
-                            <span>Scan {new Date(scanData.createdAt).toLocaleDateString()}</span>
+                            <span>Scan {scanDisplayDate && !isNaN(scanDisplayDate.getTime()) ? scanDisplayDate.toLocaleDateString() : '-'}</span>
                             <RiArrowDownSLine className='text-gray-900 text-2xl' />
                         </div>
                         <div className="flex gap-8 mt-4">
@@ -216,15 +216,23 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
 
                     {/* image section */}
                     <div className="flex flex-col lg:flex-row justify-between items-center">
+
+                        {/* left image section */}
                         <div className="flex-1 mb-6 lg:mb-0 flex flex-col items-center">
-                            <div className="w-50 max-w-sm">
-                                <Image
-                                    src={leftImage}
-                                    alt="Left foot scan"
-                                    width={300}
-                                    height={500}
-                                    className="w-full h-auto"
-                                />
+                            <div className="w-60 max-w-md">
+                                {getLatestData('picture_23') ? (
+                                    <Image
+                                        src={getLatestData('picture_23')!}
+                                        alt="Left foot scan - Plantaransicht"
+                                        width={300}
+                                        height={500}
+                                        className="w-full h-auto"
+                                    />
+                                ) : (
+                                    <div className="w-full h-[500px] bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-500">
+                                        No left foot scan image available
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -367,18 +375,47 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                                         />
                                     </div>
                                 </div>
+                                <div>
+                                    <div className="text-center text-gray-600 text-sm">Arch Index</div>
+                                    <div className="border border-gray-300 text-center py-1">
+                                        <input
+                                            type="text"
+                                            value={editableData.archIndex1}
+                                            onChange={(e) => handleInputChange('archIndex1', e.target.value)}
+                                            className="w-full text-center border-none outline-none"
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-center text-gray-600 text-sm">Arch Index</div>
+                                    <div className="border border-gray-300 text-center py-1">
+                                        <input
+                                            type="text"
+                                            value={editableData.archIndex2}
+                                            onChange={(e) => handleInputChange('archIndex2', e.target.value)}
+                                            className="w-full text-center border-none outline-none"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
+                        {/* right image section */}
                         <div className="flex-1 mb-6 lg:mb-0 flex flex-col items-center">
-                            <div className="w-50 max-w-sm">
-                                <Image
-                                    src={rightImage}
-                                    alt="Right foot scan"
-                                    width={300}
-                                    height={500}
-                                    className="w-full h-auto"
-                                />
+                                <div className="w-60 max-w-md">
+                                {getLatestData('picture_24') ? (
+                                    <Image
+                                        src={getLatestData('picture_24')!}
+                                        alt="Right foot scan - Plantaransicht"
+                                        width={300}
+                                        height={500}
+                                        className="w-full h-auto"
+                                    />
+                                ) : (
+                                    <div className="w-full h-[500px] bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-500">
+                                        No right foot scan image available
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -388,23 +425,23 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                 </div>
             </div>
 
-            {/* button section */}
+            {/* button section - now using latest data sorted by updatedAt */}
             <div className="mt-8 flex flex-col md:flex-row justify-between space-y-4 md:space-y-0">
                 <div className="flex justify-center md:justify-start">
                     <div className="flex flex-wrap space-x-2">
-                        <button className="border border-gray-300 cursor-pointer bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1" onClick={() => openModal(scanData.picture_10, 'Fersenneigung (Links)')}>Fersenneigung</button>
-                        <button className="border border-gray-300 cursor-pointer bg-[#62A07C] hover:bg-gray-100 px-4 py-1 text-sm relative my-1" onClick={() => openModal(scanData.picture_23, 'Plantaransicht (Links)')}>Plantaransicht</button>
-                        <button className="border border-gray-300 cursor-pointer  bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1" onClick={() => openStlModal(scanData.threed_model_left, '3D-Modell (Links)')}>3D-Modell</button>
-                        <button className="border border-gray-300 cursor-pointer bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1" onClick={() => openModal(scanData.picture_17, 'Sohlen Index (Links)')}>Sohlen Index</button>
+                        <button className="border border-gray-300 cursor-pointer bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_10'), 'Fersenneigung (Links)')}>Fersenneigung</button>
+                        <button className="border border-gray-300 cursor-pointer bg-[#62A07C] hover:bg-gray-100 px-4 py-1 text-sm relative my-1" onClick={() => openModal(getLatestData('picture_23'), 'Plantaransicht (Links)')}>Plantaransicht</button>
+                        <button className="border border-gray-300 cursor-pointer  bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1" onClick={() => openStlModal(getLatestData('threed_model_left'), '3D-Modell (Links)')}>3D-Modell</button>
+                        <button className="border border-gray-300 cursor-pointer bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_17'), 'Sohlen Index (Links)')}>Sohlen Index</button>
                     </div>
                 </div>
 
                 <div className="flex justify-center md:justify-end">
                     <div className="flex flex-wrap space-x-2">
-                        <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openModal(scanData.picture_11, 'Fersenneigung (Rechts)')}>Fersenneigung</button>
-                        <button className="border border-gray-300 bg-[#62A07C] px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openModal(scanData.picture_24, 'Plantaransicht (Rechts)')}>Plantaransicht</button>
-                        <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openStlModal(scanData.threed_model_right, '3D-Modell (Rechts)')}>3D-Modell</button>
-                        <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openModal(scanData.picture_16, 'Sohlen Index (Rechts)')}>Sohlen Index</button>
+                        <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_11'), 'Fersenneigung (Rechts)')}>Fersenneigung</button>
+                        <button className="border border-gray-300 bg-[#62A07C] px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_24'), 'Plantaransicht (Rechts)')}>Plantaransicht</button>
+                        <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openStlModal(getLatestData('threed_model_right'), '3D-Modell (Rechts)')}>3D-Modell</button>
+                        <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_16'), 'Sohlen Index (Rechts)')}>Sohlen Index</button>
                     </div>
                 </div>
             </div>

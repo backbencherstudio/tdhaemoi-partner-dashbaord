@@ -297,7 +297,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit, mode = 'ad
             <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold">
-                        {mode === 'update' ? 'Update Customer' : 'Manually Add a Customer'}
+                        {mode === 'update' ? 'Update Information' : 'Add Customer'}
                     </DialogTitle>
                 </DialogHeader>
 
@@ -623,7 +623,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit, mode = 'ad
                                         Loading...
                                     </>
                                 ) : (
-                                    mode === 'update' ? 'Update Customer' : 'Kunde hinzufügen'
+                                    mode === 'update' ? 'Update Info' : 'Add Customer'
                                 )}
                             </Button>
                         </div>

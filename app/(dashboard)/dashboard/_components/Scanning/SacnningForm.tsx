@@ -1,48 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BiSolidEdit } from 'react-icons/bi';
 import { ImSpinner2 } from 'react-icons/im';
 import { TiArrowSortedDown } from "react-icons/ti";
-import { getAllVersorgungen } from '@/apis/versorgungApis';
-import { addCustomerVersorgung, detailsDiagnosis, getSingleCustomer } from '@/apis/customerApis';
-import toast from 'react-hot-toast';
 import ManualEntryModal from './ManualEntryModal';
 import FeetFirstInventoryModal from './FeetFirstInventoryModal';
-const diagnosisOptions = [
-    "Plantarfasziitis",
-    "Fersensporn",
-    "Spreizfuß",
-    "Senkfuß",
-    "Plattfuß",
-    "Hohlfuß",
-    "Knickfuß",
-    "Knick-Senkfuß",
-    "Hallux valgus",
-    "Hallux rigidus",
-    "Hammerzehen / Krallenzehen",
-    "Morton-Neurom",
-    "Fußarthrose",
-    "Stressfrakturen im Fußbereich",
-    "Diabetisches Fußsyndrom"
-];
-
-// Mapping from display names to API values for diagnosis
-const diagnosisMapping: { [key: string]: string } = {
-    "Plantarfasziitis": "PLANTARFASZIITIS",
-    "Fersensporn": "FERSENSPORN",
-    "Spreizfuß": "SPREIZFUSS",
-    "Senkfuß": "SENKFUSS",
-    "Plattfuß": "PLATTFUSS",
-    "Hohlfuß": "HOHLFUSS",
-    "Knickfuß": "KNICKFUSS",
-    "Knick-Senkfuß": "KNICK_SENKFUSS",
-    "Hallux valgus": "HALLUX_VALGUS",
-    "Hallux rigidus": "HALLUX_RIGIDUS",
-    "Hammerzehen / Krallenzehen": "HAMMERZEHEN_KRALLENZEHEN",
-    "Morton-Neurom": "MORTON_NEUROM",
-    "Fußarthrose": "FUSSARTHROSE",
-    "Stressfrakturen im Fußbereich": "STRESSFRAKTUREN_IM_FUSS",
-    "Diabetisches Fußsyndrom": "DIABETISCHES_FUSSSYNDROM"
-};
+import { useScanningFormData } from '@/hooks/customer/useScanningFormData';
 
 
 
@@ -67,380 +29,65 @@ interface Customer {
     }>;
 }
 
-interface ManualEntryData {
-    marke: string;
-    modell: string;
-    kategorie: string;
-    grosse: string;
-}
-
-interface FeetFirstInventoryData {
-    kategorie: string;
-    marke: string;
-    modell: string;
-    grosse: string;
-    image?: string;
-}
-
 interface ScanningFormProps {
     customer?: Customer;
     onCustomerUpdate?: (updatedCustomer: Customer) => void;
 }
 
 export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFormProps) {
-    // Dropdown
-    const [showDiagnosisDropdown, setShowDiagnosisDropdown] = useState(false);
-    const [selectedDiagnosis, setSelectedDiagnosis] = useState("");
-    const [showSupplyDropdown, setShowSupplyDropdown] = useState(false);
-
-    // API State
-    const [versorgungData, setVersorgungData] = useState<any[]>([]);
-    const [loadingVersorgung, setLoadingVersorgung] = useState(false);
-    const [hasDataLoaded, setHasDataLoaded] = useState(false);
-    const [selectedVersorgungId, setSelectedVersorgungId] = useState<string | null>(null);
-
-    // Editable fields
-    const [diagnosis, setDiagnosis] = useState("");
-    const [editingDiagnosis, setEditingDiagnosis] = useState(false);
-    const [supply, setSupply] = useState(
-        ""
-    );
-    const [editingSupply, setEditingSupply] = useState(false);
-
-    // Button section
-    const [selectedEinlage, setSelectedEinlage] = useState<'Alltagseinlage' | 'Sporteinlage' | 'Businesseinlage'>('Alltagseinlage');
-
-    // Checkboxes
-    const [manualEntry, setManualEntry] = useState(false);
-    const [fromFeetFirst, setFromFeetFirst] = useState(false);
-
-    // Manual Entry Modal
-    const [showManualEntryModal, setShowManualEntryModal] = useState(false);
-    const [manualEntryData, setManualEntryData] = useState<ManualEntryData>({
-        marke: '',
-        modell: '',
-        kategorie: '',
-        grosse: ''
-    });
-
-    // FeetFirst Inventory Modal
-    const [showFeetFirstModal, setShowFeetFirstModal] = useState(false);
-    const [feetFirstData, setFeetFirstData] = useState<FeetFirstInventoryData>({
-        kategorie: '',
-        marke: '',
-        modell: '',
-        grosse: '',
-        image: ''
-    });
-
-    // Loading state
-    const [isSaving, setIsSaving] = useState(false);
-    const [isSavingDiagnosis, setIsSavingDiagnosis] = useState(false);
-
-    // Function to refresh customer data
-    const refreshCustomerData = async () => {
-        if (customer?.id) {
-            try {
-                const response = await getSingleCustomer(customer.id);
-                if (response?.data && onCustomerUpdate) {
-                    onCustomerUpdate(response.data);
-                }
-            } catch (error) {
-                console.error('Error refreshing customer data:', error);
-            }
-        }
-    };
-
-    useEffect(() => {
-        const statusMap = {
-            'Alltagseinlage': 'Alltagseinlagen',
-            'Sporteinlage': 'Sporteinlagen',
-            'Businesseinlage': 'Businesseinlagen'
-        };
-        fetchVersorgungData(statusMap[selectedEinlage]);
-    }, []); 
-
-    useEffect(() => {
-        if (customer?.ausfuhrliche_diagnose) {
-            setDiagnosis(customer.ausfuhrliche_diagnose);
-        }
-    }, [customer?.ausfuhrliche_diagnose]);
-
-    const findMatchingVersorgung = (buttonType: 'Alltagseinlage' | 'Sporteinlage' | 'Businesseinlage', diagnosisStatus?: string) => {
-        if (!customer?.versorgungen) return null;
-
-        const statusMap = {
-            'Alltagseinlage': 'Alltagseinlagen',
-            'Sporteinlage': 'Sporteinlagen',
-            'Businesseinlage': 'Businesseinlagen'
-        };
-
-        const targetStatus = statusMap[buttonType];
-
-        return customer.versorgungen.find(versorgung => {
-            const statusMatches = versorgung.status === targetStatus;
-            
-            if (diagnosisStatus) {
-                // If diagnosis is selected, match both status and diagnosis_status
-                return statusMatches && versorgung.diagnosis_status === diagnosisStatus;
-            } else {
-                // If no diagnosis is selected, match status and diagnosis_status should be null
-                return statusMatches && versorgung.diagnosis_status === null;
-            }
-        });
-    };
-
-    // Update supply textarea when customer versorgung data changes or button selection changes
-    useEffect(() => {
-        if (customer?.versorgungen) {
-            const currentDiagnosisStatus = selectedDiagnosis ? diagnosisMapping[selectedDiagnosis] : undefined;
-            const matchingVersorgung = findMatchingVersorgung(selectedEinlage, currentDiagnosisStatus);
-            
-            if (matchingVersorgung) {
-                setSupply(matchingVersorgung.versorgung);
-                setSelectedVersorgungId(matchingVersorgung.id);
-            } else {
-                // Only use fallback when NO diagnosis is selected
-                if (!selectedDiagnosis) {
-                    // If no diagnosis selected, try to find any versorgung with just the status
-                    const statusMap = {
-                        'Alltagseinlage': 'Alltagseinlagen',
-                        'Sporteinlage': 'Sporteinlagen',
-                        'Businesseinlage': 'Businesseinlagen'
-                    };
-                    const fallbackVersorgung = customer.versorgungen.find(v => v.status === statusMap[selectedEinlage]);
-                    if (fallbackVersorgung) {
-                        setSupply(fallbackVersorgung.versorgung);
-                        setSelectedVersorgungId(fallbackVersorgung.id);
-                    } else {
-                        setSupply("");
-                        setSelectedVersorgungId(null);
-                    }
-                } else {
-                    // If diagnosis is selected but no matching data found, clear the supply
-                    setSupply("");
-                    setSelectedVersorgungId(null);
-                }
-            }
-        }
-    }, [customer?.versorgungen, selectedEinlage, selectedDiagnosis]);
-
-    // Handlers
-    const handleDiagnosisSelect = (diagnosis: string) => {
-        setSelectedDiagnosis(diagnosis);
-        setShowDiagnosisDropdown(false);
-
-        if (customer?.versorgungen) {
-            const diagnosisStatus = diagnosisMapping[diagnosis];
-            const matchingVersorgung = findMatchingVersorgung(selectedEinlage, diagnosisStatus);
-            
-            if (matchingVersorgung) {
-                setSupply(matchingVersorgung.versorgung);
-                setSelectedVersorgungId(matchingVersorgung.id);
-            } else {
-                // If diagnosis is selected but no matching data found, clear the supply
-                setSupply("");
-                setSelectedVersorgungId(null);
-            }
-        }
-
-        // Automatically fetch versorgung data based on diagnosis and current button selection
-        if (diagnosis && diagnosisMapping[diagnosis]) {
-            const statusMap = {
-                'Alltagseinlage': 'Alltagseinlagen',
-                'Sporteinlage': 'Sporteinlagen',
-                'Businesseinlage': 'Businesseinlagen'
-            };
-            // Fetch with both diagnosis and current status
-            fetchVersorgungDataByDiagnosis(diagnosisMapping[diagnosis], statusMap[selectedEinlage]);
-        }
-    };
-
-
-    const handleVersorgungCardSelect = async (item: any) => {
-        setSupply(item.versorgung);
-        setSelectedVersorgungId(item.id);
-        setShowSupplyDropdown(false);
-
-        // Auto-save to customer if customer data is provided
-        if (customer?.id && item.id) {
-            try {
-                await addCustomerVersorgung(customer.id, item.id);
-                toast.success(`Versorgung zu ${customer.vorname || 'Kunde'} hinzugefügt`);
-                
-                // Refresh customer data to get the latest versorgung data
-                await refreshCustomerData();
-            } catch (error) {
-                console.error('Error assigning versorgung to customer:', error);
-                toast.error('Fehler beim Zuweisen der Versorgung');
-            }
-        }
-    };
-
-    const fetchVersorgungData = async (status: string) => {
-        setLoadingVersorgung(true);
-        try {
-            const response = await getAllVersorgungen(status, 1, 10, '');
-            setVersorgungData(response.data || []);
-            setHasDataLoaded(true);
-        } catch (error) {
-            // console.error('Error fetching versorgung data:', error);
-            setVersorgungData([]);
-        } finally {
-            setLoadingVersorgung(false);
-        }
-    };
-
-    const fetchVersorgungDataByDiagnosis = async (diagnosisStatus: string, status: string = '') => {
-        setLoadingVersorgung(true);
-        try {
-            // Fetch data based on diagnosis_status and optionally status (combined filtering)
-            const response = await getAllVersorgungen(status, 1, 10, diagnosisStatus);
-            setVersorgungData(response.data || []);
-            setHasDataLoaded(true);
-        } catch (error) {
-            // console.error('Error fetching versorgung data by diagnosis:', error);
-            setVersorgungData([]);
-        } finally {
-            setLoadingVersorgung(false);
-        }
-    };
-
-    const handleEinlageButtonClick = (einlageType: 'Alltagseinlage' | 'Sporteinlage' | 'Businesseinlage') => {
-        setSelectedEinlage(einlageType);
-        
-        // Map button types to API status values
-        const statusMap = {
-            'Alltagseinlage': 'Alltagseinlagen',
-            'Sporteinlage': 'Sporteinlagen',
-            'Businesseinlage': 'Businesseinlagen'
-        };
-
-        // Check if we have customer versorgung data
-        if (customer?.versorgungen) {
-            const currentDiagnosisStatus = selectedDiagnosis ? diagnosisMapping[selectedDiagnosis] : undefined;
-            const matchingVersorgung = findMatchingVersorgung(einlageType, currentDiagnosisStatus);
-            
-            if (matchingVersorgung) {
-                setSupply(matchingVersorgung.versorgung);
-                setSelectedVersorgungId(matchingVersorgung.id);
-            } else {
-                // Only use fallback when NO diagnosis is selected
-                // If a diagnosis is selected but no match found, don't show any data
-                if (!selectedDiagnosis) {
-                    // If no diagnosis selected and no exact match found, try to find any versorgung with just the status
-                    const fallbackVersorgung = customer.versorgungen.find(v => v.status === statusMap[einlageType]);
-                    if (fallbackVersorgung) {
-                        setSupply(fallbackVersorgung.versorgung);
-                        setSelectedVersorgungId(fallbackVersorgung.id);
-                    } else {
-                        setSupply("");
-                        setSelectedVersorgungId(null);
-                    }
-                } else {
-                    // If diagnosis is selected but no matching data found, clear the supply
-                    setSupply("");
-                    setSelectedVersorgungId(null);
-                }
-            }
-        } else {
-            // Reset selection when changing category (original behavior for when no customer data)
-            setSelectedVersorgungId(null);
-        }
-
-        // Check if diagnosis is selected for API fetching
-        if (selectedDiagnosis && diagnosisMapping[selectedDiagnosis]) {
-            // If diagnosis is selected, fetch by BOTH diagnosis_status AND status (combined filtering)
-            fetchVersorgungDataByDiagnosis(diagnosisMapping[selectedDiagnosis], statusMap[einlageType]);
-        } else {
-            // If no diagnosis selected, fetch by status only (default behavior)
-            fetchVersorgungData(statusMap[einlageType]);
-        }
-    };
-    const handleDiagnosisEdit = () => setEditingDiagnosis(true);
-
-    const handleDiagnosisBlur = async () => {
-        setEditingDiagnosis(false);
-
-        // Auto-save diagnosis if customer exists
-        if (customer?.id && diagnosis.trim()) {
-            setIsSavingDiagnosis(true);
-            try {
-                await detailsDiagnosis(customer.id, diagnosis);
-                toast.success('Diagnose erfolgreich gespeichert');
-                
-                // Refresh customer data to get the latest diagnosis
-                await refreshCustomerData();
-            } catch (error) {
-                console.error('Error saving diagnosis:', error);
-                toast.error('Fehler beim Speichern der Diagnose');
-            } finally {
-                setIsSavingDiagnosis(false);
-            }
-        }
-    };
-    const handleSupplyEdit = () => setEditingSupply(true);
-    const handleSupplyBlur = () => setEditingSupply(false);
-    const handleSupplyDropdownToggle = () => setShowSupplyDropdown(!showSupplyDropdown);
-
-    // Manual Entry Modal Handlers
-    const handleManualEntryClick = () => {
-        setShowManualEntryModal(true);
-        setManualEntry(true);
-    };
-
-    const handleManualEntryModalClose = () => {
-        setShowManualEntryModal(false);
-        // If no data was entered, uncheck the checkbox
-        if (!manualEntryData.marke && !manualEntryData.modell && !manualEntryData.kategorie && !manualEntryData.grosse) {
-            setManualEntry(false);
-        }
-    };
-
-    const handleManualEntryModalSave = (data: ManualEntryData) => {
-        setManualEntryData(data);
-        setManualEntry(true);
-        console.log('Manual entry data saved:', data);
-        toast.success('Schuhmodell manuell eingetragen');
-    };
-
-    // FeetFirst Inventory Modal Handlers
-    const handleFeetFirstClick = () => {
-        setShowFeetFirstModal(true);
-        setFromFeetFirst(true);
-    };
-
-    const handleFeetFirstModalClose = () => {
-        setShowFeetFirstModal(false);
-        // If no data was entered, uncheck the checkbox
-        if (!feetFirstData.kategorie && !feetFirstData.marke && !feetFirstData.modell && !feetFirstData.grosse) {
-            setFromFeetFirst(false);
-        }
-    };
-
-    const handleFeetFirstModalSave = (data: FeetFirstInventoryData) => {
-        setFeetFirstData(data);
-        setFromFeetFirst(true);
-        console.log('FeetFirst inventory data saved:', data);
-        toast.success('Schuhmodell aus FeetFirst-Bestand ausgewählt');
-    };
-
-    const handleFormSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSaving(true);
-        console.log({
-            selectedDiagnosis,
-            selectedEinlage,
-            diagnosis,
-            supply,
-            manualEntry,
-            manualEntryData: manualEntry ? manualEntryData : null,
-            fromFeetFirst,
-            feetFirstData: fromFeetFirst ? feetFirstData : null
-        });
-        await new Promise(res => setTimeout(res, 1500));
-        setIsSaving(false);
-    };
+    const {
+        diagnosisOptions,
+        // dropdowns
+        showDiagnosisDropdown,
+        setShowDiagnosisDropdown,
+        selectedDiagnosis,
+        showSupplyDropdown,
+        handleSupplyDropdownToggle,
+        // api state
+        versorgungData,
+        loadingVersorgung,
+        hasDataLoaded,
+        selectedVersorgungId,
+        // editable fields
+        diagnosis,
+        setDiagnosis,
+        editingDiagnosis,
+        supply,
+        setSupply,
+        editingSupply,
+        // buttons
+        selectedEinlage,
+        // checkboxes
+        manualEntry,
+        fromFeetFirst,
+        // manual entry modal
+        showManualEntryModal,
+        openManualEntryModal,
+        handleManualEntryModalClose,
+        handleManualEntryModalSave,
+        manualEntryData,
+        // feetfirst modal
+        showFeetFirstModal,
+        openFeetFirstModal,
+        handleFeetFirstModalClose,
+        handleFeetFirstModalSave,
+        feetFirstData,
+        // loadings
+        isSaving,
+        isSavingDiagnosis,
+        // handlers
+        handleDiagnosisSelect,
+        handleVersorgungCardSelect,
+        handleEinlageButtonClick,
+        handleDiagnosisEdit,
+        handleDiagnosisBlur,
+        handleSupplyEdit,
+        handleSupplyBlur,
+        handleManualEntryCheckboxChange,
+        handleFeetFirstCheckboxChange,
+        handleFormSubmit,
+        clearDiagnosisAndReloadOptions,
+    } = useScanningFormData(customer, onCustomerUpdate);
 
     return (
         <div>
@@ -461,16 +108,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                setSelectedDiagnosis("");
-                                                setVersorgungData([]);
-                                                setHasDataLoaded(false);
-                                                // Refresh data for current category without diagnosis filter
-                                                const statusMap = {
-                                                    'Alltagseinlage': 'Alltagseinlagen',
-                                                    'Sporteinlage': 'Sporteinlagen',
-                                                    'Businesseinlage': 'Businesseinlagen'
-                                                };
-                                                fetchVersorgungData(statusMap[selectedEinlage]);
+                                                clearDiagnosisAndReloadOptions();
                                             }}
                                             className="text-gray-400 hover:text-gray-600 text-sm p-1 hover:bg-gray-100 rounded"
                                             title="Diagnose löschen"
@@ -690,17 +328,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                                 className="w-5 h-5" 
                                 checked={manualEntry} 
                                 onChange={(e) => {
-                                    if (e.target.checked) {
-                                        handleManualEntryClick();
-                                    } else {
-                                        setManualEntry(false);
-                                        setManualEntryData({
-                                            marke: '',
-                                            modell: '',
-                                            kategorie: '',
-                                            grosse: ''
-                                        });
-                                    }
+                                    handleManualEntryCheckboxChange(e.target.checked)
                                 }} 
                             />
                             <span>Manuell eintragen (Marke + Modell + Größe)</span>
@@ -711,18 +339,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                                 className="w-5 h-5" 
                                 checked={fromFeetFirst} 
                                 onChange={(e) => {
-                                    if (e.target.checked) {
-                                        handleFeetFirstClick();
-                                    } else {
-                                        setFromFeetFirst(false);
-                                        setFeetFirstData({
-                                            kategorie: '',
-                                            marke: '',
-                                            modell: '',
-                                            grosse: '',
-                                            image: ''
-                                        });
-                                    }
+                                    handleFeetFirstCheckboxChange(e.target.checked)
                                 }} 
                             />
                             <span>Aus FeetFirst Bestand wählen</span>
@@ -736,7 +353,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-lg font-semibold text-blue-900">Manuell eingetragenes Schuhmodell</h4>
                             <button
-                                onClick={() => setShowManualEntryModal(true)}
+                                onClick={openManualEntryModal}
                                 className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                             >
                                 Bearbeiten
@@ -769,7 +386,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                         <div className="flex items-center justify-between mb-3">
                             <h4 className="text-lg font-semibold text-green-900">Aus FeetFirst-Bestand ausgewählt</h4>
                             <button
-                                onClick={() => setShowFeetFirstModal(true)}
+                                onClick={openFeetFirstModal}
                                 className="text-green-600 hover:text-green-800 text-sm font-medium"
                             >
                                 Bearbeiten

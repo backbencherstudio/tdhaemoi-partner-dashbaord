@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     Accordion,
     AccordionItem,
@@ -41,54 +41,44 @@ export default function QuestionSection({ customer }: { customer: any }) {
     const [isLoading, setIsLoading] = useState(false);
     const [hasExistingAnswers, setHasExistingAnswers] = useState(false);
 
-    // Load category data on component mount
-    useEffect(() => {
-        loadCategoryData();
+    const loadCustomerAnswers = useCallback(async () => {
+        try {
+            const response = await getCustomerQuestionOptions(customer.id);
+            if (response.success && response.data) {
+                const customerData = response.data;
+                const categories = Object.keys(customerData.answer);
+                if (categories.length > 0) {
+                    const loadedCategory = categories[0] as Category;
+                    setSelectedCategory(loadedCategory);
+                    setHasExistingAnswers(true);
+                    const formattedAnswers = formatLoadedAnswers(customerData.answer[loadedCategory]);
+                    setAnswers(formattedAnswers);
+                    setShowCommonQuestions(true);
+                }
+            }
+        } catch (error) {
+            // no-op
+        }
     }, [customer?.id]);
 
-    const loadCategoryData = async () => {
+    const loadCategoryData = useCallback(async () => {
         try {
             const response = await fetch('/data/questionData.json');
             const data = await response.json();
             setCategoryData(data);
 
-            // Load customer's previous answers after category data is loaded
             if (customer?.id) {
                 await loadCustomerAnswers();
             }
         } catch (error) {
-            // console.error('Error loading category data:', error);
-            // toast.error('Fehler beim Laden der Fragen');
+            // no-op
         }
-    };
+    }, [customer?.id, loadCustomerAnswers]);
 
-    const loadCustomerAnswers = async () => {
-        try {
-            const response = await getCustomerQuestionOptions(customer.id);
-            // console.log('Loaded customer answers:', response);
-
-            if (response.success && response.data) {
-                const customerData = response.data;
-
-                // Set the category based on loaded data
-                const categories = Object.keys(customerData.answer);
-                if (categories.length > 0) {
-                    const loadedCategory = categories[0] as Category;
-                    setSelectedCategory(loadedCategory);
-                    setHasExistingAnswers(true); // Mark that user has existing answers
-
-                    // Format and set answers
-                    const formattedAnswers = formatLoadedAnswers(customerData.answer[loadedCategory]);
-                    setAnswers(formattedAnswers);
-
-                    // For readonly view, always show common questions
-                    setShowCommonQuestions(true);
-                }
-            }
-        } catch (error) {
-            // console.error('Error loading customer answers:', error);
-        }
-    };
+    // Load category data on component mount
+    useEffect(() => {
+        loadCategoryData();
+    }, [loadCategoryData]);
 
     const formatLoadedAnswers = (loadedAnswers: any[]) => {
         const formattedAnswers: Record<string, any> = {};

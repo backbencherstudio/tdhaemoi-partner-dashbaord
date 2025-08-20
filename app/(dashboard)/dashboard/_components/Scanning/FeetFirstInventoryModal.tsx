@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import Image from 'next/image';
 
 interface FeetFirstInventoryData {
     kategorie: string;
@@ -269,7 +270,9 @@ export default function FeetFirstInventoryModal({ isOpen, onClose, onSave }: Fee
                                         onClick={() => handleModelSelect(model)}
                                         className="flex items-center p-4 border border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors text-left"
                                     >
-                                        <img
+                                        <Image
+                                            width={100}
+                                            height={100}
                                             src={model.image}
                                             alt={model.name}
                                             className="w-16 h-16 object-cover rounded-md mr-4"

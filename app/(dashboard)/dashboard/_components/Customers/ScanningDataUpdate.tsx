@@ -7,6 +7,7 @@ import { X, Upload, FileImage, File, FileText } from 'lucide-react'
 import { getSingleCustomer } from '@/apis/customerApis'
 import { useCustomerScanningFile } from '@/hooks/customer/useCustomerScanningFile'
 import { useUpdateScanningData } from '@/hooks/customer/useUpdateScanningData'
+import Image from 'next/image'
 
 interface ScanningDataUpdateProps {
     customerId: string
@@ -364,7 +365,9 @@ export default function ScanningDataUpdate({ customerId, onDataUpdate }: Scannin
                                                                 </div>
                                                             </div>
                                                             <div className="mt-2">
-                                                                <img
+                                                                <Image
+                                                                    width={100}
+                                                                    height={100}
                                                                     src={existingFile}
                                                                     alt="Existing"
                                                                     className="w-full h-20 object-cover rounded border"
@@ -413,7 +416,9 @@ export default function ScanningDataUpdate({ customerId, onDataUpdate }: Scannin
 
                                                     {preview.preview && (
                                                         <div className="mt-2">
-                                                            <img
+                                                            <Image
+                                                                width={100}
+                                                                height={100}
                                                                 src={preview.preview}
                                                                 alt="Preview"
                                                                 className="w-full h-20 object-cover rounded border"

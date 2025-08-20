@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { X, Upload, FileImage, File, FileText } from 'lucide-react'
 import { useCustomerScanningFile } from '@/hooks/customer/useCustomerScanningFile'
+import Image from 'next/image'
 
 interface AddedScanningDataProps {
     customerId: string
@@ -163,7 +164,9 @@ export default function AddedScanningData({ customerId, isOpen, onClose, onSubmi
 
                                             {preview.preview && (
                                                 <div className="mt-2">
-                                                    <img
+                                                    <Image
+                                                        width={100}
+                                                        height={100}
                                                         src={preview.preview}
                                                         alt="Preview"
                                                         className="w-full h-20 object-cover rounded border"

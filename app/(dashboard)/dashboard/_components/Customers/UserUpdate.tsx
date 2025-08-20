@@ -26,7 +26,6 @@ interface CustomerInfoForm {
 }
 
 export default function UpdateUserData({ customerId, onCustomerUpdate }: UpdateUserDataProps) {
-    const [loading, setLoading] = useState<boolean>(true)
     const [customer, setCustomer] = useState<any>(null)
     const [isEditing, setIsEditing] = useState<boolean>(false)
 

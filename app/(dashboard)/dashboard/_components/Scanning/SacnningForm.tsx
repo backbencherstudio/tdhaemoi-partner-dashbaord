@@ -5,6 +5,7 @@ import { TiArrowSortedDown } from "react-icons/ti";
 import ManualEntryModal from './ManualEntryModal';
 import FeetFirstInventoryModal from './FeetFirstInventoryModal';
 import { useScanningFormData } from '@/hooks/customer/useScanningFormData';
+import Image from 'next/image';
 
 
 
@@ -323,24 +324,24 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                     </div>
                     <div className="flex flex-col space-y-3">
                         <label className="flex items-center space-x-2 cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                className="w-5 h-5" 
-                                checked={manualEntry} 
+                            <input
+                                type="checkbox"
+                                className="w-5 h-5"
+                                checked={manualEntry}
                                 onChange={(e) => {
                                     handleManualEntryCheckboxChange(e.target.checked)
-                                }} 
+                                }}
                             />
                             <span>Manuell eintragen (Marke + Modell + Größe)</span>
                         </label>
                         <label className="flex items-center space-x-2 cursor-pointer">
-                            <input 
-                                type="checkbox" 
-                                className="w-5 h-5" 
-                                checked={fromFeetFirst} 
+                            <input
+                                type="checkbox"
+                                className="w-5 h-5"
+                                checked={fromFeetFirst}
                                 onChange={(e) => {
                                     handleFeetFirstCheckboxChange(e.target.checked)
-                                }} 
+                                }}
                             />
                             <span>Aus FeetFirst Bestand wählen</span>
                         </label>
@@ -394,7 +395,9 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                         </div>
                         <div className="flex items-center space-x-4">
                             {feetFirstData.image && (
-                                <img
+                                <Image
+                                    width={100}
+                                    height={100}
                                     src={feetFirstData.image}
                                     alt={feetFirstData.modell}
                                     className="w-16 h-16 object-cover rounded-md"

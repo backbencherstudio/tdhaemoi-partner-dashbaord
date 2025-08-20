@@ -26,11 +26,7 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
     const [loadingId, setLoadingId] = useState<number | null>(null);
 
     // Fetch customer data
-    useEffect(() => {
-        fetchLastScans();
-    }, []);
-
-    const fetchLastScans = async (isRefresh: boolean = false) => {
+    const fetchLastScans = React.useCallback(async (isRefresh: boolean = false) => {
         try {
             setIsLoading(true);
             const response = await getAllCustomers(1, 8);
@@ -39,9 +35,7 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
             // No toast needed - just refresh silently
             
             // Mark initial load as complete after first fetch
-            if (isInitialLoad) {
-                setIsInitialLoad(false);
-            }
+            setIsInitialLoad(false);
         } catch (error) {
             console.error('Error fetching last scans:', error);
             if (isRefresh) {
@@ -50,7 +44,11 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => { 
+        fetchLastScans();
+    }, [fetchLastScans]);
 
     // Expose refresh function to parent components
     useImperativeHandle(ref, () => ({
@@ -180,3 +178,4 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
 })
 
 export default LastScans;
+LastScans.displayName = 'LastScans';

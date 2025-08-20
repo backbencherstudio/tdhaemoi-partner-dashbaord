@@ -44,6 +44,20 @@ export const updateSingleCustomer = async (id: string, customerData: FormData) =
     }
 }
 
+// update customer information with JSON data
+export const updateCustomerInfo = async (id: string, customerData: any) => {
+    try {
+        const response = await axiosClient.patch(`/customers/${id}`, customerData, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
 // add new scanner file 
 export const addNewScannerFile = async (customerId: string, scannerFileData: any) => {
     try {

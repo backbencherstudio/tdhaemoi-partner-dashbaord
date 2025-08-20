@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import fxImg from '@/public/images/scanning/fax.png'
 import folderImg from '@/public/images/scanning/folder.png'

@@ -2,20 +2,18 @@
 import Image from 'next/image'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { RiArrowDownSLine } from 'react-icons/ri';
 import userload from '@/public/images/scanning/userload.png'
 import userImg from '@/public/images/scanning/user.png'
 import { MdZoomOutMap } from 'react-icons/md';
 import { TfiReload } from 'react-icons/tfi';
 import QuestionSection from '../Scanning/QuestionSection';
-import { updateSingleCustomer } from '@/apis/customerApis';
+import { updateSingleCustomer, getSingleCustomer } from '@/apis/customerApis';
 import toast from 'react-hot-toast';
 import ImagePreviewModal from '@/components/CustomerModal/ImagePreviewModal';
-import AddNewScanningModal from '@/components/CustomerModal/AddNewScanningModal';
-
-
 import { ScanData } from '@/types/scan';
+import CustomerModal from '@/components/CustomerModal/CustomerModal';
 
 export default function ScannningDataPage({ scanData }: { scanData: ScanData }) {
     const router = useRouter();
@@ -27,22 +25,45 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [addScanningModalOpen, setAddScanningModalOpen] = useState(false);
+    
+    // State for real-time data updates
+    const [currentScanData, setCurrentScanData] = useState<ScanData>(scanData);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // State for editable scan data
     const [editableData, setEditableData] = useState({
-        fusslange1: scanData.fusslange1 ?? '',
-        fusslange2: scanData.fusslange2 ?? '',
-        fussbreite1: scanData.fussbreite1 ?? '',
-        fussbreite2: scanData.fussbreite2 ?? '',
-        kugelumfang1: scanData.kugelumfang1 ?? '',
-        kugelumfang2: scanData.kugelumfang2 ?? '',
-        rist1: scanData.rist1 ?? '',
-        rist2: scanData.rist2 ?? '',
-        zehentyp1: scanData.zehentyp1 ?? '',
-        zehentyp2: scanData.zehentyp2 ?? '',
-        archIndex1: scanData.archIndex1 ?? '',
-        archIndex2: scanData.archIndex2 ?? '',
+        fusslange1: currentScanData.fusslange1 ?? '',
+        fusslange2: currentScanData.fusslange2 ?? '',
+        fussbreite1: currentScanData.fussbreite1 ?? '',
+        fussbreite2: currentScanData.fussbreite2 ?? '',
+        kugelumfang1: currentScanData.kugelumfang1 ?? '',
+        kugelumfang2: currentScanData.kugelumfang2 ?? '',
+        rist1: currentScanData.rist1 ?? '',
+        rist2: currentScanData.rist2 ?? '',
+        zehentyp1: currentScanData.zehentyp1 ?? '',
+        zehentyp2: currentScanData.zehentyp2 ?? '',
+        archIndex1: currentScanData.archIndex1 ?? '',
+        archIndex2: currentScanData.archIndex2 ?? '',
     });
+
+    // Sync currentScanData with prop scanData and update editableData
+    useEffect(() => {
+        setCurrentScanData(scanData);
+        setEditableData({
+            fusslange1: scanData.fusslange1 ?? '',
+            fusslange2: scanData.fusslange2 ?? '',
+            fussbreite1: scanData.fussbreite1 ?? '',
+            fussbreite2: scanData.fussbreite2 ?? '',
+            kugelumfang1: scanData.kugelumfang1 ?? '',
+            kugelumfang2: scanData.kugelumfang2 ?? '',
+            rist1: scanData.rist1 ?? '',
+            rist2: scanData.rist2 ?? '',
+            zehentyp1: scanData.zehentyp1 ?? '',
+            zehentyp2: scanData.zehentyp2 ?? '',
+            archIndex1: scanData.archIndex1 ?? '',
+            archIndex2: scanData.archIndex2 ?? '',
+        });
+    }, [scanData]);
 
     // Check if any field has changed
     const [originalData, setOriginalData] = useState(editableData);
@@ -98,33 +119,51 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
     };
 
 
+    // Function to refresh scan data
+    const refreshScanData = async () => {
+        try {
+            // Fetch fresh data from API
+            const response = await getSingleCustomer(currentScanData.id);
+            const payload = Array.isArray((response as any)?.data)
+                ? (response as any).data[0]
+                : Array.isArray(response)
+                    ? (response as any)[0]
+                    : (response as any)?.data ?? response;
+            
+            setCurrentScanData(payload);
+            setRefreshKey(prev => prev + 1);
+        } catch (error) {
+            console.error('Failed to refresh scan data:', error);
+        }
+    };
+
     const latestScreener = useMemo(() => {
-        if (Array.isArray(scanData.screenerFile) && scanData.screenerFile.length > 0) {
-            return scanData.screenerFile.reduce((latest, item) => {
+        if (Array.isArray(currentScanData.screenerFile) && currentScanData.screenerFile.length > 0) {
+            return currentScanData.screenerFile.reduce((latest, item) => {
                 const latestDate = new Date(latest.updatedAt);
                 const currentDate = new Date(item.updatedAt);
                 return currentDate > latestDate ? item : latest;
             });
         }
         return null;
-    }, [scanData.screenerFile]);
+    }, [currentScanData.screenerFile, refreshKey]);
 
     const scanDisplayDate = useMemo(() => {
         if (latestScreener?.updatedAt) {
             return new Date(latestScreener.updatedAt);
-        } else if (scanData.updatedAt) {
-            return new Date(scanData.updatedAt);
-        } else if (scanData.createdAt) {
-            return new Date(scanData.createdAt);
+        } else if (currentScanData.updatedAt) {
+            return new Date(currentScanData.updatedAt);
+        } else if (currentScanData.createdAt) {
+            return new Date(currentScanData.createdAt);
         }
         return null;
-    }, [latestScreener, scanData]);
+    }, [latestScreener, currentScanData]);
 
     const getLatestData = (fieldName: keyof Pick<ScanData, 'picture_10' | 'picture_23' | 'picture_11' | 'picture_24' | 'threed_model_left' | 'threed_model_right' | 'picture_17' | 'picture_16'>) => {
         if (latestScreener && latestScreener[fieldName]) {
             return latestScreener[fieldName];
         }
-        return scanData[fieldName] || null;
+        return currentScanData[fieldName] || null;
     };
 
     return (
@@ -140,30 +179,31 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
             />
 
             {/* Add New Scanning Modal */}
-            <AddNewScanningModal
+            <CustomerModal
                 isOpen={addScanningModalOpen}
                 onClose={() => setAddScanningModalOpen(false)}
-                customerId={scanData.id}
+                customerId={currentScanData.id}
                 onSubmit={() => {
-                    // Refresh the page or update the data
-                    window.location.reload();
+                    // Refresh the data without page reload
+                    refreshScanData();
                 }}
             />
 
-            <div className='flex justify-end mb-4'>
-                <button 
+            <div className='flex justify-end mb-4 gap-4'>
+                <button
                     onClick={() => setAddScanningModalOpen(true)}
                     className='bg-[#62A07C] capitalize cursor-pointer text-white px-4 py-2 rounded hover:bg-[#62a07c98] transition text-sm'
                 >
-                    add scanning data
+                    manage customer
                 </button>
+
             </div>
 
             <div className='flex flex-col xl:flex-row justify-between items-start mb-6 gap-4'>
                 <div className='w-full xl:w-7/12'>
-                    <div className="flex items-center mb-4 md:mb-0">
-                        <div className="font-bold text-xl capitalize">{scanData.vorname} {scanData.nachname}</div>
-                    </div>
+                                    <div className="flex items-center mb-4 md:mb-0">
+                    <div className="font-bold text-xl capitalize">{currentScanData.vorname} {currentScanData.nachname}</div>
+                </div>
 
                     <div className='mb-10'>
                         <div className="mb-2 flex items-center gap-2">
@@ -184,7 +224,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                             {/* Kundendaten -historie */}
                             <div className="flex flex-col items-center">
                                 <Link
-                                    href={`/dashboard/customer-history/${scanData.id}`}
+                                    href={`/dashboard/customer-history/${currentScanData.id}`}
                                     className="p-5 cursor-pointer flex items-center justify-center rounded-2xl border border-black bg-white hover:bg-gray-100 transition"
                                 >
                                     <Image src={userImg} alt="Kundendaten -historie" width={60} height={60} />
@@ -399,8 +439,8 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                         </div>
                     </div>
                 </div>
-                    <div className='w-full xl:w-5/12'>
-                    <QuestionSection customer={scanData} />
+                <div className='w-full xl:w-5/12'>
+                    <QuestionSection customer={currentScanData} />
                 </div>
             </div>
 

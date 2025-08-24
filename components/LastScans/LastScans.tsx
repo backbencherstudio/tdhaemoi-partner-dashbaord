@@ -31,9 +31,9 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
             setIsLoading(true);
             const response = await getAllCustomers(1, 8);
             setLastScans(response.data);
-            
+
             // No toast needed - just refresh silently
-            
+
             // Mark initial load as complete after first fetch
             setIsInitialLoad(false);
         } catch (error) {
@@ -46,7 +46,7 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
         }
     }, []);
 
-    useEffect(() => { 
+    useEffect(() => {
         fetchLastScans();
     }, [fetchLastScans]);
 
@@ -79,10 +79,17 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
 
 
     // handle scan view function
+    // const handleScanView = (id: number) => {
+    //     setLoadingId(id);
+    //     setTimeout(() => {
+    //         router.push(`/dashboard/scanning-data/${id}`);
+    //     }, 500);
+
+    // }
     const handleScanView = (id: number) => {
         setLoadingId(id);
         setTimeout(() => {
-            router.push(`/dashboard/scanning-data/${id}`);
+            router.push(`/dashboard/customer-info/${id}`);
         }, 500);
 
     }

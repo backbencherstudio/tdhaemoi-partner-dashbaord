@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'later-cellular-input-schema.trycloudflare.com',
+        hostname: 'fetish-ct-neutral-scotia.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

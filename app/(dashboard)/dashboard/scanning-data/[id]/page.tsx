@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
 import fxImg from '@/public/images/scanning/fax.png'
@@ -12,49 +12,28 @@ import Link from 'next/link';
 import SacnningForm from '../../_components/Scanning/SacnningForm';
 import DataModal from '../../_components/Scanning/DataModal';
 import ScannningDataPage from '../../_components/ScannningData/ScannningDataPage';
-import { getSingleCustomer } from '@/apis/customerApis';
-import { ScanData } from '@/types/scan';
-
+import { useSingleCustomer } from '@/hooks/customer/useSingleCustomer'
 
 
 export default function ScanningData() {
     const params = useParams();
-    const [scanData, setScanData] = useState<ScanData | null>(null);
-    const [loading, setLoading] = useState(true);
+    const { customer: scanData, loading, error, updateCustomer } = useSingleCustomer(String(params.id));
     const [supply] = useState(
         "Rohling 339821769, mit Pelotte Nr. 10 und Micro Elastisch"
     );
 
-
-
     // Add this state for the modal
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    useEffect(() => {
-        const fetchScanData = async () => {
-            try {
-                const response = await getSingleCustomer(String(params.id));
-                const payload = Array.isArray(response?.data) ? response.data[0] : response?.data;
-                setScanData(payload);
-                setLoading(false);
-            } catch (error) {
-                setLoading(false);
-            }
-        };
-
-        fetchScanData();
-    }, [params.id]);
-
 
     // Add this function to handle modal opening
     const handleWerkstattzettleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         setIsModalOpen(true);
     };
+
     if (loading) return <div>Loading...</div>;
+    if (error) return <div>Error: {error}</div>;
     if (!scanData) return <div>Scan not found</div>;
-
-
 
     return (
         <div className="p-4">
@@ -63,7 +42,10 @@ export default function ScanningData() {
             {/*  form section */}
             <SacnningForm
                 customer={scanData}
-                onCustomerUpdate={(updatedCustomer) => setScanData(updatedCustomer as any)}
+                onCustomerUpdate={(updatedCustomer) => {
+                    // Update the customer data using the hook
+                    updateCustomer(updatedCustomer);
+                }}
             />
             {/* Bottom Action Links */}
             <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center mb-20">

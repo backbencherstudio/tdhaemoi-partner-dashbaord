@@ -9,11 +9,11 @@ import userImg from '@/public/images/scanning/user.png'
 import { MdZoomOutMap } from 'react-icons/md';
 import { TfiReload } from 'react-icons/tfi';
 import QuestionSection from '../Scanning/QuestionSection';
-import { updateSingleCustomer, getSingleCustomer } from '@/apis/customerApis';
 import toast from 'react-hot-toast';
 import ImagePreviewModal from '@/components/CustomerModal/ImagePreviewModal';
 import { ScanData } from '@/types/scan';
 import CustomerModal from '@/components/CustomerModal/CustomerModal';
+import { useSingleCustomer } from '@/hooks/customer/useSingleCustomer';
 
 export default function ScannningDataPage({ scanData }: { scanData: ScanData }) {
     const router = useRouter();
@@ -22,33 +22,29 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
     const [modalTitle, setModalTitle] = useState<string>('');
     const [modalType, setModalType] = useState<'image' | 'stl' | null>(null);
     const [stlUrl, setStlUrl] = useState<string | null>(null);
-    const [saving, setSaving] = useState(false);
-    const [saveError, setSaveError] = useState<string | null>(null);
     const [addScanningModalOpen, setAddScanningModalOpen] = useState(false);
-    
-    // State for real-time data updates
-    const [currentScanData, setCurrentScanData] = useState<ScanData>(scanData);
-    const [refreshKey, setRefreshKey] = useState(0);
+
+    // Use the existing hook for customer data management
+    const { customer: currentScanData, updateCustomer, refreshCustomer, isUpdating, error } = useSingleCustomer(scanData.id);
 
     // State for editable scan data
     const [editableData, setEditableData] = useState({
-        fusslange1: currentScanData.fusslange1 ?? '',
-        fusslange2: currentScanData.fusslange2 ?? '',
-        fussbreite1: currentScanData.fussbreite1 ?? '',
-        fussbreite2: currentScanData.fussbreite2 ?? '',
-        kugelumfang1: currentScanData.kugelumfang1 ?? '',
-        kugelumfang2: currentScanData.kugelumfang2 ?? '',
-        rist1: currentScanData.rist1 ?? '',
-        rist2: currentScanData.rist2 ?? '',
-        zehentyp1: currentScanData.zehentyp1 ?? '',
-        zehentyp2: currentScanData.zehentyp2 ?? '',
-        archIndex1: currentScanData.archIndex1 ?? '',
-        archIndex2: currentScanData.archIndex2 ?? '',
+        fusslange1: scanData.fusslange1 ?? '',
+        fusslange2: scanData.fusslange2 ?? '',
+        fussbreite1: scanData.fussbreite1 ?? '',
+        fussbreite2: scanData.fussbreite2 ?? '',
+        kugelumfang1: scanData.kugelumfang1 ?? '',
+        kugelumfang2: scanData.kugelumfang2 ?? '',
+        rist1: scanData.rist1 ?? '',
+        rist2: scanData.rist2 ?? '',
+        zehentyp1: scanData.zehentyp1 ?? '',
+        zehentyp2: scanData.zehentyp2 ?? '',
+        archIndex1: scanData.archIndex1 ?? '',
+        archIndex2: scanData.archIndex2 ?? '',
     });
 
-    // Sync currentScanData with prop scanData and update editableData
+    // Sync editableData when scanData prop changes
     useEffect(() => {
-        setCurrentScanData(scanData);
         setEditableData({
             fusslange1: scanData.fusslange1 ?? '',
             fusslange2: scanData.fusslange2 ?? '',
@@ -79,19 +75,17 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
         }));
     };
 
-
     const handleSaveChanges = async () => {
-        setSaving(true);
-        setSaveError(null);
         try {
-            const payload = { ...editableData };
-            await updateSingleCustomer(scanData.id, payload as any);
-            setOriginalData(editableData);
-            toast.success('Scan data updated successfully!');
+            const success = await updateCustomer(editableData);
+            if (success) {
+                setOriginalData(editableData);
+                toast.success('Scan data updated successfully!');
+            } else {
+                toast.error('Failed to save changes');
+            }
         } catch (err: any) {
-            setSaveError(err?.response?.data?.message || err.message || 'Failed to save changes');
-        } finally {
-            setSaving(false);
+            toast.error('Failed to save changes');
         }
     };
 
@@ -103,6 +97,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
         setStlUrl(null);
         setModalOpen(true);
     };
+
     // Helper to open modal with STL
     const openStlModal = (stl: string | null, title: string) => {
         setStlUrl(stl);
@@ -112,58 +107,38 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
         setModalOpen(true);
     };
 
-    // handle versorgungs page
-    const handleVersorgungsPage = (e: React.MouseEvent) => {
-        e.preventDefault();
-        router.push('/dashboard/versorgungs');
-    };
+  
 
-
-    // Function to refresh scan data
-    const refreshScanData = async () => {
-        try {
-            // Fetch fresh data from API
-            const response = await getSingleCustomer(currentScanData.id);
-            const payload = Array.isArray((response as any)?.data)
-                ? (response as any).data[0]
-                : Array.isArray(response)
-                    ? (response as any)[0]
-                    : (response as any)?.data ?? response;
-            
-            setCurrentScanData(payload);
-            setRefreshKey(prev => prev + 1);
-        } catch (error) {
-            console.error('Failed to refresh scan data:', error);
-        }
-    };
+    // Use the data from hook or fallback to prop
+    const displayData = currentScanData || scanData;
 
     const latestScreener = useMemo(() => {
-        if (Array.isArray(currentScanData.screenerFile) && currentScanData.screenerFile.length > 0) {
-            return currentScanData.screenerFile.reduce((latest, item) => {
+        if (Array.isArray(displayData.screenerFile) && displayData.screenerFile.length > 0) {
+            return displayData.screenerFile.reduce((latest, item) => {
                 const latestDate = new Date(latest.updatedAt);
                 const currentDate = new Date(item.updatedAt);
                 return currentDate > latestDate ? item : latest;
             });
         }
         return null;
-    }, [currentScanData.screenerFile, refreshKey]);
+    }, [displayData.screenerFile]);
 
     const scanDisplayDate = useMemo(() => {
         if (latestScreener?.updatedAt) {
             return new Date(latestScreener.updatedAt);
-        } else if (currentScanData.updatedAt) {
-            return new Date(currentScanData.updatedAt);
-        } else if (currentScanData.createdAt) {
-            return new Date(currentScanData.createdAt);
+        } else if (displayData.updatedAt) {
+            return new Date(displayData.updatedAt);
+        } else if (displayData.createdAt) {
+            return new Date(displayData.createdAt);
         }
         return null;
-    }, [latestScreener, currentScanData]);
+    }, [latestScreener, displayData]);
 
     const getLatestData = (fieldName: keyof Pick<ScanData, 'picture_10' | 'picture_23' | 'picture_11' | 'picture_24' | 'threed_model_left' | 'threed_model_right' | 'picture_17' | 'picture_16'>) => {
         if (latestScreener && latestScreener[fieldName]) {
             return latestScreener[fieldName];
         }
-        return currentScanData[fieldName] || null;
+        return displayData[fieldName] || null;
     };
 
     return (
@@ -182,10 +157,10 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
             <CustomerModal
                 isOpen={addScanningModalOpen}
                 onClose={() => setAddScanningModalOpen(false)}
-                customerId={currentScanData.id}
+                customerId={displayData.id}
                 onSubmit={() => {
-                    // Refresh the data without page reload
-                    refreshScanData();
+                    // Refresh the data using the hook
+                    refreshCustomer();
                 }}
             />
 
@@ -196,46 +171,23 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                 >
                     manage customer
                 </button>
-
             </div>
 
             <div className='flex flex-col xl:flex-row justify-between items-start mb-6 gap-4'>
                 <div className='w-full xl:w-7/12'>
-                                    <div className="flex items-center mb-4 md:mb-0">
-                    <div className="font-bold text-xl capitalize">{currentScanData.vorname} {currentScanData.nachname}</div>
-                </div>
+                    <div className="flex items-center mb-4 md:mb-0">
+                        <div className="font-bold text-xl capitalize">{displayData.vorname} {displayData.nachname}</div>
+                    </div>
 
                     <div className='mb-10'>
                         <div className="mb-2 flex items-center gap-2">
                             <span>Scan {scanDisplayDate && !isNaN(scanDisplayDate.getTime()) ? scanDisplayDate.toLocaleDateString() : '-'}</span>
                             <RiArrowDownSLine className='text-gray-900 text-2xl' />
                         </div>
-                        <div className="flex gap-8 mt-4">
-                            {/* Versorgung starten */}
-                            <div className="flex flex-col items-center">
-                                <button
-                                    onClick={handleVersorgungsPage}
-                                    className="p-5 flex items-center justify-center rounded-2xl border border-black bg-white hover:bg-gray-100 transition cursor-pointer"
-                                >
-                                    <Image src={userload} alt="Versorgung starten" width={70} height={70} />
-                                </button>
-                                <span className="mt-2 text-center text-sm font-normal">Versorgung starten</span>
-                            </div>
-                            {/* Kundendaten -historie */}
-                            <div className="flex flex-col items-center">
-                                <Link
-                                    href={`/dashboard/customer-history/${currentScanData.id}`}
-                                    className="p-5 cursor-pointer flex items-center justify-center rounded-2xl border border-black bg-white hover:bg-gray-100 transition"
-                                >
-                                    <Image src={userImg} alt="Kundendaten -historie" width={60} height={60} />
-                                </Link>
-                                <span className="mt-2 text-center text-sm font-normal">Kundendaten -historie</span>
-                            </div>
-                        </div>
+                       
                     </div>
 
                     <div className="flex flex-col lg:flex-row justify-between items-center">
-
                         {/* left image section */}
                         <div className="flex-1 mb-6 lg:mb-0 flex flex-col items-center">
                             <div className="w-60 max-w-md">
@@ -255,7 +207,6 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                             </div>
                         </div>
 
-
                         {/* scan data section */}
                         <div className="flex-1 mx-2 ">
                             <div className='flex items-center justify-center gap-5 mb-5'>
@@ -270,13 +221,13 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                                     <button
                                         onClick={handleSaveChanges}
                                         className='bg-[#4A8A6A] cursor-pointer text-white px-2 py-1 rounded hover:bg-[#4A8A6A]/80 transition text-sm'
-                                        disabled={saving}
+                                        disabled={isUpdating}
                                     >
-                                        {saving ? 'Saving...' : 'Save'}
+                                        {isUpdating ? 'Saving...' : 'Save'}
                                     </button>
                                 )}
-                                {saveError && (
-                                    <span className='ml-2 text-red-600 text-xs'>{saveError}</span>
+                                {error && (
+                                    <span className='ml-2 text-red-600 text-xs'>{error}</span>
                                 )}
                             </div>
                             <div className="grid grid-cols-2 gap-2 mx-2">
@@ -440,7 +391,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                     </div>
                 </div>
                 <div className='w-full xl:w-5/12'>
-                    <QuestionSection customer={currentScanData} />
+                    <QuestionSection customer={displayData} />
                 </div>
             </div>
 
@@ -449,7 +400,7 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                 <div className="flex justify-center md:justify-start">
                     <div className="flex flex-wrap space-x-2">
                         <button className="border border-gray-300 cursor-pointer bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_10'), 'Fersenneigung (Links)')}>Fersenneigung</button>
-                        <button className="border border-gray-300 cursor-pointer bg-[#62A07C] hover:bg-gray-100 px-4 py-1 text-sm relative my-1" onClick={() => openModal(getLatestData('picture_23'), 'Plantaransicht (Links)')}>Plantaransicht</button>
+                        <button className="border border-gray-300 cursor-pointer bg-white hover:bg-gray-100 px-4 py-1 text-sm relative my-1" onClick={() => openModal(getLatestData('picture_23'), 'Plantaransicht (Links)')}>Plantaransicht</button>
                         <button className="border border-gray-300 cursor-pointer  bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1" onClick={() => openStlModal(getLatestData('threed_model_left'), '3D-Modell (Links)')}>3D-Modell</button>
                         <button className="border border-gray-300 cursor-pointer bg-white hover:bg-gray-100 px-4 py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_17'), 'Sohlen Index (Links)')}>Sohlen Index</button>
                     </div>
@@ -458,14 +409,12 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                 <div className="flex justify-center md:justify-end">
                     <div className="flex flex-wrap space-x-2">
                         <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_11'), 'Fersenneigung (Rechts)')}>Fersenneigung</button>
-                        <button className="border border-gray-300 bg-[#62A07C] px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_24'), 'Plantaransicht (Rechts)')}>Plantaransicht</button>
+                        <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_24'), 'Plantaransicht (Rechts)')}>Plantaransicht</button>
                         <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openStlModal(getLatestData('threed_model_right'), '3D-Modell (Rechts)')}>3D-Modell</button>
                         <button className="border border-gray-300 bg-white px-4 hover:bg-gray-100 cursor-pointer py-1 text-sm my-1" onClick={() => openModal(getLatestData('picture_16'), 'Sohlen Index (Rechts)')}>Sohlen Index</button>
                     </div>
                 </div>
             </div>
-
-
         </>
     )
 }

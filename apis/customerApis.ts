@@ -144,4 +144,44 @@ export const detailsDiagnosis = async (id: string, ausfuhrliche_diagnose: any) =
     }
 }
 
+// use customer note add 
+export const addCustomerNote = async (id: string, note: string, category: string = 'Notizen', date: string) => {
+    try {
+        const response = await axiosClient.post(`/customers-history/notizen/${id}`, { 
+            note,
+            category,
+            date
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
 
+// get customer 
+export const getCustomerNote = async (id: string, page: number, limit: number, category: string) => {
+    try {
+        // Build query parameters dynamically
+        const params = new URLSearchParams();
+        params.append('customerId', id);
+        params.append('page', page.toString());
+        params.append('limit', limit.toString());
+        
+        // Only add category if it's not empty
+        if (category && category.trim() !== '') {
+            params.append('category', category);
+        }
+        
+        const finalUrl = `customers-history?${params.toString()}`;
+        console.log('API Call URL:', finalUrl);
+        console.log('Query parameters:', params.toString());
+        console.log('Category being sent:', category);
+        
+        const response = await axiosClient.get(finalUrl);
+ 
+        return response.data;
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+    }
+}

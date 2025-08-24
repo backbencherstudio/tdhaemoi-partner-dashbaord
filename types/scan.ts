@@ -21,6 +21,11 @@ export interface ScanData {
     email: string;
     telefonnummer: string;
     wohnort: string;
+    // Additional personal information
+    geschlecht?: string;
+    geburtsdatum?: string;
+    strasse?: string;
+    land?: string;
     // Measurements
     fusslange1: string;
     fusslange2: string;
@@ -34,6 +39,12 @@ export interface ScanData {
     zehentyp2: string;
     archIndex1: string;
     archIndex2: string;
+    // Additional customer information
+    kundeSteuernummer?: string;
+    diagnose?: string;
+    kodexeMassschuhe?: string;
+    kodexeEinlagen?: string;
+    sonstiges?: string;
     createdAt: string;
     updatedAt: string;
     // Latest screener files

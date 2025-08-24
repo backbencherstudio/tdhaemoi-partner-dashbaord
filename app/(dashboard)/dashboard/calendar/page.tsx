@@ -4,8 +4,7 @@ import { Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import AppoinmentData from '@/components/AppoinmentData/AppoinmentData';
 import { useForm } from "react-hook-form"
 // import { format } from "date-fns"
-import { createAppoinment, deleteAppointment, getMyAppointments, getSingleAppointment, updateAppointment } from '@/apis/appoinmentApis';
-import toast from "react-hot-toast";
+import { useAppoinment } from '@/hooks/appoinment/useAppoinment';
 import AppointmentModal from '@/components/AppointmentModal/AppointmentModal';
 
 interface Event {
@@ -48,10 +47,8 @@ const WeeklyCalendar = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [miniCalendarDate, setMiniCalendarDate] = useState(new Date());
     const [showYearMonthPicker, setShowYearMonthPicker] = useState(false);
-    const [events, setEvents] = useState([]);
     const [showAddForm, setShowAddForm] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{
         show: boolean;
         appointmentId: number | null;
@@ -60,9 +57,22 @@ const WeeklyCalendar = () => {
         appointmentId: null
     });
     const [showFullSubtitle, setShowFullSubtitle] = useState<number | null>(null);
-    const [refreshKey, setRefreshKey] = useState(0);
     const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // Use the custom hook
+    const {
+        events,
+        isLoading,
+        refreshKey,
+        fetchAppointments,
+        createNewAppointment,
+        deleteAppointmentById,
+        getAppointmentById,
+        updateAppointmentById,
+        getEventsForDate,
+        formatDate
+    } = useAppoinment();
 
     const form = useForm<AppointmentFormData>({
         defaultValues: {
@@ -103,34 +113,7 @@ const WeeklyCalendar = () => {
 
     useEffect(() => {
         fetchAppointments();
-    }, []);
-
-    const fetchAppointments = async () => {
-        try {
-            setIsLoading(true);
-            const response = await getMyAppointments({
-                page: 1,
-                limit: 100
-            });
-            const appointments = response?.data || [];
-
-            if (appointments.length > 0) {
-                const formattedEvents = appointments.map((apt: AppointmentData) => ({
-                    id: apt.id,
-                    date: new Date(apt.date).toISOString().split('T')[0],
-                    time: apt.time,
-                    title: apt.customer_name.toUpperCase(),
-                    subtitle: apt.details?.toUpperCase(),
-                    type: apt.isClient ? 'user' : 'others'
-                }));
-                setEvents(formattedEvents);
-            }
-        } catch {
-            toast.error('Failed to load appointments');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, [fetchAppointments]);
 
     const getTodayDate = () => {
         const today = new Date();
@@ -214,27 +197,10 @@ const WeeklyCalendar = () => {
     const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
     const dayNamesLong = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    const formatDate = (date: Date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
-
-
     const isSameDay = (date1: Date, date2: Date) => {
         return date1.getFullYear() === date2.getFullYear() &&
             date1.getMonth() === date2.getMonth() &&
             date1.getDate() === date2.getDate();
-    };
-
-    const getEventsForDate = (date: Date) => {
-        const dateStr = formatDate(date);
-        return events.filter((event: Event) => {
-            const eventDate = new Date(event.date);
-            const eventDateStr = formatDate(eventDate);
-            return eventDateStr === dateStr;
-        });
     };
 
     const handleDateClick = (date: Date) => {
@@ -248,126 +214,21 @@ const WeeklyCalendar = () => {
         setMiniCalendarDate(date);
     };
 
-    // Helper function to handle date and time conversion
-    const createDateTimeWithOffset = (dateStr: string, timeStr: string) => {
-        const [hours, minutes] = timeStr.split(':');
-        const selectedDate = new Date(dateStr);
-        const dateTime = new Date();
-        dateTime.setFullYear(selectedDate.getFullYear());
-        dateTime.setMonth(selectedDate.getMonth());
-        dateTime.setDate(selectedDate.getDate());
-        dateTime.setHours(parseInt(hours) + 2);
-        dateTime.setMinutes(parseInt(minutes));
-        dateTime.setSeconds(0);
-        dateTime.setMilliseconds(0);
 
-        return dateTime;
-    };
 
-    const onSubmit = async (data: {
-        kunde: string;
-        uhrzeit: string;
-        selectedEventDate: Date | undefined;
-        termin: string;
-        bemerk: string;
-        mitarbeiter: string;
-        isClientEvent: boolean;
-    }) => {
-        const loadingToastId = toast.loading('Creating appointment...');
-        try {
-            if (!data.kunde || !data.uhrzeit || !data.selectedEventDate || !data.termin) {
-                toast.dismiss(loadingToastId);
-                toast.error('Please fill in all required fields');
-                return;
-            }
-
-            // Format time for display
-            const timeDate = new Date(`2000-01-01T${data.uhrzeit}`);
-            const formattedTime = timeDate.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            }).toLowerCase();
-
-            // Create correct datetime
-            const dateTime = createDateTimeWithOffset(formatDate(data.selectedEventDate || new Date()), data.uhrzeit);
-
-            const appointmentData = {
-                customer_name: data.kunde,
-                time: formattedTime,
-                date: dateTime.toISOString(),
-                reason: data.termin,
-                assignedTo: data.mitarbeiter || '',
-                details: data.bemerk || '',
-                isClient: Boolean(data.isClientEvent),
-                userId: "user-uuid-1"
-            };
-
-            const response = await createAppoinment(appointmentData);
-
-            if (response.success) {
-                const updatedResponse = await getMyAppointments({
-                    page: 1,
-                    limit: 100
-                });
-
-                if (updatedResponse.data) {
-                    const formattedEvents = updatedResponse.data.map((apt: AppointmentData) => ({
-                        id: apt.id,
-                        date: new Date(apt.date).toISOString().split('T')[0],
-                        time: apt.time,
-                        title: apt.customer_name.toUpperCase(),
-                        subtitle: apt.details?.toUpperCase(),
-                        type: apt.isClient ? 'user' : 'others'
-                    }));
-                    setEvents(formattedEvents);
-                    setRefreshKey(prev => prev + 1);
-                }
-
-                form.reset();
-                setShowAddForm(false);
-                toast.dismiss(loadingToastId);
-                toast.success('Appointment created successfully', {
-                    duration: 3000,
-                });
-            } else {
-                toast.dismiss(loadingToastId);
-                toast.error(response.message || 'Failed to create appointment');
-            }
-        } catch (error: unknown) {
-            toast.dismiss(loadingToastId);
-            const errorMessage = error instanceof Error ? error.message : 'Failed to create appointment';
-            toast.error(errorMessage);
+    const onSubmit = async (data: AppointmentFormData) => {
+        const success = await createNewAppointment(data);
+        if (success) {
+            form.reset();
+            setShowAddForm(false);
         }
     };
 
 
     const deleteAppointments = async (appointmentId: string) => {
-        try {
-            const response = await deleteAppointment(appointmentId);
-            const updatedResponse = await getMyAppointments({
-                page: 1,
-                limit: 100
-            });
-
-            if (updatedResponse.data) {
-                const formattedEvents = updatedResponse.data.map((apt: AppointmentData) => ({
-                    id: apt.id,
-                    date: new Date(apt.date).toISOString().split('T')[0],
-                    time: apt.time,
-                    title: apt.customer_name.toUpperCase(),
-                    subtitle: apt.details?.toUpperCase(),
-                    type: apt.isClient ? 'user' : 'others'
-                }));
-                setEvents(formattedEvents);
-                setRefreshKey(prev => prev + 1);
-            }
-
+        const success = await deleteAppointmentById(appointmentId);
+        if (success) {
             setDeleteConfirmation({ show: false, appointmentId: null });
-            toast.success(response.message || 'Appointment deleted successfully');
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to delete appointment';
-            toast.error(errorMessage);
         }
     };
 
@@ -375,69 +236,34 @@ const WeeklyCalendar = () => {
     const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
 
     const handleAppointmentClick = async (appointmentId: number) => {
-        try {
-            const response = await getSingleAppointment(appointmentId.toString());
-            if (response?.success) {
-                const apt = response.appointment;
-                setSelectedAppointment(apt);
+        const apt = await getAppointmentById(appointmentId.toString());
+        if (apt) {
+            setSelectedAppointment(apt);
 
-                // Format date and time for form
-                const date = new Date(apt.date);
-                const formattedTime = apt.time.split(' ')[0];
+            // Format date and time for form
+            const date = new Date(apt.date);
+            const formattedTime = apt.time.split(' ')[0];
 
-                editForm.reset({
-                    kunde: apt.customer_name,
-                    uhrzeit: formattedTime,
-                    selectedEventDate: date,
-                    termin: apt.reason,
-                    bemerk: apt.details,
-                    mitarbeiter: apt.assignedTo,
-                    isClientEvent: apt.isClient
-                });
+            editForm.reset({
+                kunde: apt.customer_name,
+                uhrzeit: formattedTime,
+                selectedEventDate: date,
+                termin: apt.reason,
+                bemerk: apt.details,
+                mitarbeiter: apt.assignedTo,
+                isClientEvent: apt.isClient
+            });
 
-                setIsEditModalOpen(true);
-            }
-        } catch {
-            toast.error('Failed to load appointment details');
+            setIsEditModalOpen(true);
         }
     };
 
     const onUpdateSubmit = async (data: AppointmentFormData) => {
         if (!selectedAppointment?.id) return;
 
-        try {
-            // Format time for display
-            const timeDate = new Date(`2000-01-01T${data.uhrzeit}`);
-            const formattedTime = timeDate.toLocaleTimeString('en-US', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-            }).toLowerCase();
-
-            // Create correct datetime
-            const dateTime = createDateTimeWithOffset(formatDate(data.selectedEventDate || new Date()), data.uhrzeit);
-
-            const appointmentData = {
-                customer_name: data.kunde,
-                time: formattedTime,
-                date: dateTime.toISOString(),
-                reason: data.termin,
-                assignedTo: data.mitarbeiter || '',
-                details: data.bemerk || '',
-                isClient: data.isClientEvent
-            };
-
-            const response = await updateAppointment(selectedAppointment.id.toString(), appointmentData);
-
-            if (response.success) {
-                await fetchAppointments();
-                setIsEditModalOpen(false);
-                setRefreshKey(prev => prev + 1);
-                toast.success('Appointment updated successfully');
-            }
-        } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to update appointment';
-            toast.error(errorMessage);
+        const success = await updateAppointmentById(selectedAppointment.id.toString(), data);
+        if (success) {
+            setIsEditModalOpen(false);
         }
     };
 

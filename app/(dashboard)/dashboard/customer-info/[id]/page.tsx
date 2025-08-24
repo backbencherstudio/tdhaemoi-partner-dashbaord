@@ -60,22 +60,28 @@ export default function CustomerInfo() {
 
     // Get all available scan dates from screenerFile
     const availableScanDates = useMemo(() => {
-        if (!displayData?.screenerFile || !Array.isArray(displayData.screenerFile)) {
+        if (!displayData?.screenerFile || !Array.isArray(displayData.screenerFile) || displayData.screenerFile.length === 0) {
             return [];
         }
 
-        return displayData.screenerFile
-            .map(file => ({
-                date: file.updatedAt,
-                id: file.id,
-                displayDate: new Date(file.updatedAt).toLocaleDateString()
-            }))
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort by newest first
+        try {
+            return displayData.screenerFile
+                .filter(file => file && file.updatedAt) // Filter out invalid entries
+                .map(file => ({
+                    date: file.updatedAt,
+                    id: file.id,
+                    displayDate: new Date(file.updatedAt).toLocaleDateString()
+                }))
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Sort by newest first
+        } catch (error) {
+            console.error('Error processing scan dates:', error);
+            return [];
+        }
     }, [displayData?.screenerFile]);
 
     // Get the selected scan data or default to latest
     const selectedScanData = useMemo(() => {
-        if (!displayData?.screenerFile || !Array.isArray(displayData.screenerFile)) {
+        if (!displayData?.screenerFile || !Array.isArray(displayData.screenerFile) || displayData.screenerFile.length === 0) {
             return null;
         }
 
@@ -83,12 +89,16 @@ export default function CustomerInfo() {
             return displayData.screenerFile.find(file => file.updatedAt === selectedScanDate);
         }
 
-        // Default to latest scan
-        return displayData.screenerFile.reduce((latest, item) => {
-            const latestDate = new Date(latest.updatedAt);
-            const currentDate = new Date(item.updatedAt);
-            return currentDate > latestDate ? item : latest;
-        });
+        // Default to latest scan - only reduce if array has items
+        if (displayData.screenerFile.length > 0) {
+            return displayData.screenerFile.reduce((latest, item) => {
+                const latestDate = new Date(latest.updatedAt);
+                const currentDate = new Date(item.updatedAt);
+                return currentDate > latestDate ? item : latest;
+            });
+        }
+
+        return null;
     }, [displayData?.screenerFile, selectedScanDate]);
 
     // Get data from selected scan or fallback to customer data
@@ -146,28 +156,39 @@ export default function CustomerInfo() {
                 {/* Date section with dropdown */}
                 <div className="mt-2 relative">
                     <div
-                        className="flex w-fit items-center gap-2 cursor-pointer hover:bg-gray-100 transform duration-300 p-2 rounded transition-colors"
-                        onClick={() => setShowDateDropdown(!showDateDropdown)}
+                        className={`flex w-fit items-center gap-2 p-2 rounded transition-colors ${availableScanDates.length > 0
+                                ? 'cursor-pointer hover:bg-gray-100'
+                                : 'cursor-not-allowed opacity-50'
+                            }`}
+                        onClick={() => availableScanDates.length > 0 && setShowDateDropdown(!showDateDropdown)}
                     >
                         <span className="text-gray-600 text-sm">
                             Scan Date: {getCurrentDisplayDate()}
                         </span>
-                        <RiArrowDownSLine className={`text-gray-900 text-xl transition-transform ${showDateDropdown ? 'rotate-180' : ''}`} />
+                        {availableScanDates.length > 0 && (
+                            <RiArrowDownSLine className={`text-gray-900 text-xl transition-transform ${showDateDropdown ? 'rotate-180' : ''}`} />
+                        )}
                     </div>
 
                     {/* Date Dropdown */}
                     {showDateDropdown && (
                         <div className="absolute top-full left-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-10 min-w-48">
-                            {availableScanDates.map((scanDate) => (
-                                <div
-                                    key={scanDate.id}
-                                    className={`px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors ${selectedScanDate === scanDate.date ? 'bg-blue-50 text-blue-600' : ''
-                                        }`}
-                                    onClick={() => handleDateSelect(scanDate.date)}
-                                >
-                                    {scanDate.displayDate}
+                            {availableScanDates.length > 0 ? (
+                                availableScanDates.map((scanDate) => (
+                                    <div
+                                        key={scanDate.id}
+                                        className={`px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors ${selectedScanDate === scanDate.date ? 'bg-blue-50 text-blue-600' : ''
+                                            }`}
+                                        onClick={() => handleDateSelect(scanDate.date)}
+                                    >
+                                        {scanDate.displayDate}
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="px-4 py-2 text-gray-500 text-sm">
+                                    No scan dates available
                                 </div>
-                            ))}
+                            )}
                         </div>
                     )}
                 </div>
@@ -202,16 +223,16 @@ export default function CustomerInfo() {
             {/* Zoom Mode - Show only images when zoomed */}
             {isZoomed ? (
                 <div className="relative mb-8">
-                     <div className="flex justify-center mb-4">
-                         <button
-                             onClick={toggleZoom}
-                             className="bg-red-500 cursor-pointer hover:bg-red-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg shadow-lg transition-all duration-300 ease-out flex items-center gap-1 md:gap-2 text-sm md:text-base"
-                             title="Exit zoom mode"
-                         >
-                             <span>✕</span>
-                             <span className="hidden sm:inline">Exit Zoom</span>
-                         </button>
-                     </div>
+                    <div className="flex justify-center mb-4">
+                        <button
+                            onClick={toggleZoom}
+                            className="bg-red-500 cursor-pointer hover:bg-red-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg shadow-lg transition-all duration-300 ease-out flex items-center gap-1 md:gap-2 text-sm md:text-base"
+                            title="Exit zoom mode"
+                        >
+                            <span>✕</span>
+                            <span className="hidden sm:inline">Exit Zoom</span>
+                        </button>
+                    </div>
 
                     {/* Responsive image layout */}
                     <div className="flex flex-col lg:flex-row justify-center items-center gap-4 lg:gap-8">

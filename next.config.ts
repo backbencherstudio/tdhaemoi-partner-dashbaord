@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'fetish-ct-neutral-scotia.trycloudflare.com',
+        hostname: 'female-ba-symptoms-ira.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

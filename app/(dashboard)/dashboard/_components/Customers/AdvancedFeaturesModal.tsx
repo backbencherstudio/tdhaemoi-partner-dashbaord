@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { useSingleCustomer } from '@/hooks/customer/useSingleCustomer'
+import { useUpdateCustomerInfo } from '@/hooks/customer/useUpdateCustomerInfo'
+import toast from 'react-hot-toast'
 
 interface AdvancedFeaturesModalProps {
     scanData: ScanData;
@@ -12,7 +15,11 @@ interface AdvancedFeaturesModalProps {
 }
 
 export default function AdvancedFeaturesModal({ scanData, trigger }: AdvancedFeaturesModalProps) {
-    // State for modal form data
+    // Use the hooks for customer data and updates
+    const { customer, loading, error, refreshCustomer } = useSingleCustomer(scanData.id)
+    const { updateCustomerInfo, isUpdating, error: updateError } = useUpdateCustomerInfo()
+
+    // State for modal form data - only the 5 specific fields
     const [modalFormData, setModalFormData] = useState({
         kundeSteuernummer: '',
         diagnose: '',
@@ -21,18 +28,18 @@ export default function AdvancedFeaturesModal({ scanData, trigger }: AdvancedFea
         sonstiges: ''
     });
 
-    // Update modal form data when scanData changes
+    // Update modal form data when customer data changes
     useEffect(() => {
-        if (scanData) {
+        if (customer) {
             setModalFormData({
-                kundeSteuernummer: scanData.kundeSteuernummer || '',
-                diagnose: scanData.diagnose || '',
-                kodexeMassschuhe: scanData.kodexeMassschuhe || '',
-                kodexeEinlagen: scanData.kodexeEinlagen || '',
-                sonstiges: scanData.sonstiges || ''
+                kundeSteuernummer: customer.kundeSteuernummer || '',
+                diagnose: customer.diagnose || '',
+                kodexeMassschuhe: customer.kodexeMassschuhe || '',
+                kodexeEinlagen: customer.kodexeEinlagen || '',
+                sonstiges: customer.sonstiges || ''
             });
         }
-    }, [scanData]);
+    }, [customer]);
 
     // Handle form input changes
     const handleInputChange = (field: string, value: string) => {
@@ -43,22 +50,69 @@ export default function AdvancedFeaturesModal({ scanData, trigger }: AdvancedFea
     };
 
     // Handle form submission
-    const handleFormSubmit = () => {
-        // Here you can add logic to save the form data
-        console.log('Form data:', modalFormData);
-        // You can call an API to update the customer data
+    const handleFormSubmit = async () => {
+        if (!customer?.id) return;
+
+        try {
+            const success = await updateCustomerInfo(customer.id, modalFormData);
+            if (success) {
+                // Refresh customer data to get updated information
+                await refreshCustomer();
+                toast.success('Kundendaten erfolgreich aktualisiert');
+            }
+        } catch (err) {
+            console.error('Failed to update customer:', err);
+        }
     };
 
     // Handle reset
     const handleReset = () => {
-        setModalFormData({
-            kundeSteuernummer: scanData?.kundeSteuernummer || '',
-            diagnose: scanData?.diagnose || '',
-            kodexeMassschuhe: scanData?.kodexeMassschuhe || '',
-            kodexeEinlagen: scanData?.kodexeEinlagen || '',
-            sonstiges: scanData?.sonstiges || ''
-        });
+        if (customer) {
+            setModalFormData({
+                kundeSteuernummer: customer.kundeSteuernummer || '',
+                diagnose: customer.diagnose || '',
+                kodexeMassschuhe: customer.kodexeMassschuhe || '',
+                kodexeEinlagen: customer.kodexeEinlagen || '',
+                sonstiges: customer.sonstiges || ''
+            });
+        }
     };
+
+    if (loading) {
+        return (
+            <Dialog>
+                <DialogTrigger asChild>
+                    {trigger}
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                    <div className="flex items-center justify-center py-8">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#62A07C] mx-auto"></div>
+                            <p className="mt-2 text-gray-600">Loading customer data...</p>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
+    if (error) {
+        return (
+            <Dialog>
+                <DialogTrigger asChild>
+                    {trigger}
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                    <div className="text-center py-8">
+                        <p className="text-red-600">Error: {error}</p>
+                        <Button onClick={() => refreshCustomer()} className="mt-4">
+                            Retry
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        );
+    }
 
     return (
         <Dialog>
@@ -68,7 +122,7 @@ export default function AdvancedFeaturesModal({ scanData, trigger }: AdvancedFea
             <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
                     <DialogTitle className="text-xl font-semibold">
-                        Erweiterte Kundendaten - {scanData.vorname} {scanData.nachname}
+                        Erweiterte Kundendaten - {customer?.vorname} {customer?.nachname}
                     </DialogTitle>
                 </DialogHeader>
 
@@ -143,13 +197,21 @@ export default function AdvancedFeaturesModal({ scanData, trigger }: AdvancedFea
                         />
                     </div>
 
+                    {/* Error Display */}
+                    {updateError && (
+                        <div className="bg-red-50 border border-red-200 rounded-md p-3">
+                            <p className="text-red-600 text-sm">{updateError}</p>
+                        </div>
+                    )}
+
                     {/* Action Buttons */}
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button variant="outline" onClick={handleReset} className='cursor-pointer bg-gray-300 text-black'>
-                            Reset
-                        </Button>
-                        <Button onClick={handleFormSubmit} className="bg-[#62A07C] cursor-pointer transform duration-300 hover:bg-[#4A8A6A]">
-                            Speichern
+                    <div className='flex justify-end'>
+                        <Button
+                            onClick={handleFormSubmit}
+                            className="bg-[#62A07C] cursor-pointer transform duration-300 hover:bg-[#4A8A6A]"
+                            disabled={isUpdating}
+                        >
+                            {isUpdating ? 'Speichern...' : 'Speichern'}
                         </Button>
                     </div>
                 </div>

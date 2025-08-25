@@ -43,10 +43,10 @@ const CATEGORY_COLORS: Record<CategoryType, string> = {
 export default function NoteCalendar() {
     const params = useParams();
     const { customer: scanData, loading, error } = useSingleCustomer(String(params.id));
-    const { 
-        localNotes, 
-        getNotes, 
-        isLoadingNotes, 
+    const {
+        localNotes,
+        getNotes,
+        isLoadingNotes,
         error: notesError,
         getNotesForCategory,
         getFilteredDates,
@@ -55,7 +55,7 @@ export default function NoteCalendar() {
         handleDeleteNote,
         updateLocalNotes
     } = useCustomerNote();
-    
+
     const [activeTab, setActiveTab] = useState<string>('Diagramm');
     const [showAddForm, setShowAddForm] = useState<boolean>(false);
     const [hoveredNote, setHoveredNote] = useState<number | null>(null);
@@ -108,18 +108,7 @@ export default function NoteCalendar() {
     return (
         <div className=" ">
             {/* Loading and Error Display for Notes */}
-            {isLoadingNotes && (
-                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="text-blue-700 font-semibold">Loading notes...</div>
-                </div>
-            )}
-            
-            {notesError && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="text-red-700 font-semibold mb-1">Notes Error:</div>
-                    <div className="text-red-600 text-sm">{notesError}</div>
-                </div>
-            )}
+
 
             {/* Header with Category Tabs */}
             <div className="flex flex-col md:flex-row gap-5 items-center justify-between mb-6">
@@ -141,11 +130,10 @@ export default function NoteCalendar() {
                 <button
                     onClick={() => setShowAddForm(true)}
                     disabled={loading || !scanData}
-                    className={`border bg-[#62A17B] text-white hover:bg-white hover:text-[#62A17B] cursor-pointer px-4 py-2 rounded-lg flex items-center space-x-2 transform duration-300 ${
-                        (loading || !scanData) ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
+                    className={`border bg-[#62A17B] gap-2 text-white hover:bg-white hover:text-[#62A17B] cursor-pointer px-4 py-2 rounded-lg flex items-center  transform duration-300 ${(loading || !scanData) ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
                 >
-                    <div className='border border-white rounded-full p-1'>
+                    <div className='border border-white rounded-full p-1 '>
                         <Plus size={20} />
                     </div>
                     {loading ? 'Loading...' : 'Add Note'}
@@ -166,8 +154,32 @@ export default function NoteCalendar() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {/* Today Row */}
-                    {(activeTab === 'Diagramm' || localNotes[new Date().toISOString().split('T')[0]]?.some((note: any) => note.category === activeTab)) && (
+                    {/* Loading State Row */}
+                    {isLoadingNotes && (
+                        <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8">
+                                <div className="flex items-center justify-center space-x-2">
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-700"></div>
+                                    <div className="text-black font-semibold">Loading notes...</div>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    )}
+
+                    {/* Error State Row */}
+                    {notesError && !isLoadingNotes && (
+                        <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8">
+                                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                                    <div className="text-red-700 font-semibold mb-1">Notes Error:</div>
+                                    <div className="text-red-600 text-sm">{notesError}</div>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    )}
+
+                    {/* Today Row - Only show when not loading and no errors */}
+                    {!isLoadingNotes && !notesError && (activeTab === 'Diagramm' || localNotes[new Date().toISOString().split('T')[0]]?.some((note: any) => note.category === activeTab)) && (
                         <TableRow className="bg-blue-50">
                             <TableCell className="border border-gray-500">
                                 <div className="text-black px-2 py-1 rounded text-sm font-medium">
@@ -189,7 +201,7 @@ export default function NoteCalendar() {
                                             >
                                                 <div className={`text-xs p-2 rounded text-white ${CATEGORY_COLORS[note.category as CategoryType]} cursor-pointer`}>
                                                     {note.hasLink ? (
-                                                        <button 
+                                                        <button
                                                             onClick={() => window.open(note.url || '#', '_blank')}
                                                             className="text-white hover:underline"
                                                         >
@@ -215,8 +227,8 @@ export default function NoteCalendar() {
                         </TableRow>
                     )}
 
-                    {/* Data not found row */}
-                                        {getFilteredDates(activeTab).filter(date => !isToday(date)).length === 0 &&
+                    {/* Data not found row - Only show when not loading and no errors */}
+                    {!isLoadingNotes && !notesError && getFilteredDates(activeTab).filter(date => !isToday(date)).length === 0 &&
                         !(activeTab === 'Diagramm' || localNotes[new Date().toISOString().split('T')[0]]?.some((note: any) => note.category === activeTab)) && (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-8 text-gray-500 font-semibold">
@@ -225,13 +237,11 @@ export default function NoteCalendar() {
                             </TableRow>
                         )}
 
-                    {/* Date Rows */}
-                    {(() => {
+                    {/* Date Rows - Only show when not loading and no errors */}
+                    {!isLoadingNotes && !notesError && (() => {
                         const filteredDates = getFilteredDates(activeTab).filter(date => !isToday(date));
-                        console.log('Rendering date rows for activeTab:', activeTab);
-                        console.log('Filtered dates:', filteredDates);
-                        console.log('localNotes state:', localNotes);
-                        
+
+
                         return filteredDates.map((date) => (
                             <TableRow key={date}>
                                 <TableCell className="border border-gray-500">
@@ -241,8 +251,7 @@ export default function NoteCalendar() {
                                 </TableCell>
                                 {['Notizen', 'Bestellungen', 'Leistungen', 'Termin', 'Zahlungen', 'E-mails'].map((category) => {
                                     const notesForCategory = getNotesForCategory(date, category);
-                                    console.log(`Rendering category ${category} for date ${date}:`, notesForCategory);
-                                    
+
                                     return (
                                         <TableCell key={category} className="border min-h-[80px] border-gray-500">
                                             {(activeTab === 'Diagramm' || activeTab === category) &&
@@ -255,7 +264,7 @@ export default function NoteCalendar() {
                                                     >
                                                         <div className={`text-xs p-2 rounded text-white ${CATEGORY_COLORS[note.category as CategoryType]} cursor-pointer`}>
                                                             {note.hasLink ? (
-                                                                <button 
+                                                                <button
                                                                     onClick={() => window.open(note.url || '#', '_blank')}
                                                                     className="text-white hover:underline"
                                                                 >

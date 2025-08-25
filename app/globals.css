@@ -142,3 +142,11 @@ body {
 .VIpgJd-ZVi9od-aZ2wEe-wOHMyf{
   display: none !important;
 }
+
+/* Custom time input styling: keep native picker clickable but hide its icon */
+/* Keep native picker indicator clickable (visible but moved under custom icon) */
+input[type="time"].time-input::-webkit-calendar-picker-indicator {
+  opacity: 0.001; /* tiny visible to preserve click behavior */
+  position: absolute;
+  right: 0.5rem;
+}

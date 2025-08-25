@@ -22,20 +22,26 @@ interface AppointmentData {
     isClient: boolean;
 }
 
-interface AppointmentFormData {
+
+
+interface SubmittedAppointmentData {
     kunde: string;
     uhrzeit: string;
-    selectedEventDate: Date | undefined;
+    selectedEventDate: string | undefined;
     termin: string;
     bemerk: string;
     mitarbeiter: string;
     isClientEvent: boolean;
+    customerId?: string;
 }
 
 export const useAppoinment = () => {
     const [events, setEvents] = useState<Event[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
+    
+    // Debug logging when events state changes
+    console.log('useAppoinment hook - events state changed:', events.length, 'events');
 
     // Fetch all appointments
     const fetchAppointments = useCallback(async () => {
@@ -57,6 +63,7 @@ export const useAppoinment = () => {
                     type: apt.isClient ? 'user' : 'others'
                 }));
                 setEvents(formattedEvents);
+                console.log('Events state updated with', formattedEvents.length, 'events');
             }
         } catch (error) {
             toast.error('Failed to load appointments');
@@ -66,7 +73,7 @@ export const useAppoinment = () => {
     }, []);
 
     // Create new appointment
-    const createNewAppointment = useCallback(async (data: AppointmentFormData) => {
+    const createNewAppointment = useCallback(async (data: SubmittedAppointmentData) => {
         const loadingToastId = toast.loading('Creating appointment...');
         try {
             if (!data.kunde || !data.uhrzeit || !data.selectedEventDate || !data.termin) {
@@ -83,19 +90,22 @@ export const useAppoinment = () => {
                 hour12: true
             }).toLowerCase();
 
-            // Create correct datetime
-            const dateTime = createDateTimeWithOffset(formatDate(data.selectedEventDate || new Date()), data.uhrzeit);
+            // Create correct datetime - data.selectedEventDate is already ISO string
+            const dateTime = createDateTimeWithOffset(formatDate(new Date(data.selectedEventDate || new Date())), data.uhrzeit);
 
-            const appointmentData = {
+            const appointmentData: any = {
                 customer_name: data.kunde,
                 time: formattedTime,
                 date: dateTime.toISOString(),
                 reason: data.termin,
                 assignedTo: data.mitarbeiter || '',
                 details: data.bemerk || '',
-                isClient: Boolean(data.isClientEvent),
-                userId: "user-uuid-1"
+                isClient: Boolean(data.isClientEvent)
             };
+
+            if (data.customerId) {
+                appointmentData.customerId = data.customerId;
+            }
 
             const response = await createAppoinment(appointmentData);
 
@@ -150,7 +160,7 @@ export const useAppoinment = () => {
     }, []);
 
     // Update appointment
-    const updateAppointmentById = useCallback(async (appointmentId: string, data: AppointmentFormData) => {
+    const updateAppointmentById = useCallback(async (appointmentId: string, data: SubmittedAppointmentData) => {
         try {
             // Format time for display
             const timeDate = new Date(`2000-01-01T${data.uhrzeit}`);
@@ -160,10 +170,10 @@ export const useAppoinment = () => {
                 hour12: true
             }).toLowerCase();
 
-            // Create correct datetime
-            const dateTime = createDateTimeWithOffset(formatDate(data.selectedEventDate || new Date()), data.uhrzeit);
+            // Create correct datetime - data.selectedEventDate is already ISO string
+            const dateTime = createDateTimeWithOffset(formatDate(new Date(data.selectedEventDate || new Date())), data.uhrzeit);
 
-            const appointmentData = {
+            const appointmentData: any = {
                 customer_name: data.kunde,
                 time: formattedTime,
                 date: dateTime.toISOString(),
@@ -172,6 +182,10 @@ export const useAppoinment = () => {
                 details: data.bemerk || '',
                 isClient: data.isClientEvent
             };
+
+            if (data.customerId) {
+                appointmentData.customerId = data.customerId;
+            }
 
             const response = await updateAppointment(appointmentId, appointmentData);
 

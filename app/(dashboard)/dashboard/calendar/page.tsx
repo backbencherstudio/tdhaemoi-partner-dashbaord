@@ -1,11 +1,11 @@
 'use client'
-import React, { useState, useEffect } from 'react';
-import { Plus, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import React from 'react';
+import { Plus, X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import AppoinmentData from '@/components/AppoinmentData/AppoinmentData';
 import { useForm } from "react-hook-form"
-// import { format } from "date-fns"
 import { useAppoinment } from '@/hooks/appoinment/useAppoinment';
 import AppointmentModal from '@/components/AppointmentModal/AppointmentModal';
+import { useWeeklyCalendar } from '@/hooks/calendar/useWeeklyCalendar';
 
 interface Event {
     id: number;
@@ -44,21 +44,38 @@ const truncateWords = (text: string, limit: number) => {
 };
 
 const WeeklyCalendar = () => {
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [miniCalendarDate, setMiniCalendarDate] = useState(new Date());
-    const [showYearMonthPicker, setShowYearMonthPicker] = useState(false);
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    const [showAddForm, setShowAddForm] = React.useState(false);
+    const {
+        currentDate,
+        miniCalendarDate,
+        showYearMonthPicker,
+        isMobile,
+        isNavigating,
+        setShowYearMonthPicker,
+        navigateWeek,
+        navigateMiniCalendarMonth,
+        handleYearMonthChange,
+        handleMiniCalendarDateClick,
+        weekDates,
+        miniCalendarDays,
+        today,
+        monthNames,
+        dayNames,
+        dayNamesLong,
+        isSameDay,
+        isPastDate,
+    } = useWeeklyCalendar();
+    const [deleteConfirmation, setDeleteConfirmation] = React.useState<{
         show: boolean;
         appointmentId: number | null;
     }>({
         show: false,
         appointmentId: null
     });
-    const [showFullSubtitle, setShowFullSubtitle] = useState<number | null>(null);
-    const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [showFullSubtitle, setShowFullSubtitle] = React.useState<number | null>(null);
+    const [selectedAppointment, setSelectedAppointment] = React.useState<AppointmentData | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
+    const [isDeleting, setIsDeleting] = React.useState(false);
 
     // Use the custom hook
     const {
@@ -98,125 +115,27 @@ const WeeklyCalendar = () => {
         }
     });
 
-    useEffect(() => {
-        const checkMobile = () => {
-            setIsMobile(window.innerWidth < 768);
-            if (window.innerWidth < 768) {
-                setIsMobile(true);
-            }
-        };
-
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
-    }, []);
-
-    useEffect(() => {
+    React.useEffect(() => {
         fetchAppointments();
     }, [fetchAppointments]);
 
-    const getTodayDate = () => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        return today;
-    };
-
-    const getWeekStart = (date: Date) => {
-        const today = getTodayDate();
-        const d = new Date(date);
-        if (d < today) {
-            d.setDate(today.getDate());
-            d.setMonth(today.getMonth());
-            d.setFullYear(today.getFullYear());
-        }
-        const day = d.getDay();
-        const diff = d.getDate() - day;
-        const weekStart = new Date(d.setDate(diff));
-        return weekStart < today ? today : weekStart;
-    };
-
-    const getWeekDates = () => {
-        const weekStart = getWeekStart(currentDate);
-        const dates = [];
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(weekStart);
-            date.setDate(weekStart.getDate() + i);
-            dates.push(date);
-        }
-        return dates;
-    };
-
-    // Navigate weeks
-    const navigateWeek = (direction: number) => {
-        const newDate = new Date(currentDate);
-        newDate.setDate(currentDate.getDate() + (direction * 7));
-        setCurrentDate(newDate);
-    };
-
-    // Navigate mini calendar month
-    const navigateMiniCalendarMonth = (direction: number) => {
-        const newDate = new Date(miniCalendarDate);
-        newDate.setMonth(miniCalendarDate.getMonth() + direction);
-        setMiniCalendarDate(newDate);
-        setCurrentDate(newDate);
-    };
-
-
-    //  mini calendar
-    const generateMiniCalendar = () => {
-        const year = miniCalendarDate.getFullYear();
-        const month = miniCalendarDate.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const startDate = new Date(firstDay);
-        startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-        const days = [];
-        for (let i = 0; i < 42; i++) {
-            const date = new Date(startDate);
-            date.setDate(startDate.getDate() + i);
-            days.push(date);
-        }
-        return days;
-    };
-
-    const handleYearMonthChange = (year: number, month: number) => {
-        const newDate = new Date(year, month, 1);
-        setMiniCalendarDate(newDate);
-        setCurrentDate(newDate);
-        setShowYearMonthPicker(false);
-    };
-
-    const weekDates = getWeekDates();
-    const miniCalendarDays = generateMiniCalendar();
-    const today = getTodayDate();
-
-    const monthNames = [
-        'January', 'February', 'March', 'April', 'May', 'June',
-        'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-    const dayNamesLong = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    const isSameDay = (date1: Date, date2: Date) => {
-        return date1.getFullYear() === date2.getFullYear() &&
-            date1.getMonth() === date2.getMonth() &&
-            date1.getDate() === date2.getDate();
-    };
-
     const handleDateClick = (date: Date) => {
+        // Prevent adding appointments to past dates
+        if (isPastDate(date)) {
+            alert('You cannot add appointments to past dates.');
+            return;
+        }
+
         form.reset();
         form.setValue('selectedEventDate', date);
         setShowAddForm(true);
     };
 
-    const handleMiniCalendarDateClick = (date: Date) => {
-        setCurrentDate(date);
-        setMiniCalendarDate(date);
-    };
 
 
 
-    const onSubmit = async (data: AppointmentFormData) => {
+
+    const onSubmit = async (data: { selectedEventDate: string | undefined; isClientEvent: boolean; kunde: string; uhrzeit: string; termin: string; bemerk: string; mitarbeiter: string }) => {
         const success = await createNewAppointment(data);
         if (success) {
             form.reset();
@@ -258,7 +177,7 @@ const WeeklyCalendar = () => {
         }
     };
 
-    const onUpdateSubmit = async (data: AppointmentFormData) => {
+    const onUpdateSubmit = async (data: { selectedEventDate: string | undefined; isClientEvent: boolean; kunde: string; uhrzeit: string; termin: string; bemerk: string; mitarbeiter: string }) => {
         if (!selectedAppointment?.id) return;
 
         const success = await updateAppointmentById(selectedAppointment.id.toString(), data);
@@ -300,23 +219,43 @@ const WeeklyCalendar = () => {
                         <div className="space-y-6 grid grid-cols-1 sm:grid-cols-2 gap-10">
                             <div className='flex flex-col xl:flex-row xl:items-start items-center gap-4 justify-between'>
                                 {/* Week Navigation */}
-                                <div className="flex  items-center justify-between mb-4">
+                                <div className="flex items-center justify-between mb-4">
                                     <button
                                         onClick={() => navigateWeek(-1)}
-                                        className="p-2 hover:bg-gray-100 rounded md:hidden"
+                                        disabled={isNavigating}
+                                        className={`p-2 block lg:hidden rounded transition-colors ${isNavigating
+                                            ? 'text-gray-400 cursor-not-allowed'
+                                            : 'hover:bg-gray-100 text-gray-700'
+                                            }`}
+                                        title="Previous Week"
                                     >
-                                        <ChevronLeft className="w-5 h-5" />
+                                        {isNavigating ? (
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-700"></div>
+                                        ) : (
+                                            <ChevronLeft className="w-5 h-5" />
+                                        )}
                                     </button>
-                                    <h2 className="text-base sm:text-lg font-semibold text-center">
-                                        Week of {monthNames[weekDates[0].getMonth()].slice(0, 3)}. {weekDates[0].getDate()}, {weekDates[0].getFullYear()}
+                                    <h2 className="text-base sm:text-lg font-semibold text-center mx-4">
+                                        {isNavigating ? 'Loading...' : `Week of ${monthNames[weekDates[0].getMonth()].slice(0, 3)}. ${weekDates[0].getDate()}, ${weekDates[0].getFullYear()}`}
                                     </h2>
                                     <button
                                         onClick={() => navigateWeek(1)}
-                                        className="p-2 hover:bg-gray-100 rounded md:hidden"
+                                        disabled={isNavigating}
+                                        className={`p-2 block lg:hidden rounded transition-colors ${isNavigating
+                                            ? 'text-gray-400 cursor-not-allowed'
+                                            : 'hover:bg-gray-100 text-gray-700'
+                                            }`}
+                                        title="Next Week"
                                     >
-                                        <ChevronRight className="w-5 h-5" />
+                                        {isNavigating ? (
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-700"></div>
+                                        ) : (
+                                            <ChevronRight className="w-5 h-5" />
+                                        )}
                                     </button>
                                 </div>
+
+
                                 {/* Mini Calendar - Hidden on mobile */}
                                 {!isMobile && (
                                     <div className="2xl:w-96 flex-shrink-0 relative">
@@ -389,15 +328,22 @@ const WeeklyCalendar = () => {
                                                 const isCurrentMonth = date.getMonth() === miniCalendarDate.getMonth();
                                                 const isToday = isSameDay(date, today);
                                                 const isSelected = weekDates.some(weekDate => isSameDay(weekDate, date));
+                                                const isCurrentWeek = weekDates.some(weekDate =>
+                                                    Math.abs(date.getTime() - weekDate.getTime()) < 7 * 24 * 60 * 60 * 1000
+                                                );
+                                                const isPast = isPastDate(date);
 
                                                 return (
                                                     <div
                                                         key={index}
-                                                        className={`p-2 cursor-pointer hover:bg-gray-200 rounded ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-900'
-                                                            } ${isToday ? 'bg-[#62A07C] text-white' : ''
-                                                            } ${isSelected && !isToday ? 'bg-blue-100' : ''
+                                                        className={`p-2 cursor-pointer hover:bg-gray-200 rounded transition-colors ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-900'
+                                                            } ${isToday ? 'bg-[#62A07C] text-white font-bold' : ''
+                                                            } ${isSelected && !isToday ? 'bg-blue-100 border-2 border-blue-300' : ''
+                                                            } ${isCurrentWeek && !isSelected && !isToday ? 'bg-blue-50 border border-blue-200' : ''
+                                                            } ${isPast && !isToday && !isSelected ? 'opacity-50 text-gray-500' : ''
                                                             }`}
                                                         onClick={() => handleMiniCalendarDateClick(date)}
+                                                        title={`${date.toDateString()} - Click to navigate to this week`}
                                                     >
                                                         {date.getDate()}
                                                     </div>
@@ -406,6 +352,103 @@ const WeeklyCalendar = () => {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Mobile Mini Calendar */}
+                                {/* {isMobile && (
+                                    <div className="w-full mt-4">
+                                        <div className="text-center mb-4">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <button
+                                                    onClick={() => navigateMiniCalendarMonth(-1)}
+                                                    className="p-2 cursor-pointer hover:bg-gray-100 rounded"
+                                                >
+                                                    <ChevronLeft className="w-5 h-5" />
+                                                </button>
+
+                                                <button
+                                                    onClick={() => setShowYearMonthPicker(!showYearMonthPicker)}
+                                                    className="font-semibold cursor-pointer hover:bg-gray-100 px-3 py-2 rounded"
+                                                >
+                                                    {monthNames[miniCalendarDate.getMonth()]} {miniCalendarDate.getFullYear()}
+                                                </button>
+
+                                                <button
+                                                    onClick={() => navigateMiniCalendarMonth(1)}
+                                                    className="p-2 cursor-pointer hover:bg-gray-100 rounded"
+                                                >
+                                                    <ChevronRight className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        </div>
+
+    
+                                        {showYearMonthPicker && (
+                                            <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 mb-4">
+                                                <div className="mb-4">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                                                    <select
+                                                        value={miniCalendarDate.getFullYear()}
+                                                        onChange={(e) => handleYearMonthChange(parseInt(e.target.value), miniCalendarDate.getMonth())}
+                                                        className="w-full p-2 border border-gray-300 rounded"
+                                                    >
+                                                        {years.map(year => (
+                                                            <option key={year} value={year}>{year}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="mb-4">
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Month</label>
+                                                    <select
+                                                        value={miniCalendarDate.getMonth()}
+                                                        onChange={(e) => handleYearMonthChange(miniCalendarDate.getFullYear(), parseInt(e.target.value))}
+                                                        className="w-full p-2 border border-gray-300 rounded"
+                                                    >
+                                                        {monthNames.map((month, index) => (
+                                                            <option key={index} value={index}>{month}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <button
+                                                    onClick={() => setShowYearMonthPicker(false)}
+                                                    className="w-full py-2 border rounded text-sm cursor-pointer hover:bg-gray-100 transform duration-300"
+                                                >
+                                                    Done
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-7 gap-1 text-center text-sm">
+                                            {dayNames.map(day => (
+                                                <div key={day} className="p-3 font-medium text-gray-600">{day}</div>
+                                            ))}
+                                            {miniCalendarDays.map((date, index) => {
+                                                const isCurrentMonth = date.getMonth() === miniCalendarDate.getMonth();
+                                                const isToday = isSameDay(date, today);
+                                                const isSelected = weekDates.some(weekDate => isSameDay(weekDate, date));
+                                                const isCurrentWeek = weekDates.some(weekDate =>
+                                                    Math.abs(date.getTime() - weekDate.getTime()) < 7 * 24 * 60 * 60 * 1000
+                                                );
+                                                const isPast = isPastDate(date);
+
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className={`p-3 cursor-pointer hover:bg-gray-200 rounded text-sm transition-colors ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-900'
+                                                            } ${isToday ? 'bg-[#62A07C] text-white font-bold' : ''
+                                                            } ${isSelected && !isToday ? 'bg-blue-100 border-2 border-blue-300' : ''
+                                                            } ${isCurrentWeek && !isSelected && !isToday ? 'bg-blue-50 border border-blue-200' : ''
+                                                            } ${isPast && !isToday && !isSelected ? 'opacity-50 text-gray-500' : ''
+                                                            }`}
+                                                        onClick={() => handleMiniCalendarDateClick(date)}
+                                                        title={`${date.toDateString()} - Click to navigate to this week`}
+                                                    >
+                                                        {date.getDate()}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )} */}
                             </div>
 
                             {weekDates.map((date, index) => {
@@ -416,22 +459,29 @@ const WeeklyCalendar = () => {
                                 return (
                                     <div key={index} className="border-b border-gray-200 pb-6">
                                         {/* Date Header */}
-                                        <div className="flex items-center justify-between mb-4 bg-gray-50 p-3 rounded">
+                                        <div className={`flex items-center justify-between mb-4 p-3 rounded ${isPastDate(date) ? 'bg-gray-100 border border-gray-200' : 'bg-gray-50'
+                                            }`}>
                                             <div className="flex items-center gap-4">
-                                                <div className={`text-3xl sm:text-4xl font-light ${dayColor}`}>
+                                                <div className={`text-3xl sm:text-4xl font-light ${dayColor} ${isPastDate(date) ? 'opacity-60' : ''
+                                                    }`}>
                                                     {date.getDate()}
                                                 </div>
                                                 <div>
-                                                    <div className={`text-sm ${dayColor}`}>
+                                                    <div className={`text-sm ${dayColor} ${isPastDate(date) ? 'opacity-60' : ''
+                                                        }`}>
                                                         {dayNamesLong[index]}
                                                     </div>
-                                                    <div className="text-xs text-gray-500">
+                                                    <div className={`text-xs ${isPastDate(date) ? 'text-gray-400' : 'text-gray-500'
+                                                        }`}>
                                                         {monthNames[date.getMonth()]} {date.getFullYear()}
                                                     </div>
                                                 </div>
                                             </div>
                                             {isToday && (
                                                 <div className="w-4 h-4 bg-[#62A07C] rounded-full"></div>
+                                            )}
+                                            {isPastDate(date) && (
+                                                <div className="text-xs text-gray-400 italic">Past</div>
                                             )}
                                         </div>
 
@@ -523,9 +573,14 @@ const WeeklyCalendar = () => {
                                                     e.stopPropagation();
                                                     handleDateClick(date);
                                                 }}
-                                                className="w-full cursor-pointer p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-gray-400 hover:text-gray-600 hover:bg-gray-50 text-sm transition-colors"
+                                                disabled={isPastDate(date)}
+                                                className={`w-full cursor-pointer p-3 border-2 border-dashed rounded-lg text-sm transition-colors ${isPastDate(date)
+                                                    ? 'border-gray-200 text-gray-300 cursor-not-allowed bg-gray-50'
+                                                    : 'border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                                                    }`}
+                                                title={isPastDate(date) ? 'Cannot add appointments to past dates' : 'Add new appointment'}
                                             >
-                                                + Termin hinzufügen
+                                                {isPastDate(date) ? 'Past Date' : '+ Termin hinzufügen'}
                                             </button>
                                             {dayEvents.length === 0 && (
                                                 <div className="space-y-2 py-4">
@@ -544,27 +599,31 @@ const WeeklyCalendar = () => {
             </div>
 
             {/* Add Event Modal */}
-            <AppointmentModal
-                isOpen={showAddForm}
-                onClose={() => {
-                    setShowAddForm(false);
-                    form.reset();
-                }}
-                form={form}
-                onSubmit={onSubmit}
-                title="Neuer Termin"
-                buttonText="Termin bestätigen"
-            />
+            {showAddForm && (
+                <AppointmentModal
+                    isOpen
+                    onClose={() => {
+                        setShowAddForm(false);
+                        form.reset();
+                    }}
+                    form={form}
+                    onSubmit={onSubmit}
+                    title="Neuer Termin"
+                    buttonText="Termin bestätigen"
+                />
+            )}
 
             {/* Edit Event Modal */}
-            <AppointmentModal
-                isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen(false)}
-                form={editForm}
-                onSubmit={onUpdateSubmit}
-                title="Termin bearbeiten"
-                buttonText="Aktualisieren"
-            />
+            {isEditModalOpen && (
+                <AppointmentModal
+                    isOpen
+                    onClose={() => setIsEditModalOpen(false)}
+                    form={editForm}
+                    onSubmit={onUpdateSubmit}
+                    title="Termin bearbeiten"
+                    buttonText="Aktualisieren"
+                />
+            )}
 
             {/* Delete Confirmation Modal */}
             {deleteConfirmation.show && (
@@ -580,11 +639,20 @@ const WeeklyCalendar = () => {
                                 Abbrechen
                             </button>
                             <button
-                                onClick={() => deleteConfirmation.appointmentId &&
-                                    deleteAppointments(deleteConfirmation.appointmentId.toString())}
-                                className="px-4 py-2 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-700"
+                                onClick={async () => {
+                                    if (!deleteConfirmation.appointmentId || isDeleting) return;
+                                    try {
+                                        setIsDeleting(true);
+                                        await deleteAppointments(deleteConfirmation.appointmentId.toString());
+                                    } finally {
+                                        setIsDeleting(false);
+                                    }
+                                }}
+                                disabled={isDeleting}
+                                className={`px-4 py-2 cursor-pointer bg-red-600 text-white rounded-lg hover:bg-red-700 ${isDeleting ? 'opacity-70 cursor-not-allowed' : ''}`}
                             >
-                                Löschen
+                                {isDeleting && <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />}
+                                {isDeleting ? 'Bitte warten...' : 'Löschen'}
                             </button>
                         </div>
                     </div>

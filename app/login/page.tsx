@@ -41,7 +41,7 @@ export default function Login() {
         try {
             const response = await loginUser(data.email, data.password)
             if (response.success && response.user.role === 'PARTNER') {
-                await login(response.token, response.user)
+                await login(response.token)
                 toast.success('Login successful')
                 router.push('/dashboard')
             } else {

@@ -39,18 +39,21 @@ export const loginUser = async (email: string, password: string) => {
 };
 
 
+// user check auth
+export const userCheckAuth = async () => {
+  try {
+    const response = await axiosClient.get('/users/check-auth');
+    return response.data;
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.message || error.message || 'Failed to check auth';
+    throw new Error(errorMessage);
+  }
+};
+
 // Update user profile
 export const updateUserProfile = async (formData: FormData) => {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('No authentication token found');
-
-    const response = await axiosClient.patch('/partner/update-partner-profile', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'Authorization': `${token}`
-      },
-    });
+    const response = await axiosClient.patch('/partner/update-partner-profile', formData);
     return response.data;
   } catch (error: any) {
     const errorMessage = error.response?.data?.message || error.message || 'Failed to update profile';

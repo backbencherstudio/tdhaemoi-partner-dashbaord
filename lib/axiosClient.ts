@@ -17,4 +17,24 @@ axiosClient.interceptors.request.use(
   }
 );
 
+// Response interceptor to handle authentication errors
+axiosClient.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // Handle authentication errors
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      // Clear invalid token
+      localStorage.removeItem('token');
+      
+      // Redirect to login if not already there
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default axiosClient;

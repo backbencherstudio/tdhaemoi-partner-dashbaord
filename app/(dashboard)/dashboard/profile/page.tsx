@@ -20,7 +20,7 @@ interface PasswordFormData {
 }
 
 export default function Profile() {
-    const { user } = useAuth()
+    const { user, setUser } = useAuth()
     const [activeTab, setActiveTab] = useState('profile')
     const [profileImage, setProfileImage] = useState(user?.image || '')
     const [isEditMode, setIsEditMode] = useState(false)
@@ -64,9 +64,11 @@ export default function Profile() {
             const response = await updateUserProfile(formData);
             
             if (response.success) {
-                const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-                const updatedUser = { ...currentUser, ...response.user };
-                localStorage.setItem('user', JSON.stringify(updatedUser));
+                // Update user state in AuthContext instead of localStorage
+                if (user && response.user) {
+                    const updatedUser = { ...user, ...response.user };
+                    setUser(updatedUser);
+                }
                 
                 toast.success('Profile updated successfully');
                 setIsEditMode(false);

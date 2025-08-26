@@ -1,19 +1,13 @@
 'use client'
-import Image from 'next/image'
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import React, { useState, useMemo, useEffect } from 'react'
-import { RiArrowDownSLine } from 'react-icons/ri';
-import userload from '@/public/images/scanning/userload.png'
-import userImg from '@/public/images/scanning/user.png'
-import { MdZoomOutMap } from 'react-icons/md';
-import { TfiReload } from 'react-icons/tfi';
+import React, { useState, useEffect } from 'react'
 import QuestionSection from '../Scanning/QuestionSection';
 import toast from 'react-hot-toast';
 import ImagePreviewModal from '@/components/CustomerModal/ImagePreviewModal';
 import { ScanData } from '@/types/scan';
 import CustomerModal from '@/components/CustomerModal/CustomerModal';
 import { useSingleCustomer } from '@/hooks/customer/useSingleCustomer';
+import ScanDataDisplay from '@/components/Shared/ScanDataDisplay';
 
 export default function ScannningDataPage({ scanData }: { scanData: ScanData }) {
     const router = useRouter();
@@ -107,12 +101,10 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
         setModalOpen(true);
     };
 
-  
-
     // Use the data from hook or fallback to prop
     const displayData = currentScanData || scanData;
 
-    const latestScreener = useMemo(() => {
+    const latestScreener = React.useMemo(() => {
         if (Array.isArray(displayData.screenerFile) && displayData.screenerFile.length > 0) {
             return displayData.screenerFile.reduce((latest, item) => {
                 const latestDate = new Date(latest.updatedAt);
@@ -122,17 +114,6 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
         }
         return null;
     }, [displayData.screenerFile]);
-
-    const scanDisplayDate = useMemo(() => {
-        if (latestScreener?.updatedAt) {
-            return new Date(latestScreener.updatedAt);
-        } else if (displayData.updatedAt) {
-            return new Date(displayData.updatedAt);
-        } else if (displayData.createdAt) {
-            return new Date(displayData.createdAt);
-        }
-        return null;
-    }, [latestScreener, displayData]);
 
     const getLatestData = (fieldName: keyof Pick<ScanData, 'picture_10' | 'picture_23' | 'picture_11' | 'picture_24' | 'threed_model_left' | 'threed_model_right' | 'picture_17' | 'picture_16'>) => {
         if (latestScreener && latestScreener[fieldName]) {
@@ -179,216 +160,27 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
                         <div className="font-bold text-xl capitalize">{displayData.vorname} {displayData.nachname}</div>
                     </div>
 
-                    <div className='mb-10'>
-                        <div className="mb-2 flex items-center gap-2">
-                            <span>Scan {scanDisplayDate && !isNaN(scanDisplayDate.getTime()) ? scanDisplayDate.toLocaleDateString() : '-'}</span>
-                            <RiArrowDownSLine className='text-gray-900 text-2xl' />
-                        </div>
-                       
-                    </div>
-
-                    <div className="flex flex-col lg:flex-row justify-between items-center">
-                        {/* left image section */}
-                        <div className="flex-1 mb-6 lg:mb-0 flex flex-col items-center">
-                            <div className="w-60 max-w-md">
-                                {getLatestData('picture_23') ? (
-                                    <Image
-                                        src={getLatestData('picture_23')!}
-                                        alt="Left foot scan - Plantaransicht"
-                                        width={300}
-                                        height={500}
-                                        className="w-full h-auto"
-                                    />
-                                ) : (
-                                    <div className="w-full h-[500px] bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-500">
-                                        No left foot scan image available
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* scan data section */}
-                        <div className="flex-1 mx-2 ">
-                            <div className='flex items-center justify-center gap-5 mb-5'>
-                                <div className='border border-gray-500 rounded p-1 cursor-pointer hover:bg-gray-100 transition'>
-                                    <MdZoomOutMap className='text-gray-600 text-4xl' />
-                                </div>
-                                <div className='border border-gray-500 rounded p-1 cursor-pointer hover:bg-gray-100 transition'>
-                                    <TfiReload className='text-gray-600 text-4xl' />
-                                </div>
-
-                                {isChanged && (
-                                    <button
-                                        onClick={handleSaveChanges}
-                                        className='bg-[#4A8A6A] cursor-pointer text-white px-2 py-1 rounded hover:bg-[#4A8A6A]/80 transition text-sm'
-                                        disabled={isUpdating}
-                                    >
-                                        {isUpdating ? 'Saving...' : 'Save'}
-                                    </button>
-                                )}
-                                {error && (
-                                    <span className='ml-2 text-red-600 text-xs'>{error}</span>
-                                )}
-                            </div>
-                            <div className="grid grid-cols-2 gap-2 mx-2">
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Fusslänge</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.fusslange1}
-                                            onChange={(e) => handleInputChange('fusslange1', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Fusslänge</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.fusslange2}
-                                            onChange={(e) => handleInputChange('fusslange2', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Fussbreite</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.fussbreite1}
-                                            onChange={(e) => handleInputChange('fussbreite1', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Fussbreite</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.fussbreite2}
-                                            onChange={(e) => handleInputChange('fussbreite2', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Kugelumfang</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.kugelumfang1}
-                                            onChange={(e) => handleInputChange('kugelumfang1', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Kugelumfang</div>
-                                    <div className="border border-gray-300 text-center py-1 relative">
-                                        <input
-                                            type="text"
-                                            value={editableData.kugelumfang2}
-                                            onChange={(e) => handleInputChange('kugelumfang2', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Rist</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.rist1}
-                                            onChange={(e) => handleInputChange('rist1', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Rist</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.rist2}
-                                            onChange={(e) => handleInputChange('rist2', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Zehentyp</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.zehentyp1}
-                                            onChange={(e) => handleInputChange('zehentyp1', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Zehentyp</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.zehentyp2}
-                                            onChange={(e) => handleInputChange('zehentyp2', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Arch Index</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.archIndex1}
-                                            onChange={(e) => handleInputChange('archIndex1', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <div className="text-center text-gray-600 text-sm">Arch Index</div>
-                                    <div className="border border-gray-300 text-center py-1">
-                                        <input
-                                            type="text"
-                                            value={editableData.archIndex2}
-                                            onChange={(e) => handleInputChange('archIndex2', e.target.value)}
-                                            className="w-full text-center border-none outline-none"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* right image section */}
-                        <div className="flex-1 mb-6 lg:mb-0 flex flex-col items-center">
-                            <div className="w-60 max-w-md">
-                                {getLatestData('picture_24') ? (
-                                    <Image
-                                        src={getLatestData('picture_24')!}
-                                        alt="Right foot scan - Plantaransicht"
-                                        width={300}
-                                        height={500}
-                                        className="w-full h-auto"
-                                    />
-                                ) : (
-                                    <div className="w-full h-[500px] bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-500">
-                                        No right foot scan image available
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    {/* Use the reusable ScanDataDisplay component */}
+                    <ScanDataDisplay
+                        scanData={displayData}
+                        isEditable={true}
+                        editableData={editableData}
+                        onInputChange={handleInputChange}
+                    >
+                        {/* Additional content for the scan data section */}
+                        {isChanged && (
+                            <button
+                                onClick={handleSaveChanges}
+                                className='bg-[#4A8A6A] cursor-pointer text-white px-2 py-1 rounded hover:bg-[#4A8A6A]/80 transition text-sm'
+                                disabled={isUpdating}
+                            >
+                                {isUpdating ? 'Saving...' : 'Save'}
+                            </button>
+                        )}
+                        {error && (
+                            <span className='ml-2 text-red-600 text-xs'>{error}</span>
+                        )}
+                    </ScanDataDisplay>
                 </div>
                 <div className='w-full xl:w-5/12'>
                     <QuestionSection customer={displayData} />

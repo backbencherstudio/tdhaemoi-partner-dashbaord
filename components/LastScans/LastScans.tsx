@@ -63,8 +63,10 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
         slidesToScroll: 1,
         align: 'start',
         breakpoints: {
+            '(min-width: 640px)': { slidesToScroll: 1 },
             '(min-width: 768px)': { slidesToScroll: 2 },
-            '(min-width: 1024px)': { slidesToScroll: 4 }
+            '(min-width: 1024px)': { slidesToScroll: 3 },
+            '(min-width: 1280px)': { slidesToScroll: 5 }
         }
     })
 
@@ -125,8 +127,8 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
                     <div className="overflow-hidden" ref={emblaRef}>
                         <div className="flex">
                             {lastScans.map((scan: LastScan, index: number) => (
-                                <div key={index} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_50%] lg:flex-[0_0_25%] p-2">
-                                    <div key={scan.id} className='border-2 border-gray-200 p-3 flex flex-col gap-1'>
+                                <div key={index} className="flex-[0_0_100%] min-w-0 sm:flex-[0_0_100%] md:flex-[0_0_50%] lg:flex-[0_0_33.333%] xl:flex-[0_0_20%] p-2">
+                                    <div key={scan.id} className='border-2 border-gray-200 p-3 flex flex-col gap-2'>
                                         <div className='flex justify-center items-center'>
                                             <Image src={legsImg} alt='legs' className='w-48 h-48' />
                                         </div>
@@ -138,7 +140,7 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
                                             <button
                                                 onClick={() => handleScanView(scan.id)}
                                                 disabled={loadingId === scan.id}
-                                                className='bg-[#62A07C] cursor-pointer hover:bg-[#62a07c98] transform duration-300 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed'
+                                                className='bg-[#62A07C] cursor-pointer hover:bg-[#62a07c98] transform duration-300 text-white px-4 py-1 rounded-md flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed'
                                             >
                                                 {loadingId === scan.id ? (
                                                     <>
@@ -149,10 +151,10 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
                                                         Laden...
                                                     </>
                                                 ) : (
-                                                    'Scansadas ansehen'
+                                                    'Scan ansehen'
                                                 )}
                                             </button>
-                                            <button className='bg-[#62A07C]  text-white px-4 py-2 rounded-md'>Kundeninfo</button>
+                                            <button className='bg-[#62A07C]  text-white px-4 py-1 rounded-md'>Kundeninfo</button>
                                         </div>
                                     </div>
                                 </div>

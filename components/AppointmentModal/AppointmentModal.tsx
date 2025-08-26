@@ -53,8 +53,6 @@ export default function AppointmentModal({
     title,
     buttonText
 }: AppointmentModalProps) {
-    if (!isOpen) return null;
-
     const [submitting, setSubmitting] = React.useState(false);
 
     const {
@@ -69,6 +67,8 @@ export default function AppointmentModal({
         setShowNameSuggestions,
         clearSearch,
     } = useSearchCustomer();
+
+    if (!isOpen) return null;
 
     const handleFormSubmit = async (data: AppointmentFormData) => {
         const formattedData: SubmittedAppointmentData = {

@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form'
 import { X, Upload, FileImage, File, FileText } from 'lucide-react'
 import { useAddCustomer } from '@/hooks/customer/useAddCustomer'
+import Image from 'next/image'
 
 interface CustomerFormData {
     vorname: string
@@ -330,7 +331,9 @@ export default function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCusto
                                                         {/* Image Preview */}
                                                         {preview?.preview && (
                                                             <div className="mt-2">
-                                                                <img
+                                                                <Image
+                                                                    width={100}
+                                                                    height={100}
                                                                     src={preview.preview}
                                                                     alt="Preview"
                                                                     className="w-full h-20 object-cover rounded border"

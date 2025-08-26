@@ -12,6 +12,7 @@ interface LastScan {
     nachname: string;
     createdAt: string;
     wohnort: string;
+    customerNumber: string;
 }
 
 export interface LastScansRef {
@@ -133,6 +134,7 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
                                             <Image src={legsImg} alt='legs' className='w-48 h-48' />
                                         </div>
                                         <h2 className='text-xl capitalize font-semibold'>{scan?.vorname} {scan?.nachname}</h2>
+                                        <p>Customer ID: {scan?.customerNumber}</p>
                                         <p>Erstellt am: {formatDate(scan.createdAt)}</p>
                                         <p>Ort: {scan?.wohnort}</p>
 

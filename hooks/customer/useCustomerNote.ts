@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { addCustomerNote, getCustomerNote } from '@/apis/customerApis';
+import toast from 'react-hot-toast';
+import { addCustomerNote, getCustomerNote, deleteCustomerNote, updateCustomerNote } from '@/apis/customerApis';
 
 // Types and Interfaces
 interface CustomerNote {
@@ -12,6 +13,7 @@ interface CustomerNote {
     paymentIs: string | null;
     eventId: string | null;
     note: string | null;
+    system_note: string | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -23,6 +25,7 @@ interface Note {
     timestamp: string;
     hasLink?: boolean;
     url?: string | null;
+    apiId?: string; // original backend note id for API actions
 }
 
 interface Notes {
@@ -41,8 +44,8 @@ interface UseCustomerNoteReturn {
     addNote: (customerId: string, note: string, category: string, date: string) => Promise<void>;
     getNotes: (customerId: string, page?: number, limit?: number, category?: string) => Promise<CustomerNote[]>;
     updateLocalNotes: (apiNotes: CustomerNote[]) => void;
-
-    // Helper functions
+    deleteNote: (id: string) => Promise<void>;
+    updateNote: (id: string, note: string, category?: string, date?: string) => Promise<void>;
     getAllDates: () => string[];
     getNotesForCategory: (date: string, category: string) => Note[];
     getFilteredDates: (activeTab: string) => string[];
@@ -52,67 +55,37 @@ interface UseCustomerNoteReturn {
     transformApiNotesToLocal: (apiNotes: CustomerNote[]) => Notes;
 }
 
-// Constants
+
 const CATEGORY_MAPPING = {
     'E-mails': 'Emails'
 } as const;
 
 export const useCustomerNote = (): UseCustomerNoteReturn => {
-    // State
+
     const [isAdding, setIsAdding] = useState(false);
     const [isLoadingNotes, setIsLoadingNotes] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [notes, setNotes] = useState<CustomerNote[]>([]);
     const [localNotes, setLocalNotes] = useState<Notes>({});
 
-    // Helper function to map frontend categories to API categories
     const mapToApiCategory = useCallback((frontendCategory: string): string => {
         return CATEGORY_MAPPING[frontendCategory as keyof typeof CATEGORY_MAPPING] || frontendCategory;
     }, []);
 
-    // Helper function to map API categories to frontend categories
     const mapToFrontendCategory = useCallback((apiCategory: string): string => {
         if (apiCategory === 'Emails') return 'E-mails';
         return apiCategory;
     }, []);
 
-    // Helper function to generate date key from note
     const getDateKey = useCallback((note: CustomerNote): string => {
         const date = note.date || note.createdAt;
         return new Date(date).toISOString().split('T')[0];
     }, []);
 
-    // Helper function to determine note display text and link status
     const getNoteDisplayInfo = useCallback((note: CustomerNote): { text: string; hasLink: boolean; url?: string | null } => {
-        if (note.note) {
-            return { text: note.note, hasLink: false };
-        }
-        if (note.url) {
-            // Transform external email URLs to internal dashboard URLs
-            let transformedUrl = note.url;
-
-            // Check if it's an external email URL that needs transformation
-            if (note.url.includes('/message/system-inbox/') || note.url.includes('/messages/system-inbox/') || note.url.includes('/messages/inbox/')) {
-                // Extract the email ID from the URL
-                const urlParts = note.url.split('/');
-                const emailId = urlParts[urlParts.length - 1];
-
-                // Create internal dashboard URL
-                transformedUrl = `/dashboard/email/sent/${emailId}`;
-
-                console.log('URL Transformation:', {
-                    original: note.url,
-                    emailId,
-                    transformed: transformedUrl
-                });
-            }
-
-            return { text: 'Link', hasLink: true, url: transformedUrl };
-        }
-        if (note.eventId) {
-            return { text: `Event: ${note.eventId}`, hasLink: false };
-        }
-        return { text: '', hasLink: false };
+        // Per requirement: only show system_note, never links, ignore url/note/event
+        const text = note.system_note ? note.system_note : '';
+        return { text, hasLink: false };
     }, []);
 
     // Helper function to generate note ID
@@ -167,8 +140,8 @@ export const useCustomerNote = (): UseCustomerNoteReturn => {
                 transformed[dateKey] = [];
             }
 
-            // Only add notes that have actual content
-            if (apiNote.note || apiNote.url || apiNote.eventId) {
+            // Only add notes that have actual content in system_note
+            if (apiNote.system_note) {
                 const frontendCategory = mapToFrontendCategory(apiNote.category);
                 const { text, hasLink, url: transformedUrl } = getNoteDisplayInfo(apiNote);
 
@@ -178,7 +151,8 @@ export const useCustomerNote = (): UseCustomerNoteReturn => {
                     category: frontendCategory,
                     timestamp: apiNote.createdAt,
                     hasLink,
-                    url: transformedUrl || apiNote.url
+                    url: undefined,
+                    apiId: apiNote.id
                 };
 
                 transformed[dateKey].push(transformedNote);
@@ -224,20 +198,60 @@ export const useCustomerNote = (): UseCustomerNoteReturn => {
     }, [localNotes, getAllDates]);
 
     const handleDeleteNote = useCallback((date: string, noteId: number) => {
-        const updatedNotes = { ...localNotes };
-        updatedNotes[date] = updatedNotes[date].filter(note => note.id !== noteId);
+        const notesForDate = localNotes[date] || [];
+        const targetNote = notesForDate.find(n => n.id === noteId);
 
+        // Only allow deleting user notes (Notizen)
+        if (!targetNote || targetNote.category !== 'Notizen') {
+            setError('Nur Notizen können gelöscht werden');
+            return;
+        }
+
+        // Optimistic update
+        const previousState = { ...localNotes };
+        const updatedNotes = { ...localNotes };
+        updatedNotes[date] = notesForDate.filter(note => note.id !== noteId);
         if (updatedNotes[date].length === 0) {
             delete updatedNotes[date];
         }
-
         setLocalNotes(updatedNotes);
+
+        // If we have the backend id, delete on server
+        if (targetNote?.apiId) {
+            deleteCustomerNote(targetNote.apiId)
+                .then(() => {
+                    toast.success('Notiz erfolgreich gelöscht!');
+                })
+                .catch(() => {
+                    // Revert on failure
+                    setLocalNotes(previousState);
+                    setError('Failed to delete note');
+                    toast.error('Löschen der Notiz fehlgeschlagen');
+                });
+        } else {
+            // Local-only note removed
+            toast.success('Notiz erfolgreich gelöscht!');
+        }
     }, [localNotes]);
 
     const updateLocalNotes = useCallback((apiNotes: CustomerNote[]) => {
         const transformedNotes = transformApiNotesToLocal(apiNotes);
         setLocalNotes(transformedNotes);
     }, [transformApiNotesToLocal]);
+
+    const deleteNote = useCallback(async (id: string) => {
+        await deleteCustomerNote(id);
+    }, []);
+
+    const updateNote = useCallback(async (id: string, note: string, category?: string, date?: string) => {
+        try {
+            setError(null);
+            await updateCustomerNote(id, note, category || 'Notizen', date || '');
+        } catch (err: any) {
+            setError('Failed to update note');
+            throw err;
+        }
+    }, []);
 
     return {
         // State
@@ -251,7 +265,8 @@ export const useCustomerNote = (): UseCustomerNoteReturn => {
         addNote,
         getNotes,
         updateLocalNotes,
-
+        deleteNote,
+        updateNote,
         // Helper functions
         getAllDates,
         getNotesForCategory,

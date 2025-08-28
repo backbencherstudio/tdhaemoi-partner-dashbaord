@@ -25,6 +25,9 @@ interface CustomerUpdateData {
     kodexeMassschuhe?: string
     kodexeEinlagen?: string
     sonstiges?: string
+    // Pricing information
+    fußanalyse?: number
+    einlagenversorgung?: number
 }
 
 interface UseUpdateCustomerInfoReturn {

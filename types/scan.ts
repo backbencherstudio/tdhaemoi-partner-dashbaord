@@ -45,6 +45,9 @@ export interface ScanData {
     kodexeMassschuhe?: string;
     kodexeEinlagen?: string;
     sonstiges?: string;
+    // Pricing information
+    fußanalyse?: number | string;
+    einlagenversorgung?: number | string;
     createdAt: string;
     updatedAt: string;
     // Latest screener files

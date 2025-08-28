@@ -12,23 +12,32 @@ import Link from 'next/link';
 import SacnningForm from '../../_components/Scanning/SacnningForm';
 import DataModal from '../../_components/Scanning/DataModal';
 import ScannningDataPage from '../../_components/ScannningData/ScannningDataPage';
+import SetPriceModal from '../../_components/Scanning/SetPriceModal';
 import { useSingleCustomer } from '@/hooks/customer/useSingleCustomer'
+import { FaMoneyBillWave } from 'react-icons/fa'
 
 
 export default function ScanningData() {
     const params = useParams();
-    const { customer: scanData, loading, error, updateCustomer } = useSingleCustomer(String(params.id));
+    const { customer: scanData, loading, error, updateCustomer, refreshCustomer } = useSingleCustomer(String(params.id));
     const [supply] = useState(
         "Rohling 339821769, mit Pelotte Nr. 10 und Micro Elastisch"
     );
 
     // Add this state for the modal
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
 
-    // Add this function to handle modal opening
+
     const handleWerkstattzettleClick = (e: React.MouseEvent) => {
         e.preventDefault();
         setIsModalOpen(true);
+    };
+
+
+    const handlePriceClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setIsPriceModalOpen(true);
     };
 
     if (loading) return <div>Loading...</div>;
@@ -43,12 +52,22 @@ export default function ScanningData() {
             <SacnningForm
                 customer={scanData}
                 onCustomerUpdate={(updatedCustomer) => {
-                    // Update the customer data using the hook
                     updateCustomer(updatedCustomer);
                 }}
             />
             {/* Bottom Action Links */}
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center mb-20">
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 text-center mb-20">
+
+                <div className='flex flex-col items-center'>
+                    <div
+                        onClick={handlePriceClick}
+                        className='p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300 flex items-center justify-center'
+                    >
+                        <FaMoneyBillWave className='text-4xl' />
+                    </div>
+                    <span className="text-sm capitalize">set price</span>
+                </div>
+
                 <div className="flex flex-col items-center">
                     <div
                         onClick={handleWerkstattzettleClick}
@@ -102,6 +121,17 @@ export default function ScanningData() {
                 nameKunde: scanData ? `${scanData.vorname} ${scanData.nachname}` : '',
                 Geschäftstandort: scanData ? scanData.wohnort : ''
             }} supply={supply} />
+
+            {/* Set Price Modal */}
+            <SetPriceModal
+                scanData={scanData}
+                isOpen={isPriceModalOpen}
+                onOpenChange={setIsPriceModalOpen}
+                onPriceUpdate={() => {
+                    // Refresh the customer data after price update
+                    refreshCustomer()
+                }}
+            />
         </div>
     );
 }

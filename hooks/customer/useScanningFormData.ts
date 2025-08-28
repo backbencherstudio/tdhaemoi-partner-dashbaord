@@ -381,8 +381,23 @@ export const useScanningFormData = (
         }
     };
 
+    // order create 
+    const resolveVersorgungIdFromText = () => {
+        const normalize = (t?: string) => (t ?? '').trim();
+        const normalizedSupply = normalize(supply);
+        const derivedFromApi = versorgungData.find((v: any) => normalize(v?.versorgung) === normalizedSupply);
+        const customerList: any[] = Array.isArray(customer?.versorgungen) ? customer!.versorgungen : [];
+        const preferredStatus = statusMap[selectedEinlage];
+        const derivedFromCustomerPreferred = customerList.find((v: any) => normalize(v?.versorgung) === normalizedSupply && v?.status === preferredStatus);
+        const derivedFromCustomerAny = customerList.find((v: any) => normalize(v?.versorgung) === normalizedSupply);
+        return derivedFromApi?.id || derivedFromCustomerPreferred?.id || derivedFromCustomerAny?.id || selectedVersorgungId || null;
+    };
+
+    // order create
     const handleFormSubmit = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
+        const resolvedVersorgungId = resolveVersorgungIdFromText();
+
         setIsSaving(true);
         // simulate save
         await new Promise((res) => setTimeout(res, 1500));
@@ -455,6 +470,7 @@ export const useScanningFormData = (
         handleFeetFirstCheckboxChange,
         handleFormSubmit,
         clearDiagnosisAndReloadOptions,
+        resolveVersorgungIdFromText,
     } as const;
 };
 

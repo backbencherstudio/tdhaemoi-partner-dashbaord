@@ -201,3 +201,14 @@ export const updateCustomerNote = async (id: string, note: string, category: str
         throw error;
     }
 }
+
+
+// create order 
+export const createOrder = async (customerId: string, versorgungId: string) => {
+    try {
+        const response = await axiosClient.post('/customer-orders/create', { customerId, versorgungId });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

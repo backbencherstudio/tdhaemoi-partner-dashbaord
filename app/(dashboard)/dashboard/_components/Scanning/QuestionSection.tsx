@@ -299,7 +299,7 @@ export default function QuestionSection({ customer }: { customer: any }) {
 
         // Handle nested questions (ID 6 - pain details)
         if (options.length > 0 && typeof options[0] === 'object' && 'id' in options[0]) {
-            console.log('Processing nested question with selectedAnswer:', selectedAnswer);
+            //  console.log('Processing nested question with selectedAnswer:', selectedAnswer);
             return (
                 <div className="flex flex-col gap-4">
                     <Accordion type="multiple" className="w-full space-y-1">
@@ -325,7 +325,7 @@ export default function QuestionSection({ customer }: { customer: any }) {
                                                     );
                                                 }
 
-                                                console.log(`Sub-question ${subQ.id} option "${option}":`, { isSelected, subQuestionKey, selectedAnswer });
+                                                // console.log(`Sub-question ${subQ.id} option "${option}":`, { isSelected, subQuestionKey, selectedAnswer });
 
                                                 return (
                                                     <label key={optIndex} className="flex items-center gap-2 text-sm">
@@ -395,14 +395,8 @@ export default function QuestionSection({ customer }: { customer: any }) {
     const renderReadonlyAnswers = () => {
         if (!hasExistingAnswers) return null;
 
-        console.log('Readonly view debug:', {
-            categorySpecificQuestion,
-            filteredQuestions,
-            showCommonQuestions,
-            answers
-        });
 
-        const allQuestions = [...(categorySpecificQuestion ? categorySpecificQuestion.questions : []), ...filteredQuestions.flatMap(item => item.questions)];
+        // const allQuestions = [...(categorySpecificQuestion ? categorySpecificQuestion.questions : []), ...filteredQuestions.flatMap(item => item.questions)];
 
         return (
             <div className="mb-6">

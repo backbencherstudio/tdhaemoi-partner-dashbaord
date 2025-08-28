@@ -6,6 +6,7 @@ import ManualEntryModal from './ManualEntryModal';
 import FeetFirstInventoryModal from './FeetFirstInventoryModal';
 import { useScanningFormData } from '@/hooks/customer/useScanningFormData';
 import Image from 'next/image';
+import { useCreateOrder } from '@/hooks/orders/useCreateOrder';
 
 
 
@@ -88,7 +89,17 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
         handleFeetFirstCheckboxChange,
         handleFormSubmit,
         clearDiagnosisAndReloadOptions,
+        resolveVersorgungIdFromText,
     } = useScanningFormData(customer, onCustomerUpdate);
+
+    const { createOrder, isCreating } = useCreateOrder();
+
+    const handleCreateOrderClick = async () => {
+        const resolvedId = resolveVersorgungIdFromText();
+        if (customer?.id && resolvedId) {
+            await createOrder(customer.id, resolvedId);
+        }
+    };
 
     return (
         <div>
@@ -433,24 +444,16 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                     </div>
                 )}
 
-                {/* Checkbox and Save Button Section */}
-                <div className="my-16">
-                    <div className="flex justify-center">
-                        <button
-                            type="submit"
-                            className="bg-black text-white rounded-full px-12 py-2 text-sm font-semibold focus:outline-none hover:bg-gray-800 transition-colors flex items-center justify-center min-w-[160px]"
-                            disabled={isSaving}
-                        >
-                            {isSaving ? (
-                                <span className="flex items-center">
-                                    <ImSpinner2 className="animate-spin mr-2 text-2xl" />
-                                    Speichern...
-                                </span>
-                            ) : (
-                                'Speichern'
-                            )}
-                        </button>
-                    </div>
+
+                <div className="flex justify-center">
+                    <button
+                        type="button"
+                        className="bg-black text-white rounded-full px-12 py-2 text-sm font-semibold focus:outline-none hover:bg-gray-800 transition-colors flex items-center justify-center min-w-[160px]"
+                        onClick={handleCreateOrderClick}
+                        disabled={isSaving || isCreating}
+                    >
+                        {isSaving || isCreating ? 'Speichern...' : 'Speichern'}
+                    </button>
                 </div>
             </div>
 

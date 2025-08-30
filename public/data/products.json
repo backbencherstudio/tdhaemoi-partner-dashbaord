@@ -1,0 +1,192 @@
+[
+    {
+        "id": 1,
+        "Produktname": "New Balance 580",
+        "Produktkürzel": "MANDJFPPXWE1344",
+        "Hersteller": "New Balance",
+        "Lagerort": "Alle Lagerorte",
+        "minStockLevel": 10,
+        "sizeQuantities": {
+            "35": 35,
+            "36": 12,
+            "37": 8,
+            "38": 20,
+            "39": 25,
+            "40": 30,
+            "41": 28,
+            "42": 35,
+            "43": 40,
+            "44": 38,
+            "45": 32,
+            "46": 25,
+            "47": 18,
+            "48": 12,
+            "49": 8
+        },
+        "inventoryHistory": [
+            {
+                "id": "hist_1",
+                "date": "2024-01-15T10:30:00Z",
+                "type": "delivery",
+                "quantity": 50,
+                "size": "40",
+                "previousStock": 0,
+                "newStock": 50,
+                "user": "admin",
+                "notes": "Initial delivery"
+            }
+        ]
+    },
+    {
+        "id": 2,
+        "Produktname": "Adidas Ultraboost",
+        "Produktkürzel": "ADIDAS-UB-2024",
+        "Hersteller": "Adidas",
+        "Lagerort": "Lager 1",
+        "minStockLevel": 5,
+        "sizeQuantities": {
+            "35": 3,
+            "36": 2,
+            "37": 1,
+            "38": 4,
+            "39": 6,
+            "40": 8,
+            "41": 10,
+            "42": 12,
+            "43": 15,
+            "44": 18,
+            "45": 20,
+            "46": 16,
+            "47": 12,
+            "48": 8,
+            "49": 5
+        },
+        "inventoryHistory": [
+            {
+                "id": "hist_2",
+                "date": "2024-01-10T14:20:00Z",
+                "type": "delivery",
+                "quantity": 30,
+                "size": "42",
+                "previousStock": 0,
+                "newStock": 30,
+                "user": "admin",
+                "notes": "Spring collection delivery"
+            }
+        ]
+    },
+    {
+        "id": 3,
+        "Produktname": "Nike Air Max",
+        "Produktkürzel": "NIKE-AM-2024",
+        "Hersteller": "Nike",
+        "Lagerort": "Lager 2",
+        "minStockLevel": 8,
+        "sizeQuantities": {
+            "35": 2,
+            "36": 1,
+            "37": 0,
+            "38": 3,
+            "39": 5,
+            "40": 7,
+            "41": 9,
+            "42": 11,
+            "43": 13,
+            "44": 15,
+            "45": 17,
+            "46": 14,
+            "47": 10,
+            "48": 6,
+            "49": 3
+        },
+        "inventoryHistory": [
+            {
+                "id": "hist_3",
+                "date": "2024-01-12T09:15:00Z",
+                "type": "sale",
+                "quantity": -2,
+                "size": "42",
+                "previousStock": 13,
+                "newStock": 11,
+                "user": "system",
+                "notes": "Online order #12345"
+            }
+        ]
+    },
+    {
+        "id": 4,
+        "Produktname": "Puma RS-X",
+        "Produktkürzel": "PUMA-RSX-2024",
+        "Hersteller": "Puma",
+        "Lagerort": "Lager 3",
+        "minStockLevel": 12,
+        "sizeQuantities": {
+            "35": 8,
+            "36": 6,
+            "37": 4,
+            "38": 10,
+            "39": 12,
+            "40": 15,
+            "41": 18,
+            "42": 20,
+            "43": 22,
+            "44": 25,
+            "45": 28,
+            "46": 24,
+            "47": 20,
+            "48": 16,
+            "49": 12
+        },
+        "inventoryHistory": [
+            {
+                "id": "hist_4",
+                "date": "2024-01-14T16:45:00Z",
+                "type": "correction",
+                "quantity": 5,
+                "size": "40",
+                "previousStock": 10,
+                "newStock": 15,
+                "user": "admin",
+                "notes": "Manual stock correction"
+            }
+        ]
+    },
+    {
+        "id": 5,
+        "Produktname": "Asics Gel-Kayano",
+        "Produktkürzel": "ASICS-GK-2024",
+        "Hersteller": "Asics",
+        "Lagerort": "Lager 4",
+        "minStockLevel": 6,
+        "sizeQuantities": {
+            "35": 1,
+            "36": 0,
+            "37": 0,
+            "38": 2,
+            "39": 3,
+            "40": 4,
+            "41": 5,
+            "42": 6,
+            "43": 7,
+            "44": 8,
+            "45": 9,
+            "46": 7,
+            "47": 5,
+            "48": 3,
+            "49": 1
+        },
+        "inventoryHistory": [
+            {
+                "id": "hist_5",
+                "date": "2024-01-16T11:30:00Z",
+                "type": "transfer",
+                "quantity": -3,
+                "size": "42",
+                "previousStock": 9,
+                "newStock": 6,
+                "user": "admin",
+                "notes": "Transfer to Lager 1"
+            }
+        ]
+    }
+]

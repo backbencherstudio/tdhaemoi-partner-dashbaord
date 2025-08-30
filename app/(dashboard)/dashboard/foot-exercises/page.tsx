@@ -222,7 +222,7 @@ export default function FootExercises() {
                             }}>
                                 <p>+43 5950-2330</p>
                                 <p>FeetFirst GmbH</p>
-                                <p>info@feetfirst.com</p>
+                                <p>info@feetf1rst.com</p>
                             </div>
                         </div>
                     </div>

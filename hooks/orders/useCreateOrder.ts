@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { createOrder as createOrderApi } from '@/apis/customerApis';
+import { createOrder as createOrderApi } from '@/apis/productsOrderApis';
 
 export const useCreateOrder = () => {
     const [isCreating, setIsCreating] = useState(false);

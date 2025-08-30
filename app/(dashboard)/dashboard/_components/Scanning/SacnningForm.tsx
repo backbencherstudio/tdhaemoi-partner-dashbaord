@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BiSolidEdit } from 'react-icons/bi';
 import { ImSpinner2 } from 'react-icons/im';
 import { TiArrowSortedDown } from "react-icons/ti";
@@ -7,7 +7,7 @@ import FeetFirstInventoryModal from './FeetFirstInventoryModal';
 import { useScanningFormData } from '@/hooks/customer/useScanningFormData';
 import Image from 'next/image';
 import { useCreateOrder } from '@/hooks/orders/useCreateOrder';
-
+import InvoiceGeneratePdfModal from '../PdfModal/InvoiceGeneratePdf/InvoiceGeneratePdfModal';
 
 
 interface Customer {
@@ -93,12 +93,29 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
     } = useScanningFormData(customer, onCustomerUpdate);
 
     const { createOrder, isCreating } = useCreateOrder();
+    const [showPdfModal, setShowPdfModal] = useState(false);
+    const [currentOrderId, setCurrentOrderId] = useState<string | undefined>(undefined);
 
     const handleCreateOrderClick = async () => {
         const resolvedId = resolveVersorgungIdFromText();
         if (customer?.id && resolvedId) {
-            await createOrder(customer.id, resolvedId);
+            try {
+                const result = await createOrder(customer.id, resolvedId);
+                // Extract orderId from the response
+                const orderId = (result as any)?.data?.id ?? (result as any)?.id ?? result?.orderId;
+                if (orderId) {
+                    setCurrentOrderId(orderId);
+                    setShowPdfModal(true);
+                }
+            } catch (error) {
+                console.error('Failed to create order:', error);
+            }
         }
+    };
+
+    const handleClosePdfModal = () => {
+        setShowPdfModal(false);
+        setCurrentOrderId(undefined);
     };
 
     return (
@@ -445,7 +462,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 )}
 
 
-                <div className="flex justify-center">
+                <div className="flex justify-center my-10">
                     <button
                         type="button"
                         className="bg-black text-white rounded-full px-12 py-2 text-sm font-semibold focus:outline-none hover:bg-gray-800 transition-colors flex items-center justify-center min-w-[160px]"
@@ -470,6 +487,13 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 isOpen={showFeetFirstModal}
                 onClose={handleFeetFirstModalClose}
                 onSave={handleFeetFirstModalSave}
+            />
+
+            {/* PDF Generation Modal */}
+            <InvoiceGeneratePdfModal
+                isOpen={showPdfModal}
+                onClose={handleClosePdfModal}
+                orderId={currentOrderId}
             />
         </div>
     );

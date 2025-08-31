@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     Table,
     TableHeader,
@@ -8,15 +8,38 @@ import {
     TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Trash2, ClipboardEdit, ArrowLeft } from "lucide-react";
+import { AlertTriangle, Trash2, ClipboardEdit, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useOrders, steps } from "@/contexts/OrdersContext";
+import toast from 'react-hot-toast';
+import ConfirmModal from '../ConfirmModal/ConfirmModal';
+import { useDeleteSingleOrder } from '@/hooks/orders/useDeleteSingleOrder';
 
 export default function ProcessTable() {
-    const { orders, togglePriority, moveToNextStep } = useOrders();
-    const [visibleCount, setVisibleCount] = useState(10);
+    const {
+        orders,
+        loading,
+        error,
+        pagination,
+        currentPage,
+        setCurrentPage,
+        togglePriority,
+        moveToNextStep,
+        refetch,
+        refreshOrderData,
+        deleteOrder
+    } = useOrders();
+
+    const { deleteSingleOrder, loading: deleteLoading } = useDeleteSingleOrder();
+
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-    const hasMore = orders.length > visibleCount;
-    const handleLoadMore = () => setVisibleCount((prev) => prev + 10);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [pendingAction, setPendingAction] = useState<{
+        type: 'nextStep' | 'priority' | 'delete';
+        orderId: string;
+        orderName: string;
+        currentStatus: string;
+        newStatus: string;
+    } | null>(null);
 
     // Get the selected order's current step to show as active in the progress bar
     const getActiveStep = () => {
@@ -30,16 +53,148 @@ export default function ProcessTable() {
 
     // Handle next step button click
     const handleNextStep = (orderId: string) => {
-        moveToNextStep(orderId);
-        // Keep the same order selected after moving to next step
-        setSelectedOrderId(orderId);
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        const nextStep = order.currentStep + 1;
+        if (nextStep >= steps.length) return;
+
+        const nextGermanStatus = steps[nextStep];
+
+        setPendingAction({
+            type: 'nextStep',
+            orderId: orderId,
+            orderName: order.kundenname,
+            currentStatus: order.displayStatus,
+            newStatus: nextGermanStatus
+        });
+        setShowConfirmModal(true);
+    };
+
+    // Execute next step after confirmation
+    const executeNextStep = async () => {
+        if (!pendingAction) return;
+
+        try {
+            await moveToNextStep(pendingAction.orderId);
+            setSelectedOrderId(pendingAction.orderId);
+
+            toast.success(`Status erfolgreich geändert: ${pendingAction.currentStatus} → ${pendingAction.newStatus}`);
+
+            // Refresh the order data to get the latest status
+            setTimeout(() => {
+                refreshOrderData(pendingAction.orderId);
+            }, 500);
+        } catch (error) {
+            console.error('Failed to move to next step:', error);
+            toast.error('Fehler beim Ändern des Status');
+        } finally {
+            setShowConfirmModal(false);
+            setPendingAction(null);
+        }
     };
 
     // Handle priority toggle and select order
     const handlePriorityToggle = (orderId: string) => {
-        togglePriority(orderId);
-        setSelectedOrderId(orderId);
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        const isPrioritizing = !order.isPrioritized;
+        const newStatus = isPrioritizing ? "Einlage vorbereiten" : "Zurück zu ursprünglichem Status";
+
+        setPendingAction({
+            type: 'priority',
+            orderId: orderId,
+            orderName: order.kundenname,
+            currentStatus: order.displayStatus,
+            newStatus: newStatus
+        });
+        setShowConfirmModal(true);
     };
+
+    // Execute priority toggle after confirmation
+    const executePriorityToggle = async () => {
+        if (!pendingAction) return;
+
+        try {
+            await togglePriority(pendingAction.orderId);
+            setSelectedOrderId(pendingAction.orderId);
+
+            const order = orders.find(o => o.id === pendingAction.orderId);
+            if (order) {
+                const isPrioritizing = !order.isPrioritized;
+                if (isPrioritizing) {
+                    toast.success(`Auftrag erfolgreich priorisiert: ${pendingAction.orderName}`);
+                } else {
+                    toast.success(`Priorität erfolgreich entfernt: ${pendingAction.orderName}`);
+                }
+            }
+
+            // Refresh the order data to get the latest status
+            setTimeout(() => {
+                refreshOrderData(pendingAction.orderId);
+            }, 500);
+        } catch (error) {
+            console.error('Failed to toggle priority:', error);
+            toast.error('Fehler beim Ändern der Priorität');
+        } finally {
+            setShowConfirmModal(false);
+            setPendingAction(null);
+        }
+    };
+
+    // Handle delete order
+    const handleDeleteOrder = (orderId: string) => {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+
+        setPendingAction({
+            type: 'delete',
+            orderId: orderId,
+            orderName: order.kundenname,
+            currentStatus: order.displayStatus,
+            newStatus: 'Gelöscht'
+        });
+        setShowConfirmModal(true);
+    };
+
+    // Execute delete order after confirmation
+    const executeDeleteOrder = async () => {
+        if (!pendingAction) return;
+
+        try {
+            // Use context's deleteOrder which handles local state updates
+            await deleteOrder(pendingAction.orderId);
+            toast.success(`Auftrag erfolgreich gelöscht: ${pendingAction.orderName}`);
+
+            // Clear selection if the deleted order was selected
+            if (selectedOrderId === pendingAction.orderId) {
+                setSelectedOrderId(null);
+            }
+        } catch (error) {
+            console.error('Failed to delete order:', error);
+            toast.error('Fehler beim Löschen des Auftrags');
+        } finally {
+            setShowConfirmModal(false);
+            setPendingAction(null);
+        }
+    };
+
+    // Handle pagination
+    const handlePageChange = (newPage: number) => {
+        setCurrentPage(newPage);
+        setSelectedOrderId(null); // Reset selection when changing pages
+    };
+
+    // Clear selection when orders change
+    useEffect(() => {
+        if (orders.length > 0 && selectedOrderId) {
+            const orderExists = orders.some(order => order.id === selectedOrderId);
+            if (!orderExists) {
+                setSelectedOrderId(null);
+            }
+        }
+    }, [orders, selectedOrderId]);
 
     // Get status color for each step
     const getStepColor = (stepIndex: number, isActive: boolean) => {
@@ -57,6 +212,43 @@ export default function ProcessTable() {
         }
         return 'text-gray-400 font-normal';
     };
+
+    if (loading) {
+        return (
+            <div className="mt-6 sm:mt-10 max-w-full flex justify-center items-center py-20">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading orders...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="mt-6 sm:mt-10 max-w-full flex justify-center items-center py-20">
+                <div className="text-center">
+                    <p className="text-red-600 mb-4">Error: {error}</p>
+                    <Button onClick={refetch} variant="outline">
+                        Try Again
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!orders || orders.length === 0) {
+        return (
+            <div className="mt-6 sm:mt-10 max-w-full flex justify-center items-center py-20">
+                <div className="text-center">
+                    <p className="text-gray-600 mb-4">No orders found</p>
+                    <Button onClick={refetch} variant="outline">
+                        Refresh
+                    </Button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="mt-6 sm:mt-10 max-w-full overflow-x-auto">
@@ -76,74 +268,92 @@ export default function ProcessTable() {
                         </React.Fragment>
                     ))}
                 </div>
+
                 <div className="flex-shrink-0">
                     <button className="border px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium whitespace-nowrap">letzten 30 Tage</button>
                 </div>
             </div>
+
             <Table className="table-fixed w-full">
                 <TableHeader>
                     <TableRow>
-                        <TableHead className="w-40 sm:w-50 md:w-60 min-w-[160px] lg:w-[200px]"></TableHead>
-                        <TableHead className="w-[80px] sm:w-[95px] min-w-[80px] max-w-[95px] whitespace-normal break-words text-xs sm:text-sm">Bestellnummer</TableHead>
-                        <TableHead className="w-[90px] sm:w-[100px] min-w-[90px] max-w-[100px] whitespace-normal break-words text-xs sm:text-sm">Kundenname</TableHead>
-                        <TableHead className="w-[140px] sm:w-[160px] min-w-[140px] max-w-[160px] whitespace-normal break-words text-xs sm:text-sm">Status</TableHead>
-                        <TableHead className="w-[70px] sm:w-[80px] min-w-[70px] max-w-[80px] whitespace-normal break-words text-xs sm:text-sm">Preis</TableHead>
-                        <TableHead className="w-[160px] sm:w-[180px] min-w-[160px] max-w-[180px] whitespace-normal break-words text-xs sm:text-sm hidden md:table-cell">Zahlung</TableHead>
-                        <TableHead className="w-[140px] sm:w-[160px] min-w-[140px] max-w-[160px] whitespace-normal break-words text-xs sm:text-sm hidden lg:table-cell">Beschreibung</TableHead>
-                        <TableHead className="w-[140px] sm:w-[160px] min-w-[140px] max-w-[160px] whitespace-normal break-words text-xs sm:text-sm hidden xl:table-cell">Abholort / Versand</TableHead>
-                        <TableHead className="w-[100px] sm:w-[120px] min-w-[100px] max-w-[120px] whitespace-normal break-words text-xs sm:text-sm">Fertigstellung</TableHead>
+                        <TableHead className="w-[200px] min-w-[200px] max-w-[200px] text-center"></TableHead>
+                        <TableHead className="w-[120px] min-w-[120px] max-w-[120px] whitespace-normal break-words text-xs sm:text-sm text-center">Bestellnummer</TableHead>
+                        <TableHead className="w-[140px] min-w-[140px] max-w-[140px] whitespace-normal break-words text-xs sm:text-sm text-center">Kundenname</TableHead>
+                        <TableHead className="w-[160px] min-w-[160px] max-w-[160px] whitespace-normal break-words text-xs sm:text-sm text-center">Status</TableHead>
+                        <TableHead className="w-[100px] min-w-[100px] max-w-[100px] whitespace-normal break-words text-xs sm:text-sm text-center">Preis</TableHead>
+                        <TableHead className="w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words text-xs sm:text-sm hidden md:table-cell text-center">Zahlung</TableHead>
+                        <TableHead className="w-[160px] min-w-[160px] max-w-[160px] whitespace-normal break-words text-xs sm:text-sm hidden lg:table-cell text-center">Beschreibung</TableHead>
+                        <TableHead className="w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words text-xs sm:text-sm hidden xl:table-cell text-center">Abholort / Versand</TableHead>
+                        <TableHead className="w-[140px] min-w-[140px] max-w-[140px] whitespace-normal break-words text-xs sm:text-sm text-center">Fertigstellung</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {orders.slice(0, visibleCount).map((row, idx) => (
+                    {orders.map((row, idx) => (
                         <TableRow
-                            key={idx}
-                            className={`hover:bg-gray-50 transition-colors ${selectedOrderId === row.id ? 'bg-blue-50' : ''}`}
+                            key={row.id}
+                            className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedOrderId === row.id ? 'bg-blue-50' : ''}`}
+                            onClick={() => setSelectedOrderId(row.id)}
                         >
-                            <TableCell className="p-2">
-                                <div className="flex flex-wrap gap-1 sm:gap-2 ">
+                            <TableCell className="p-2 w-[200px] min-w-[200px] max-w-[200px] text-center">
+                                <div className="flex flex-wrap gap-1 sm:gap-2 justify-center">
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className={`h-6 sm:h-8 px-1 sm:px-2 text-xs hover:bg-gray-200 flex items-center gap-1 min-w-fit ${row.currentStep >= steps.length - 1 ? 'opacity-50 cursor-not-allowed' : ''
+                                        className={`h-6 cursor-pointer sm:h-8 px-1 sm:px-2 text-xs hover:bg-gray-200 flex items-center gap-1 min-w-fit ${row.currentStep >= steps.length - 1 ? 'opacity-50 cursor-not-allowed' : ''
                                             }`}
-                                        onClick={() => handleNextStep(row.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleNextStep(row.id);
+                                        }}
                                         disabled={row.currentStep >= steps.length - 1}
                                         title={row.currentStep >= steps.length - 1 ? "Bereits im letzten Schritt" : "Nächster Schritt"}
                                     >
                                         <ArrowLeft className="h-3 w-3 text-gray-700" />
                                         <span className="hidden sm:inline text-gray-700">Nächster</span>
                                     </Button>
+
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className={`h-6 w-6 sm:h-8 sm:w-8 p-0 hover:bg-red-100 ${row.isPrioritized ? 'bg-red-100' : ''}`}
+                                        className={`h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-red-100 ${row.isPrioritized ? 'bg-red-100' : ''}`}
                                         title="Auftrag priorisieren"
-                                        onClick={() => handlePriorityToggle(row.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handlePriorityToggle(row.id);
+                                        }}
                                     >
                                         <AlertTriangle className={`h-3 w-3 ${row.isPrioritized ? 'text-red-600 fill-current' : 'text-red-500'}`} />
                                     </Button>
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-6 w-6 sm:h-8 sm:w-8 p-0 hover:bg-gray-200"
+                                        className="h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-gray-200"
                                         title="Löschen"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteOrder(row.id);
+                                        }}
+                                        disabled={deleteLoading}
                                     >
                                         <Trash2 className="h-3 w-3 text-gray-700" />
                                     </Button>
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-6 w-6 sm:h-8 sm:w-8 p-0 hover:bg-blue-100"
+                                        className="h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-blue-100"
                                         title="Bearbeiten"
+                                        onClick={(e) => e.stopPropagation()}
                                     >
                                         <ClipboardEdit className="h-3 w-3 text-blue-600" />
                                     </Button>
                                 </div>
                             </TableCell>
-                            <TableCell className="font-medium text-xs sm:text-sm w-[80px] sm:w-[95px] min-w-[80px] max-w-[95px] whitespace-normal break-words overflow-hidden">{row.bestellnummer}</TableCell>
-                            <TableCell className="text-xs sm:text-sm w-[90px] sm:w-[100px] min-w-[90px] max-w-[100px] whitespace-normal break-words overflow-hidden">{row.kundenname}</TableCell>
-                            <TableCell className="text-xs sm:text-sm w-[140px] sm:w-[160px] min-w-[140px] max-w-[160px] whitespace-normal break-words overflow-hidden">
+
+                            <TableCell className="font-medium text-center text-xs sm:text-sm w-[120px] min-w-[120px] max-w-[120px] whitespace-normal break-words overflow-hidden">{row.bestellnummer}</TableCell>
+
+                            <TableCell className="text-center text-xs sm:text-sm w-[140px] min-w-[140px] max-w-[140px] whitespace-normal break-words overflow-hidden">{row.kundenname}</TableCell>
+                            <TableCell className="text-center text-xs sm:text-sm w-[160px] min-w-[160px] max-w-[160px] whitespace-normal break-words overflow-hidden">
                                 <span className={`px-1 sm:px-2 py-1 rounded text-xs font-medium ${row.currentStep === 0 ? 'bg-red-100 text-red-800' :
                                     row.currentStep === 1 ? 'bg-orange-100 text-orange-800' :
                                         row.currentStep === 2 ? 'bg-green-100 text-green-800' :
@@ -154,22 +364,73 @@ export default function ProcessTable() {
                                     {row.status}
                                 </span>
                             </TableCell>
-                            <TableCell className="text-xs sm:text-sm w-[70px] sm:w-[80px] min-w-[70px] max-w-[80px] whitespace-normal break-words overflow-hidden">{row.preis}</TableCell>
-                            <TableCell className="text-xs sm:text-sm w-[160px] sm:w-[180px] min-w-[160px] max-w-[180px] whitespace-normal break-words overflow-hidden hidden md:table-cell">{row.zahlung}</TableCell>
-                            <TableCell className="text-xs sm:text-sm w-[140px] sm:w-[160px] min-w-[140px] max-w-[160px] whitespace-normal break-words overflow-hidden hidden lg:table-cell">{row.beschreibung}</TableCell>
-                            <TableCell className="text-xs sm:text-sm w-[140px] sm:w-[160px] min-w-[140px] max-w-[160px] whitespace-normal break-words overflow-hidden hidden xl:table-cell">{row.abholort}</TableCell>
-                            <TableCell className="text-xs sm:text-sm w-[100px] sm:w-[120px] min-w-[100px] max-w-[120px] whitespace-normal break-words overflow-hidden">{row.fertigstellung}</TableCell>
+                            <TableCell className="text-center text-xs sm:text-sm w-[100px] min-w-[100px] max-w-[100px] whitespace-normal break-words overflow-hidden">{row.preis}</TableCell>
+                            <TableCell className="text-center text-xs sm:text-sm w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words overflow-hidden hidden md:table-cell">{row.zahlung}</TableCell>
+                            <TableCell className="text-center text-xs sm:text-sm w-[160px] min-w-[160px] max-w-[160px] whitespace-normal break-words overflow-hidden hidden lg:table-cell">{row.beschreibung}</TableCell>
+                            <TableCell className="text-center text-xs sm:text-sm w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words overflow-hidden hidden xl:table-cell">{row.abholort}</TableCell>
+                            <TableCell className="text-center text-xs sm:text-sm w-[140px] min-w-[140px] max-w-[140px] whitespace-normal break-words overflow-hidden">{row.fertigstellung}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
             </Table>
-            {hasMore && (
-                <div className="flex justify-center mt-4 sm:mt-6">
-                    <Button variant="outline" className="px-4 sm:px-8 py-2 text-sm sm:text-base font-semibold" onClick={handleLoadMore}>
-                        Mehr anzeigen
-                    </Button>
+
+            {/* Pagination Controls */}
+            {pagination && (
+                <div className="flex justify-between items-center mt-6 px-4">
+                    <div className="text-sm text-gray-600">
+                        Showing {((currentPage - 1) * pagination.itemsPerPage) + 1} to {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} orders
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={!pagination.hasPrevPage}
+                            className="flex items-center gap-1"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                            Previous
+                        </Button>
+
+                        <span className="text-sm text-gray-600 px-3">
+                            Page {currentPage} of {pagination.totalPages}
+                        </span>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={!pagination.hasNextPage}
+                            className="flex items-center gap-1"
+                        >
+                            Next
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
             )}
+
+            {/* Confirmation Modal */}
+            <ConfirmModal
+                open={showConfirmModal}
+                onOpenChange={setShowConfirmModal}
+                title={pendingAction?.type === 'delete' ? "Auftrag löschen bestätigen" : "Status ändern bestätigen"}
+                description={pendingAction?.type === 'delete' ? "Sind Sie sicher, dass Sie den Auftrag" : "Sind Sie sicher, dass Sie den Status für den Auftrag"}
+                orderName={pendingAction?.orderName}
+                currentStatus={pendingAction?.currentStatus || ''}
+                newStatus={pendingAction?.newStatus || ''}
+                onConfirm={() => {
+                    if (pendingAction?.type === 'nextStep') {
+                        executeNextStep();
+                    } else if (pendingAction?.type === 'priority') {
+                        executePriorityToggle();
+                    } else if (pendingAction?.type === 'delete') {
+                        executeDeleteOrder();
+                    }
+                }}
+                confirmText={pendingAction?.type === 'delete' ? "Ja, löschen" : "Ja, Status ändern"}
+                isDeleteAction={pendingAction?.type === 'delete'}
+            />
         </div>
     );
 }

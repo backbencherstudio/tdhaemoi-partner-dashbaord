@@ -79,7 +79,7 @@ export default function SetPriceModal({ isOpen, onOpenChange, scanData, onPriceU
 
                 <div className="space-y-6 mt-6">
                     {/* VAT Section */}
-                    <div className="space-y-3">
+                    {/* <div className="space-y-3">
                         <Label className="text-base font-semibold">Mehrwertsteuer</Label>
                         <div className="space-y-2 flex items-center justify-between gap-2">
                             <div className="flex items-center space-x-2">
@@ -105,7 +105,7 @@ export default function SetPriceModal({ isOpen, onOpenChange, scanData, onPriceU
                                 <Label htmlFor="vat-exclusive">Preise exkl. MwSt. anzeigen</Label>
                             </div>
                         </div>
-                    </div>
+                    </div> */}
 
                     {/* Foot Analysis Section */}
                     <div className="space-y-3">

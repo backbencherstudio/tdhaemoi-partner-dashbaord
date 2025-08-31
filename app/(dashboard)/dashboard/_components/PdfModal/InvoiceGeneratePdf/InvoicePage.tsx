@@ -130,7 +130,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                 )}
             </button>
 
-            {/* Hidden printable area - Same as FootExercises */}
+            {/* Hidden printable area - Fixed layout */}
             <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
                 <div
                     id="invoice-print-area"
@@ -139,7 +139,9 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                         height: '1123px',
                         background: '#fff',
                         position: 'relative',
-                        overflow: 'hidden',
+                        fontFamily: 'Arial, sans-serif',
+                        fontSize: '14px',
+                        lineHeight: '1.4'
                     }}
                 >
                     {/* Header */}
@@ -151,15 +153,23 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                         right: 0,
                         zIndex: 1
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <div style={{ width: '70px', height: '110px', marginRight: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                            <div style={{ width: '70px', height: '120px', marginRight: '30px', flexShrink: 0 }}>
                                 <img src="/images/pdfLogo.png" alt="FeetFirst Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             </div>
-                            <div>
-                                <div style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '8px' }}>{data.customer.vorname} {data.customer.nachname}</div>
-                                <div style={{ fontSize: '14px', color: '#666', marginBottom: '4px' }}>Kdnr: {data.customer.customerNumber}</div>
-                                <div style={{ fontSize: '14px', color: '#666', marginBottom: '4px' }}>Geb.: {formatDate(data.createdAt)}</div>
-                                <div style={{ fontSize: '14px', color: '#666' }}>Scan: {formatDate(data.createdAt)}</div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 'bold', fontSize: '20px', marginBottom: '12px', textAlign: 'left' }}>
+                                    {data.customer.vorname} {data.customer.nachname}
+                                </div>
+                                <div style={{ fontSize: '14px', marginBottom: '6px', textAlign: 'left' }}>
+                                    Kdnr: {data.customer.customerNumber}
+                                </div>
+                                <div style={{ fontSize: '14px', marginBottom: '6px', textAlign: 'left' }}>
+                                    Geb.: {formatDate(data.createdAt)}
+                                </div>
+                                <div style={{ fontSize: '14px', textAlign: 'left' }}>
+                                    Scan: {formatDate(data.createdAt)}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -171,27 +181,35 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                         top: '220px',
                         left: 0,
                         right: 0,
-                        bottom: '80px',
+                        bottom: '60px',
                         overflow: 'hidden'
                     }}>
                         {/* Kundendaten Section */}
-                        <div style={{ marginBottom: '30px' }}>
-                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', color: '#333' }}>Kundendaten</h2>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Email: {data.customer.email || '-'}</p>
+                        <div style={{ marginBottom: '30px', paddingTop: '20px' }}>
+                            <h2 style={{ 
+                                fontSize: '18px', 
+                                fontWeight: 'bold', 
+                                marginBottom: '20px', 
+                                color: '#333',
+                                textAlign: 'left'
+                            }}>
+                                Kundendaten
+                            </h2>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+                                <div style={{ textAlign: 'left' }}>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Email: {data.customer.email || '-'}</p>
                                     </div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Telefon: {data.customer.telefonnummer || '-'}</p>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Telefon: {data.customer.telefonnummer || '-'}</p>
                                     </div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Wohnort: {data.customer.wohnort || '-'}</p>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Wohnort: {data.customer.wohnort || '-'}</p>
                                     </div>
                                 </div>
-                                <div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Diagnose: -</p>
+                                <div style={{ textAlign: 'left' }}>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Diagnose: -</p>
                                     </div>
                                 </div>
                             </div>
@@ -199,23 +217,30 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
 
                         {/* Bearbeitung & Terminierung Section */}
                         <div style={{ marginBottom: '30px' }}>
-                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', color: '#333' }}>Bearbeitung & Terminierung</h2>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <div>
-                                    <div style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-
-                                        <p>Mitarbeiter: {data.partner.name}</p>
+                            <h2 style={{ 
+                                fontSize: '18px', 
+                                fontWeight: 'bold', 
+                                marginBottom: '20px', 
+                                color: '#333',
+                                textAlign: 'left'
+                            }}>
+                                Bearbeitung & Terminierung
+                            </h2>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+                                <div style={{ textAlign: 'left' }}>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Mitarbeiter: {data.partner.name}</p>
                                     </div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Auftragsdatum: {formatDate(data.createdAt)}</p>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Auftragsdatum: {formatDate(data.createdAt)}</p>
                                     </div>
                                 </div>
-                                <div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Fertigstellung bis: {formatDate(data.statusUpdate)}</p>
+                                <div style={{ textAlign: 'left' }}>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Fertigstellung bis: {formatDate(data.statusUpdate)}</p>
                                     </div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Abholung: Bremen</p>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Abholung: Bremen</p>
                                     </div>
                                 </div>
                             </div>
@@ -223,27 +248,51 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
 
                         {/* Versorgung & Materialien Section */}
                         <div style={{ marginBottom: '30px' }}>
-                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', color: '#333' }}>Versorgung & Materialien</h2>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <div>
-                                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px', color: '#555' }}>Versorgung</h3>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Versorgung: {data.product.status}</p>
+                            <h2 style={{ 
+                                fontSize: '18px', 
+                                fontWeight: 'bold', 
+                                marginBottom: '20px', 
+                                color: '#333',
+                                textAlign: 'left'
+                            }}>
+                                Versorgung & Materialien
+                            </h2>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+                                <div style={{ textAlign: 'left' }}>
+                                    <h3 style={{ 
+                                        fontSize: '16px', 
+                                        fontWeight: 'bold', 
+                                        marginBottom: '15px', 
+                                        color: '#555',
+                                        textAlign: 'left'
+                                    }}>
+                                        Versorgung
+                                    </h3>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Versorgung: {data.product.versorgung || data.product.status}</p>
                                     </div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Rohling: {data.product.rohlingHersteller}</p>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Rohling: {data.product.rohlingHersteller}</p>
                                     </div>
                                 </div>
-                                <div>
-                                    <h3 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px', color: '#555' }}>Materialien</h3>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Rohling: {data.product.artikelHersteller}</p>
+                                <div style={{ textAlign: 'left' }}>
+                                    <h3 style={{ 
+                                        fontSize: '16px', 
+                                        fontWeight: 'bold', 
+                                        marginBottom: '15px', 
+                                        color: '#555',
+                                        textAlign: 'left'
+                                    }}>
+                                        Materialien
+                                    </h3>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Rohling: {data.product.artikelHersteller}</p>
                                     </div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Pelotte: -</p>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Pelotte: -</p>
                                     </div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Zusatz: -</p>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Zusatz: -</p>
                                     </div>
                                 </div>
                             </div>
@@ -251,25 +300,39 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
 
                         {/* Zahlung & Abholung Section */}
                         <div style={{ marginBottom: '30px' }}>
-                            <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px', color: '#333' }}>Zahlung & Abholung</h2>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                                <div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Einlagenversorgung: Standard {formatPrice(data.einlagenversorgung)}</p>
+                            <h2 style={{ 
+                                fontSize: '18px', 
+                                fontWeight: 'bold', 
+                                marginBottom: '20px', 
+                                color: '#333',
+                                textAlign: 'left'
+                            }}>
+                                Zahlung & Abholung
+                            </h2>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+                                <div style={{ textAlign: 'left' }}>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Einlagenversorgung: Standard {formatPrice(data.einlagenversorgung)}</p>
                                     </div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Fußanalyse: {formatPrice(data.fußanalyse)}</p>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Fußanalyse: {formatPrice(data.fußanalyse)}</p>
                                     </div>
-                                    <div style={{ marginBottom: '10px', fontWeight: 'bold', fontSize: '16px' }}>
-                                        <p>Gesamtpreis: {formatPrice(data.totalPrice)}</p>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ 
+                                            margin: 0, 
+                                            fontWeight: 'bold', 
+                                            fontSize: '16px'
+                                        }}>
+                                            Gesamtpreis: {formatPrice(data.totalPrice)}
+                                        </p>
                                     </div>
                                 </div>
-                                <div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Private Bezahlung am: ________________</p>
+                                <div style={{ textAlign: 'left' }}>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Private Bezahlung am: ________________</p>
                                     </div>
-                                    <div style={{ marginBottom: '10px' }}>
-                                        <p>Abgeholt am: ________________</p>
+                                    <div style={{ marginBottom: '15px' }}>
+                                        <p style={{ margin: 0 }}>Abgeholt am: ________________</p>
                                     </div>
                                 </div>
                             </div>
@@ -294,7 +357,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                             padding: '0 40px',
                             height: '100%'
                         }}>
-                            <p>+43 5950-2330</p>
+                            <p>+43 595024330</p>
                             <p>FeetFirst GmbH</p>
                             <p>info@feetf1rst.com</p>
                         </div>

@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'female-ba-symptoms-ira.trycloudflare.com',
+        hostname: 'kuwait-albany-depth-creative.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

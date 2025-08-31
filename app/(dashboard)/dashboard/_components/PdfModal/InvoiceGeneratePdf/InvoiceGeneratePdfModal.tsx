@@ -117,12 +117,7 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
                         <span>PDF Generation</span>
                     </DialogTitle>
                 </DialogHeader>
-                {/* Instructions */}
-                <div className="text-center">
-                    <p className="text-gray-700 mb-4">
-                        Download the PDF invoice or send it directly to your customer.
-                    </p>
-                </div>
+
                 {isLoading ? (
                     <div className="flex items-center justify-center py-8">
                         <div className="text-center">
@@ -143,19 +138,6 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
                             {/* <h3 className="text-lg font-semibold text-gray-900 mb-2">
                                 Order #{orderData.id}
                             </h3> */}
-
-                            {/* Action Buttons */}
-                            <div className="mb-4">
-                                {/* Download PDF Button - Uses InvoicePage */}
-                                <InvoicePage
-                                    data={orderData}
-                                    isGenerating={isGenerating}
-                                    onGenerateStart={() => setIsGenerating(true)}
-                                    onGenerateComplete={() => setIsGenerating(false)}
-                                />
-
-
-                            </div>
                             <p className="text-gray-600">
                                 Customer: {orderData.customer.vorname} {orderData.customer.nachname}
                             </p>
@@ -164,16 +146,28 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
                             </p>
                         </div>
 
+                        {/* Instructions */}
+                        <div className="text-center">
+                            <p className="text-gray-700 mb-4">
+                                Download the PDF invoice or send it directly to your customer.
+                            </p>
+                        </div>
 
+                        {/* Action Buttons */}
+                        <div className="flex gap-4 justify-center ">
+                            {/* Download PDF Button - Uses InvoicePage */}
+                            <InvoicePage
+                                data={orderData}
+                                isGenerating={isGenerating}
+                                onGenerateStart={() => setIsGenerating(true)}
+                                onGenerateComplete={() => setIsGenerating(false)}
+                            />
 
-
-
-                        <div className='flex items-center justify-center gap-4'>
                             {/* Send to Customer Button */}
                             <button
                                 onClick={handleGenerateAndSend}
                                 disabled={isSending}
-                                className="w-full py-2 bg-[#62A17C] text-white rounded-md hover:bg-[#4A8A5F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+                                className=" bg-[#62A17C] px-4 text-white rounded-md hover:bg-[#4A8A5F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                             >
                                 {isSending ? (
                                     <>
@@ -182,19 +176,13 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
                                     </>
                                 ) : (
                                     <>
-                                        <Send className="w-4 h-4 mr-2 " />
+                                        <Send className="w-4 h-4 mr-2" />
                                         Send to Customer
                                     </>
                                 )}
                             </button>
 
-                            {/* Cancel Button */}
-                            <button
-                                onClick={onClose}
-                                className="w-full py-2 cursor-pointer border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                                Cancel
-                            </button>
+
                         </div>
 
                     </div>

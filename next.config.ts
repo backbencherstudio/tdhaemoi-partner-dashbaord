@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'kuwait-albany-depth-creative.trycloudflare.com',
+        hostname: 'mysql-entertainment-sporting-health.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

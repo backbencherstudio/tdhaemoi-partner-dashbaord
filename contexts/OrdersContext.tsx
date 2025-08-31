@@ -9,8 +9,8 @@ export interface OrderData {
     id: string;
     bestellnummer: string;
     kundenname: string;
-    status: string;           // This will be the API status (e.g., "Sarted")
-    displayStatus: string;    // This will be the German display text (e.g., "Einlage vorbereiten")
+    status: string;
+    displayStatus: string;
     preis: string;
     zahlung: string;
     beschreibung: string;
@@ -18,6 +18,7 @@ export interface OrderData {
     fertigstellung: string;
     productName: string;
     deliveryDate: string;
+    invoice: string | null;
     isPrioritized: boolean;
     currentStep: number;
 }
@@ -29,7 +30,9 @@ interface OrdersContextType {
     error: string | null;
     pagination: any;
     currentPage: number;
+    selectedDays: number;
     setCurrentPage: (page: number) => void;
+    setSelectedDays: (days: number) => void;
     togglePriority: (orderId: string) => Promise<void>;
     moveToNextStep: (orderId: string) => void;
     moveToPreviousStep: (orderId: string) => void;
@@ -64,7 +67,7 @@ const germanStatusToApiStatus: Record<string, string> = {
 // Map API status values to German status names
 const apiStatusToGermanStatus: Record<string, string> = {
     "Started": "Einlage vorbereiten",
-    "Sarted": "Einlage vorbereiten", // Handle typo in API
+    "Sarted": "Einlage vorbereiten",
     "In Progress": "Einlage in Fertigung",
     "Packaging": "Einlage verpacken",
     "Ready for Pickup": "Einlage Abholbereit",
@@ -80,7 +83,6 @@ const apiStatusToGermanStatus: Record<string, string> = {
     "Ausgeführte_Einlagen": "Ausgeführte Einlagen"
 };
 
-// Helper function to check if an order should be prioritized based on its status
 const shouldBePrioritized = (orderStatus: string): boolean => {
     const prioritizedStatuses = [
         'Einlage_vorbereiten',
@@ -121,38 +123,38 @@ const mapApiDataToOrderData = (apiOrder: ApiOrderData): OrderData => {
         id: apiOrder.id,
         bestellnummer: apiOrder.customer.customerNumber.toString(),
         kundenname: `${apiOrder.customer.vorname} ${apiOrder.customer.nachname}`,
-        status: apiOrder.orderStatus, // Show original API status in table
-        displayStatus: germanStatus, // Keep German status for display purposes
+        status: apiOrder.orderStatus,
+        displayStatus: germanStatus,
         preis: `${(apiOrder.fußanalyse + apiOrder.einlagenversorgung).toFixed(2)} €`,
         zahlung: "Offen",
         beschreibung: apiOrder.product.versorgung || apiOrder.product.status,
         abholort: "Abholung Innsbruck oder Wird mit Post versandt",
-        fertigstellung: new Date(apiOrder.createdAt).toLocaleDateString('de-DE'),
+        fertigstellung: new Date(apiOrder.statusUpdate || apiOrder.createdAt).toLocaleDateString('de-DE'),
         productName: apiOrder.product.status || apiOrder.product.name,
         deliveryDate: new Date(apiOrder.updatedAt).toLocaleDateString('de-DE'),
-        isPrioritized: isPrioritized, // Set based on status
+        invoice: apiOrder.invoice, // Include invoice URL
+        isPrioritized: isPrioritized,
         currentStep: currentStep,
     };
 };
 
 export function OrdersProvider({ children }: { children: ReactNode }) {
     const [currentPage, setCurrentPage] = useState(1);
+    const [selectedDays, setSelectedDays] = useState(30); // Default to 30 days
     const [orders, setOrders] = useState<OrderData[]>([]);
     const [prioritizedOrders, setPrioritizedOrders] = useState<OrderData[]>([]);
 
-    const { orders: apiOrders, loading, error, pagination, refetch } = useGetAllOrders(currentPage, 10);
+    const { orders: apiOrders, loading, error, pagination, refetch } = useGetAllOrders(currentPage, 10, selectedDays);
     const { updateStatus: updateOrderStatusHook } = useUpdateOrderStatus();
 
-    // Load all prioritized orders from API on mount
+    // Load all prioritized orders from API on mount and when days change
     useEffect(() => {
         const loadPrioritizedOrders = async () => {
             try {
                 // Get all orders from first few pages to find prioritized ones
                 const allPrioritizedOrders: OrderData[] = [];
-
-                // Check first 3 pages for prioritized orders
                 for (let page = 1; page <= 3; page++) {
-                    const response = await getAllOrders(page, 10, 7);
+                    const response = await getAllOrders(page, 10, selectedDays);
                     if (response.success && response.data.length > 0) {
                         const mappedOrders = response.data.map(mapApiDataToOrderData);
                         const prioritizedFromPage = mappedOrders.filter((order: OrderData) => order.isPrioritized);
@@ -170,41 +172,37 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         };
 
         loadPrioritizedOrders();
-    }, []);
+    }, [selectedDays]);
 
     // Update orders when API data changes
     useEffect(() => {
         if (apiOrders.length > 0) {
             const mappedOrders = apiOrders.map(mapApiDataToOrderData);
             setOrders(mappedOrders);
-
-            // Update prioritized orders - preserve existing prioritized orders and add new ones
             setPrioritizedOrders(prevPrioritized => {
-                // Keep all existing prioritized orders that are not in current page
                 const existingPrioritized = prevPrioritized.filter(order =>
                     !mappedOrders.some(newOrder => newOrder.id === order.id)
                 );
-
-                // Add new orders that should be prioritized from current page
                 const newPrioritized = mappedOrders.filter(order => order.isPrioritized);
-
                 return [...existingPrioritized, ...newPrioritized];
             });
         }
     }, [apiOrders]);
 
-    // Don't filter here - use the actual prioritizedOrders state
+    // Reset to first page when days filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedDays]);
+
 
     const togglePriority = async (orderId: string) => {
         const order = orders.find(o => o.id === orderId);
         if (!order) return;
-
         const isPrioritizing = !order.isPrioritized;
 
         if (isPrioritizing) {
-            // When prioritizing, set status to "Einlage vorbereiten" and update API
             try {
-                await updateOrderStatusHook(orderId, "Einlage_vorbereiten"); // API expects "Einlage_vorbereiten"
+                await updateOrderStatusHook(orderId, "Einlage_vorbereiten");
 
                 setOrders(prevOrders =>
                     prevOrders.map(o =>
@@ -213,8 +211,8 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                                 ...o,
                                 isPrioritized: true,
                                 currentStep: 0,
-                                status: "Einlage_vorbereiten", // Show API status in table
-                                displayStatus: "Einlage vorbereiten" // Keep German for display
+                                status: "Einlage_vorbereiten",
+                                displayStatus: "Einlage vorbereiten"
                             }
                             : o
                     )
@@ -226,17 +224,13 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                         ...order,
                         isPrioritized: true,
                         currentStep: 0,
-                        status: "Einlage_vorbereiten", // API status for table
-                        displayStatus: "Einlage vorbereiten" // German for display
+                        status: "Einlage_vorbereiten",
+                        displayStatus: "Einlage vorbereiten"
                     };
-
-                    // Check if order already exists in prioritized orders
                     const existingIndex = prevPrioritized.findIndex(o => o.id === orderId);
                     if (existingIndex >= 0) {
-                        // Update existing
                         return prevPrioritized.map(o => o.id === orderId ? updatedOrder : o);
                     } else {
-                        // Add new
                         return [...prevPrioritized, updatedOrder];
                     }
                 });
@@ -244,7 +238,6 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                 console.error('Failed to update order status:', error);
             }
         } else {
-            // When removing priority, just update local state
             setOrders(prevOrders =>
                 prevOrders.map(o =>
                     o.id === orderId
@@ -252,8 +245,6 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                         : o
                 )
             );
-
-            // Remove from prioritized orders
             setPrioritizedOrders(prevPrioritized =>
                 prevPrioritized.filter(o => o.id !== orderId)
             );
@@ -284,22 +275,21 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                         ? {
                             ...o,
                             currentStep: nextStep,
-                            status: nextApiStatus, // Show API status in table
-                            displayStatus: nextGermanStatus // Keep German for display
+                            status: nextApiStatus,
+                            displayStatus: nextGermanStatus
                         }
                         : o
                 )
             );
 
-            // Also update prioritized orders if this order is prioritized
             setPrioritizedOrders(prevPrioritized =>
                 prevPrioritized.map(o =>
                     o.id === orderId
                         ? {
                             ...o,
                             currentStep: nextStep,
-                            status: nextApiStatus, // API status for table
-                            displayStatus: nextGermanStatus // German for display
+                            status: nextApiStatus,
+                            displayStatus: nextGermanStatus
                         }
                         : o
                 )
@@ -323,18 +313,15 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         }
 
         try {
-            // Update status via API
             await updateOrderStatusHook(orderId, previousApiStatus);
-
-            // Update local state with the new API status
             setOrders(prevOrders =>
                 prevOrders.map(o =>
                     o.id === orderId
                         ? {
                             ...o,
                             currentStep: previousStep,
-                            status: previousApiStatus, // Show API status in table
-                            displayStatus: previousGermanStatus // Keep German for display
+                            status: previousApiStatus,
+                            displayStatus: previousGermanStatus
                         }
                         : o
                 )
@@ -347,8 +334,8 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                         ? {
                             ...o,
                             currentStep: previousStep,
-                            status: previousApiStatus, // API status for table
-                            displayStatus: previousGermanStatus // German for display
+                            status: previousApiStatus,
+                            displayStatus: previousGermanStatus
                         }
                         : o
                 )
@@ -378,9 +365,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                     o.id === orderId
                         ? {
                             ...o,
-                            status: newApiStatus, // API status for table
+                            status: newApiStatus,
                             currentStep: newStep,
-                            displayStatus: newGermanStatus // German for display
+                            displayStatus: newGermanStatus
                         }
                         : o
                 )
@@ -392,9 +379,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                     o.id === orderId
                         ? {
                             ...o,
-                            status: newApiStatus, // API status for table
+                            status: newApiStatus,
                             currentStep: newStep,
-                            displayStatus: newGermanStatus // German for display
+                            displayStatus: newGermanStatus
                         }
                         : o
                 )
@@ -406,53 +393,42 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
 
     const deleteOrder = async (orderId: string) => {
         await deleteOrderApi(orderId);
-        
-        // Immediately remove from local state
+
+
         setOrders(prevOrders => prevOrders.filter(o => o.id !== orderId));
         setPrioritizedOrders(prevPrioritized => prevPrioritized.filter(o => o.id !== orderId));
-        
-        // Also refetch to ensure sync with server
         refetch();
     };
 
     const deleteOrderByUser = async (orderId: string) => {
         await deleteOrderApi(orderId);
-        
-        // Immediately remove from local state
+
+
         setOrders(prevOrders => prevOrders.filter(o => o.id !== orderId));
         setPrioritizedOrders(prevPrioritized => prevPrioritized.filter(o => o.id !== orderId));
-        
-        // Also refetch to ensure sync with server
         refetch();
     };
 
-    // Function to refresh a single order's data
+
     const refreshOrderData = async (orderId: string) => {
         try {
             const response = await getSingleOrder(orderId);
             if (response.success) {
                 const updatedOrder = mapApiDataToOrderData(response.data);
-
-                // Update in orders array
                 setOrders(prevOrders =>
                     prevOrders.map(o => o.id === orderId ? updatedOrder : o)
                 );
-
-                // Update in prioritized orders if it exists there, or add/remove based on new status
                 setPrioritizedOrders(prevPrioritized => {
                     const existingIndex = prevPrioritized.findIndex(o => o.id === orderId);
-
                     if (updatedOrder.isPrioritized) {
-                        // If order should be prioritized, add or update it
                         if (existingIndex >= 0) {
-                            // Update existing
                             return prevPrioritized.map(o => o.id === orderId ? updatedOrder : o);
                         } else {
-                            // Add new
+
                             return [...prevPrioritized, updatedOrder];
                         }
                     } else {
-                        // If order should not be prioritized, remove it
+
                         return prevPrioritized.filter(o => o.id !== orderId);
                     }
                 });
@@ -470,7 +446,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
             error,
             pagination,
             currentPage,
+            selectedDays,
             setCurrentPage,
+            setSelectedDays,
             togglePriority,
             moveToNextStep,
             moveToPreviousStep,

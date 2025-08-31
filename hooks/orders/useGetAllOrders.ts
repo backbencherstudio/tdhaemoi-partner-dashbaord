@@ -50,17 +50,17 @@ export interface OrdersResponse {
     pagination: PaginationData;
 }
 
-export const useGetAllOrders = (page: number = 1, limit: number = 10) => {
+export const useGetAllOrders = (page: number = 1, limit: number = 10, days: number = 30) => {
     const [orders, setOrders] = useState<ApiOrderData[]>([]);
     const [pagination, setPagination] = useState<PaginationData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchOrders = async (pageNum: number, limitNum: number) => {
+    const fetchOrders = async (pageNum: number, limitNum: number, daysNum: number) => {
         try {
             setLoading(true);
             setError(null);
-            const response: OrdersResponse = await getAllOrders(pageNum, limitNum);
+            const response: OrdersResponse = await getAllOrders(pageNum, limitNum, daysNum);
             
             if (response.success) {
                 setOrders(response.data);
@@ -76,11 +76,11 @@ export const useGetAllOrders = (page: number = 1, limit: number = 10) => {
     };
 
     useEffect(() => {
-        fetchOrders(page, limit);
-    }, [page, limit]);
+        fetchOrders(page, limit, days);
+    }, [page, limit, days]);
 
     const refetch = () => {
-        fetchOrders(page, limit);
+        fetchOrders(page, limit, days);
     };
 
     return {

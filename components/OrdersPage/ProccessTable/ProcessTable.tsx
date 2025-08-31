@@ -8,6 +8,13 @@ import {
     TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { AlertTriangle, Trash2, ClipboardEdit, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useOrders, steps } from "@/contexts/OrdersContext";
 import toast from 'react-hot-toast';
@@ -21,7 +28,9 @@ export default function ProcessTable() {
         error,
         pagination,
         currentPage,
+        selectedDays,
         setCurrentPage,
+        setSelectedDays,
         togglePriority,
         moveToNextStep,
         refetch,
@@ -180,6 +189,33 @@ export default function ProcessTable() {
         }
     };
 
+    // Handle invoice download
+    const handleInvoiceDownload = (orderId: string) => {
+        const order = orders.find(o => o.id === orderId);
+        if (!order || !order.invoice) {
+            toast.error('Keine Rechnung verfügbar für diesen Auftrag');
+            return;
+        }
+
+        try {
+            // Create a temporary anchor element to trigger download
+            const link = document.createElement('a');
+            link.href = order.invoice;
+            link.download = `Rechnung_${order.bestellnummer}_${order.kundenname.replace(/\s+/g, '_')}.pdf`;
+            link.target = '_blank';
+            
+            // Append to DOM, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            toast.success('Rechnung wird heruntergeladen...');
+        } catch (error) {
+            console.error('Failed to download invoice:', error);
+            toast.error('Fehler beim Herunterladen der Rechnung');
+        }
+    };
+
     // Handle pagination
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage);
@@ -270,7 +306,19 @@ export default function ProcessTable() {
                 </div>
 
                 <div className="flex-shrink-0">
-                    <button className="border px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium whitespace-nowrap">letzten 30 Tage</button>
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm text-gray-600 font-medium">Zeitraum:</span>
+                        <Select value={selectedDays.toString()} onValueChange={(value) => setSelectedDays(parseInt(value))}>
+                            <SelectTrigger className="w-32 text-xs sm:text-sm cursor-pointer">
+                                <SelectValue placeholder="Tage wählen" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="7">7 Tage</SelectItem>
+                                <SelectItem value="30">30 Tage</SelectItem>
+                                <SelectItem value="40">40 Tage</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
 
@@ -285,7 +333,7 @@ export default function ProcessTable() {
                         <TableHead className="w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words text-xs sm:text-sm hidden md:table-cell text-center">Zahlung</TableHead>
                         <TableHead className="w-[160px] min-w-[160px] max-w-[160px] whitespace-normal break-words text-xs sm:text-sm hidden lg:table-cell text-center">Beschreibung</TableHead>
                         <TableHead className="w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words text-xs sm:text-sm hidden xl:table-cell text-center">Abholort / Versand</TableHead>
-                        <TableHead className="w-[140px] min-w-[140px] max-w-[140px] whitespace-normal break-words text-xs sm:text-sm text-center">Fertigstellung</TableHead>
+                        <TableHead className="w-[140px] min-w-[140px] max-w-[140px] whitespace-normal break-words text-xs sm:text-sm text-center">Status Update</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -296,7 +344,7 @@ export default function ProcessTable() {
                             onClick={() => setSelectedOrderId(row.id)}
                         >
                             <TableCell className="p-2 w-[200px] min-w-[200px] max-w-[200px] text-center">
-                                <div className="flex flex-wrap gap-1 sm:gap-2 justify-center">
+                                <div className="flex  gap-1 sm:gap-2 justify-center">
                                     <Button
                                         variant="ghost"
                                         size="sm"
@@ -338,15 +386,23 @@ export default function ProcessTable() {
                                     >
                                         <Trash2 className="h-3 w-3 text-gray-700" />
                                     </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-blue-100"
-                                        title="Bearbeiten"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <ClipboardEdit className="h-3 w-3 text-blue-600" />
-                                    </Button>
+                                                                         <Button
+                                         variant="ghost"
+                                         size="sm"
+                                         className={`h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-blue-100 ${
+                                             !row.invoice ? 'opacity-50 cursor-not-allowed' : ''
+                                         }`}
+                                         title={row.invoice ? "Rechnung herunterladen" : "Keine Rechnung verfügbar"}
+                                         onClick={(e) => {
+                                             e.stopPropagation();
+                                             if (row.invoice) {
+                                                 handleInvoiceDownload(row.id);
+                                             }
+                                         }}
+                                         disabled={!row.invoice}
+                                     >
+                                         <ClipboardEdit className={`h-3 w-3 ${row.invoice ? 'text-blue-600' : 'text-gray-400'}`} />
+                                     </Button>
                                 </div>
                             </TableCell>
 

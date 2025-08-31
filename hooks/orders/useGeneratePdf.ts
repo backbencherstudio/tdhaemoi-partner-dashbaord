@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from 'react';
-import { getSingleOrder } from '@/apis/productsOrderApis';
+import { getSingleOrder } from '@/apis/productsOrder';
 import toast from 'react-hot-toast';
 
 export interface OrderPdfData {

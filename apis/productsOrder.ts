@@ -9,7 +9,7 @@ export const createOrder = async (customerId: string, versorgungId: string) => {
     }
 }
 
-// get single order /customer-orders/3a63db17-8720-44ca-bfd9-8200e3618742
+// get single order 
 export const getSingleOrder = async (orderId: string) => {
     try {
         const response = await axiosClient.get(`/customer-orders/${orderId}`);
@@ -64,4 +64,3 @@ export const deleteOrder = async (orderId: string) => {
         throw error;
     }
 }
-

@@ -10,7 +10,6 @@ import emailImg from '@/public/images/scanning/email.png'
 import logoImg from '@/public/images/scanning/logo.png'
 import Link from 'next/link';
 import SacnningForm from '../../_components/Scanning/SacnningForm';
-import DataModal from '../../_components/Scanning/DataModal';
 import ScannningDataPage from '../../_components/ScannningData/ScannningDataPage';
 import SetPriceModal from '../../_components/Scanning/SetPriceModal';
 import { useSingleCustomer } from '@/hooks/customer/useSingleCustomer'
@@ -68,7 +67,7 @@ export default function ScanningData() {
                     <span className="text-sm capitalize">set price</span>
                 </div>
 
-                <div className="flex flex-col items-center">
+                {/* <div className="flex flex-col items-center">
                     <div
                         onClick={handleWerkstattzettleClick}
                         className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300"
@@ -76,7 +75,7 @@ export default function ScanningData() {
                         <Image src={fxImg} alt="Werkstattzettel" width={50} height={50} className='w-11 h-auto' />
                     </div>
                     <span className="text-sm">Werkstattzettel<br />ausdrucken</span>
-                </div>
+                </div> */}
 
                 <div className="flex flex-col items-center">
                     <Link href="" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300">
@@ -116,11 +115,6 @@ export default function ScanningData() {
                 </div>
             </div>
 
-            {/* print werkstattzettel */}
-            <DataModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} scanData={{
-                nameKunde: scanData ? `${scanData.vorname} ${scanData.nachname}` : '',
-                Geschäftstandort: scanData ? scanData.wohnort : ''
-            }} supply={supply} />
 
             {/* Set Price Modal */}
             <SetPriceModal

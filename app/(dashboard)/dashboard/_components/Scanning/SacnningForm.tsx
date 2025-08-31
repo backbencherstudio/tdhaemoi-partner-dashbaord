@@ -8,6 +8,15 @@ import { useScanningFormData } from '@/hooks/customer/useScanningFormData';
 import Image from 'next/image';
 import { useCreateOrder } from '@/hooks/orders/useCreateOrder';
 import InvoiceGeneratePdfModal from '../PdfModal/InvoiceGeneratePdf/InvoiceGeneratePdfModal';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 
 interface Customer {
@@ -95,6 +104,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
     const { createOrder, isCreating } = useCreateOrder();
     const [showPdfModal, setShowPdfModal] = useState(false);
     const [currentOrderId, setCurrentOrderId] = useState<string | undefined>(undefined);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const handleCreateOrderClick = async () => {
         const resolvedId = resolveVersorgungIdFromText();
@@ -116,6 +126,23 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
     const handleClosePdfModal = () => {
         setShowPdfModal(false);
         setCurrentOrderId(undefined);
+    };
+
+    const handleConfirmOrder = async () => {
+        const resolvedId = resolveVersorgungIdFromText();
+        if (customer?.id && resolvedId) {
+            try {
+                const result = await createOrder(customer.id, resolvedId);
+                const orderId = (result as any)?.data?.id ?? (result as any)?.id ?? result?.orderId;
+                if (orderId) {
+                    setCurrentOrderId(orderId);
+                    setShowPdfModal(true);
+                }
+            } catch (error) {
+                console.error('Failed to create order:', error);
+            }
+        }
+        setShowConfirmModal(false);
     };
 
     return (
@@ -463,14 +490,14 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
 
 
                 <div className="flex justify-center my-10">
-                    <button
+                    <Button
                         type="button"
                         className="bg-black cursor-pointer transform duration-300 text-white rounded-full px-12 py-2 text-sm font-semibold focus:outline-none hover:bg-gray-800 transition-colors flex items-center justify-center min-w-[160px]"
-                        onClick={handleCreateOrderClick}
-                        disabled={isSaving || isCreating}
+                        onClick={() => setShowConfirmModal(true)}
+                        disabled={isCreating}
                     >
-                        {isSaving || isCreating ? 'Speichern...' : 'Speichern'}
-                    </button>
+                        {isCreating ? 'Speichern...' : 'Speichern'}
+                    </Button>
                 </div>
             </div>
 
@@ -488,6 +515,34 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 onClose={handleFeetFirstModalClose}
                 onSave={handleFeetFirstModalSave}
             />
+
+            {/* Confirmation Modal */}
+            <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Bestellung bestätigen</DialogTitle>
+                        <DialogDescription>
+                            Sind Sie sicher, dass Sie eine neue Bestellung für diesen Kunden erstellen möchten?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter>
+                        <Button
+                            className='cursor-pointer'
+                            variant="outline"
+                            onClick={() => setShowConfirmModal(false)}
+                        >
+                            Abbrechen
+                        </Button>
+                        <Button
+                            className='cursor-pointer'
+                            onClick={handleConfirmOrder}
+                            disabled={isCreating}
+                        >
+                            {isCreating ? 'Erstelle...' : 'Ja, erstellen'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* PDF Generation Modal */}
             <InvoiceGeneratePdfModal

@@ -465,7 +465,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 <div className="flex justify-center my-10">
                     <button
                         type="button"
-                        className="bg-black text-white rounded-full px-12 py-2 text-sm font-semibold focus:outline-none hover:bg-gray-800 transition-colors flex items-center justify-center min-w-[160px]"
+                        className="bg-black cursor-pointer transform duration-300 text-white rounded-full px-12 py-2 text-sm font-semibold focus:outline-none hover:bg-gray-800 transition-colors flex items-center justify-center min-w-[160px]"
                         onClick={handleCreateOrderClick}
                         disabled={isSaving || isCreating}
                     >

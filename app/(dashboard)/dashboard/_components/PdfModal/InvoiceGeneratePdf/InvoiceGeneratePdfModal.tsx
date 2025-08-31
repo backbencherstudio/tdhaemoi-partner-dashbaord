@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useGeneratePdf, OrderPdfData } from '@/hooks/orders/useGeneratePdf';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useGeneratePdf } from '@/hooks/orders/useGeneratePdf';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { pdfSendToCustomer } from '@/apis/productsOrder';
 import InvoicePage from './InvoicePage';
+import toast from 'react-hot-toast';
 import {
     FileText,
-    User,
-    Package,
-    CreditCard,
-    Calendar,
-    Phone,
-    Mail,
-    MapPin,
+    Send,
     X
 } from 'lucide-react';
 
@@ -25,6 +20,7 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
     const { orderData, fetchOrderData } = useGeneratePdf();
     const [isLoading, setIsLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isSending, setIsSending] = useState(false);
 
     useEffect(() => {
         if (isOpen && orderId) {
@@ -33,36 +29,102 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
         }
     }, [isOpen, orderId, fetchOrderData]);
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('de-DE');
+    const handleGenerateAndSend = async () => {
+        if (!orderData) return;
+
+        try {
+            setIsSending(true);
+
+            // Generate PDF without downloading (just for sending)
+            const pdfContainer = document.getElementById('invoice-print-area');
+            if (!pdfContainer) {
+                toast.error('Print area not found');
+                return;
+            }
+
+            // Import html2canvas and jsPDF dynamically
+            const html2canvas = (await import('html2canvas')).default;
+            const jsPDF = (await import('jspdf')).default;
+
+            const canvas = await html2canvas(pdfContainer, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                width: 794,
+                height: 1123
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+
+            const imgWidth = 210;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+
+            // Convert PDF to Blob for file upload (NO download)
+            const pdfBlob = pdf.output('blob');
+
+            // Send to customer (without downloading)
+            await handleSendToCustomer(pdfBlob);
+
+        } catch (error) {
+            console.error('Failed to generate PDF:', error);
+            toast.error('Failed to generate PDF');
+        } finally {
+            setIsSending(false);
+        }
     };
 
-    const formatPrice = (price: number) => {
-        return (price / 100).toFixed(2) + ' €';
+    const handleSendToCustomer = async (pdfBlob: Blob) => {
+        if (!orderId) {
+            toast.error('Order ID not found');
+            return;
+        }
+
+        try {
+            // Create FormData with the PDF file
+            const formData = new FormData();
+            formData.append('invoice', pdfBlob, `order_${orderData?.customer.vorname}_${orderData?.customer.nachname}.pdf`);
+
+            // Call the API with FormData
+            const response = await pdfSendToCustomer(orderId, formData);
+
+            if (response.success) {
+                toast.success('PDF sent to customer successfully!');
+                onClose();
+            } else {
+                toast.error('Failed to send PDF to customer');
+            }
+        } catch (error) {
+            console.error('Error sending PDF to customer:', error);
+            toast.error('Failed to send PDF to customer');
+        }
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="!max-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-md">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8">
-                                <img 
-                                    src="/images/pdfLogo.png" 
-                                    alt="FeetFirst Logo" 
-                                    className="w-full h-full object-contain"
-                                />
-                            </div>
-                            <span>Invoice Preview</span>
+                    <DialogTitle className="flex items-center justify-center space-x-3">
+                        <div className="w-8 h-8">
+                            <img
+                                src="/images/pdfLogo.png"
+                                alt="FeetFirst Logo"
+                                className="w-full h-full object-contain"
+                            />
                         </div>
-                    
-                    
+                        <span>PDF Generation</span>
                     </DialogTitle>
                 </DialogHeader>
-
+                {/* Instructions */}
+                <div className="text-center">
+                    <p className="text-gray-700 mb-4">
+                        Download the PDF invoice or send it directly to your customer.
+                    </p>
+                </div>
                 {isLoading ? (
-                    <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="flex items-center justify-center py-8">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                             <p className="text-gray-600">Loading order data...</p>
@@ -76,228 +138,68 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
                     </div>
                 ) : (
                     <div className="space-y-6">
-                        {/* Header with Generate PDF button */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-3">
-                                <div>
-                                    <p className="text-gray-600">Order #{orderData.id}</p>
-                                </div>
-                            </div>
-                            <div className="flex space-x-3">
-                                <InvoicePage 
-                                    data={orderData} 
+                        {/* Order Info */}
+                        <div className="text-center">
+                            {/* <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                Order #{orderData.id}
+                            </h3> */}
+
+                            {/* Action Buttons */}
+                            <div className="mb-4">
+                                {/* Download PDF Button - Uses InvoicePage */}
+                                <InvoicePage
+                                    data={orderData}
                                     isGenerating={isGenerating}
                                     onGenerateStart={() => setIsGenerating(true)}
                                     onGenerateComplete={() => setIsGenerating(false)}
                                 />
+
+
                             </div>
+                            <p className="text-gray-600">
+                                Customer: {orderData.customer.vorname} {orderData.customer.nachname}
+                            </p>
+                            <p className="text-gray-600">
+                                Total: {orderData.totalPrice.toFixed(2)} €
+                            </p>
                         </div>
 
-                        {/* Invoice Content */}
-                        <div className="bg-white border-2  rounded-lg shadow-lg overflow-hidden">
-                            {/* Company Header */}
-                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b ">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-4">
-                                        <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center">
-                                            <span className="text-white text-2xl font-bold">S</span>
-                                        </div>
-                                        <div>
-                                            <h2 className="text-3xl font-bold text-gray-900">FeetFirst</h2>
-                                            <p className="text-gray-600 text-lg">GmbH</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-lg font-semibold text-gray-900">
-                                            {orderData.customer.vorname} {orderData.customer.nachname}
-                                        </div>
-                                        <div className="text-sm text-gray-600">Kdnr: {orderData.customer.customerNumber}</div>
-                                        <div className="text-sm text-gray-600">Scan: {formatDate(orderData.createdAt)}</div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <div className="p-6 space-y-6">
-                                {/* Customer Data Section */}
-                                <Card>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="flex items-center text-lg">
-                                            <User className="h-5 w-5 mr-2 text-blue-600" />
-                                            Kundendaten
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-3">
-                                                <div className="flex items-center space-x-3">
-                                                    <Mail className="h-4 w-4 text-gray-500" />
-                                                    <div>
-                                                        <span className="font-medium">Email:</span>
-                                                        <span className="ml-2 text-gray-700">{orderData.customer.email || '-'}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center space-x-3">
-                                                    <Phone className="h-4 w-4 text-gray-500" />
-                                                    <div>
-                                                        <span className="font-medium">Telefon:</span>
-                                                        <span className="ml-2 text-gray-700">{orderData.customer.telefonnummer || '-'}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center space-x-3">
-                                                    <MapPin className="h-4 w-4 text-gray-500" />
-                                                    <div>
-                                                        <span className="font-medium">Wohnort:</span>
-                                                        <span className="ml-2 text-gray-700">{orderData.customer.wohnort || '-'}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <span className="font-medium">Diagnose:</span>
-                                                    <span className="ml-2 text-gray-700">-</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
 
-                                {/* Processing & Scheduling Section */}
-                                <Card>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="flex items-center text-lg">
-                                            <Calendar className="h-5 w-5 mr-2 text-green-600" />
-                                            Bearbeitung & Terminierung
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <span className="font-medium">Mitarbeiter:</span>
-                                                    <span className="ml-2 text-gray-700">{orderData.partner.name}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="font-medium">Auftragsdatum:</span>
-                                                    <span className="ml-2 text-gray-700">{formatDate(orderData.createdAt)}</span>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <span className="font-medium">Fertigstellung bis:</span>
-                                                    <span className="ml-2 text-gray-700">{formatDate(orderData.statusUpdate)}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="font-medium">Abholung:</span>
-                                                    <span className="ml-2 text-gray-700">Bremen</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
 
-                                {/* Supply & Materials Section */}
-                                <Card>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="flex items-center text-lg">
-                                            <Package className="h-5 w-5 mr-2 text-purple-600" />
-                                            Versorgung & Materialien
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-3">
-                                                <h4 className="font-semibold text-gray-800">Versorgung</h4>
-                                                <div>
-                                                    <span className="font-medium">Versorgung:</span>
-                                                    <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-700 rounded text-sm">
-                                                        {orderData.product.status}
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <span className="font-medium">Rohling:</span>
-                                                    <span className="ml-2 text-gray-700">{orderData.product.rohlingHersteller}</span>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <h4 className="font-semibold text-gray-800">Materialien</h4>
-                                                <div>
-                                                    <span className="font-medium">Rohling:</span>
-                                                    <span className="ml-2 text-gray-700">{orderData.product.artikelHersteller}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="font-medium">Pelotte:</span>
-                                                    <span className="ml-2 text-gray-700">-</span>
-                                                </div>
-                                                <div>
-                                                    <span className="font-medium">Zusatz:</span>
-                                                    <span className="ml-2 text-gray-700">-</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
 
-                                {/* Payment & Pickup Section */}
-                                <Card>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="flex items-center text-lg">
-                                            <CreditCard className="h-5 w-5 mr-2 text-amber-600" />
-                                            Zahlung & Abholung
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="space-y-3">
-                                                <div className="flex justify-between items-center">
-                                                    <span className="font-medium">Einlagenversorgung:</span>
-                                                    <span className="text-gray-700">Standard {formatPrice(orderData.einlagenversorgung)}</span>
-                                                </div>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="font-medium">Fußanalyse:</span>
-                                                    <span className="text-gray-700">{formatPrice(orderData.fußanalyse)}</span>
-                                                </div>
-                                                <div className="border-t border-gray-300 my-3"></div>
-                                                <div className="flex justify-between items-center text-lg font-bold">
-                                                    <span>Gesamtpreis:</span>
-                                                    <span className="text-blue-600">{formatPrice(orderData.totalPrice)}</span>
-                                                </div>
-                                            </div>
-                                            <div className="space-y-3">
-                                                <div>
-                                                    <span className="font-medium">Private Bezahlung am:</span>
-                                                    <div className="mt-1 border-b-2 border-gray-300 h-6"></div>
-                                                </div>
-                                                <div>
-                                                    <span className="font-medium">Abgeholt am:</span>
-                                                    <div className="mt-1 border-b-2 border-gray-300 h-6"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </div>
+                        <div className='flex items-center justify-center gap-4'>
+                            {/* Send to Customer Button */}
+                            <button
+                                onClick={handleGenerateAndSend}
+                                disabled={isSending}
+                                className="w-full py-2 bg-[#62A17C] text-white rounded-md hover:bg-[#4A8A5F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center cursor-pointer"
+                            >
+                                {isSending ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        Sending...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="w-4 h-4 mr-2 " />
+                                        Send to Customer
+                                    </>
+                                )}
+                            </button>
 
-                            {/* Footer */}
-                            <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
-                                <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
-                                    <div className="flex items-center space-x-2 text-gray-600">
-                                        <Phone className="h-4 w-4" />
-                                        <span>+43 595024330</span>
-                                    </div>
-                                    <div className="text-center">
-                                        <div className="font-semibold text-gray-900">FeetFirst GmbH</div>
-                                    </div>
-                                    <div className="flex items-center space-x-2 text-gray-600">
-                                        <Mail className="h-4 w-4" />
-                                        <span>info@feetfirst.com</span>
-                                    </div>
-                                </div>
-                            </div>
+                            {/* Cancel Button */}
+                            <button
+                                onClick={onClose}
+                                className="w-full py-2 cursor-pointer border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
                         </div>
 
-                
                     </div>
                 )}
+
             </DialogContent>
         </Dialog>
     );

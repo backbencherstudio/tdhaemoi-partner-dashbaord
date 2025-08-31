@@ -18,3 +18,18 @@ export const getSingleOrder = async (orderId: string) => {
         throw error;
     }
 }
+
+
+// pdf send to customer 
+export const pdfSendToCustomer = async (orderId: string, formData: FormData) => {
+    try {
+        const response = await axiosClient.post(`/customer-orders/upload-invoice/${orderId}?sendToClient=true`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

@@ -118,7 +118,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
             <button
                 onClick={generatePdf}
                 disabled={isGenerating}
-                className="bg-[#62A17C] transform duration-300 cursor-pointer hover:bg-[#62A17C] text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#62A17C] transform duration-300 cursor-pointer hover:bg-[#62A17C] text-white py-2 px-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {isGenerating ? (
                     <>
@@ -126,7 +126,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                         Generating...
                     </>
                 ) : (
-                    'Generate PDF'
+                    'Download PDF'
                 )}
             </button>
 

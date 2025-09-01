@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { searchCustomers } from '@/apis/customerApis';
+import { sendExercisesToCustomerEmail } from '@/apis/exercisesApis';
 
 interface Customer {
     id: string;
@@ -22,6 +23,7 @@ export const useFootExercises = () => {
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [isSearching, setIsSearching] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isSendingEmail, setIsSendingEmail] = useState(false);
 
     const handleSearch = useCallback(async (query: string) => {
         if (!query.trim()) {
@@ -67,6 +69,27 @@ export const useFootExercises = () => {
         setShowSuggestions(false);
     }, []);
 
+    const sendEmailToCustomer = useCallback(async (pdfBlob: Blob, email?: string) => {
+        const targetEmail = email || selectedCustomer?.email;
+        
+        if (!targetEmail) {
+            throw new Error('No email address provided');
+        }
+
+        setIsSendingEmail(true);
+        try {
+            const pdfFile = new File([pdfBlob], 'fussuebungen.pdf', { type: 'application/pdf' });
+            
+            const response = await sendExercisesToCustomerEmail(pdfFile, targetEmail);
+            return response;
+        } catch (error) {
+            console.error('Error sending email:', error);
+            throw error;
+        } finally {
+            setIsSendingEmail(false);
+        }
+    }, [selectedCustomer?.email]);
+
     return {
         searchQuery,
         setSearchQuery,
@@ -74,9 +97,11 @@ export const useFootExercises = () => {
         selectedCustomer,
         isSearching,
         showSuggestions,
+        isSendingEmail,
         handleSearch,
         handleCustomerSelect,
         clearSelection,
-        setShowSuggestions
+        setShowSuggestions,
+        sendEmailToCustomer
     };
 };

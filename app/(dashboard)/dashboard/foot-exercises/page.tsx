@@ -9,9 +9,6 @@ import html2canvas from "html2canvas";
 import { useFootExercises } from "@/hooks/footexercises/footexercises";
 import useDebounce from "@/hooks/useDebounce";
 
-
-
-
 interface Exercise {
     id: number;
     title: string;
@@ -35,7 +32,9 @@ export default function FootExercises() {
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [selected, setSelected] = useState<number[]>([]);
     const [expanded, setExpanded] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [printLoading, setPrintLoading] = useState(false);
+    const [emailLoading, setEmailLoading] = useState(false);
+    const [customEmail, setCustomEmail] = useState('');
 
     // Customer search functionality
     const {
@@ -48,7 +47,8 @@ export default function FootExercises() {
         handleSearch,
         handleCustomerSelect,
         clearSelection,
-        setShowSuggestions
+        setShowSuggestions,
+        sendEmailToCustomer
     } = useFootExercises();
 
     // Debounce search to avoid too many API calls
@@ -58,17 +58,15 @@ export default function FootExercises() {
         getAllExercises().then((data) => setExercises(data?.exercises || []));
     }, []);
 
-    // Handle search when debounced query changes
     useEffect(() => {
         if (debouncedSearchQuery) {
             handleSearch(debouncedSearchQuery);
         } else {
-            // Clear results when query is empty
             setShowSuggestions(false);
         }
     }, [debouncedSearchQuery, handleSearch]);
 
-    // Group by category
+
     const categories = exercises.reduce((acc: Record<string, Exercise[]>, ex: Exercise) => {
         acc[ex.category] = acc[ex.category] || [];
         acc[ex.category].push(ex);
@@ -82,15 +80,13 @@ export default function FootExercises() {
         );
     };
 
-    const handlePrint = async () => {
-        setLoading(true);
+    const generatePDF = async (): Promise<Blob> => {
         const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
         
         for (let i = 0; i < pages.length; i++) {
             const pageDiv = document.getElementById(`print-page-${i}`);
             if (!pageDiv) continue;
             
-            // Reduced scale for smaller file size (original was 2, now 1.5)
             const canvas = await html2canvas(pageDiv, { 
                 scale: 1.5, 
                 useCORS: true,
@@ -101,7 +97,6 @@ export default function FootExercises() {
             
             if (i > 0) pdf.addPage();
             
-            // Get A4 dimensions in points
             const pageWidth = pdf.internal.pageSize.getWidth();
             const imgProps = pdf.getImageProperties(imgData);
             const pdfWidth = pageWidth;
@@ -110,8 +105,59 @@ export default function FootExercises() {
             pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
         }
         
-        pdf.save("fussuebungen.pdf");
-        setLoading(false);
+        return pdf.output('blob');
+    };
+
+    const handlePrint = async () => {
+        setPrintLoading(true);
+        try {
+            const pdfBlob = await generatePDF();
+            const url = URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = "fussuebungen.pdf";
+            link.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+        } finally {
+            setPrintLoading(false);
+        }
+    };
+
+    const handleEmail = async () => {
+        let targetEmail = '';
+        
+        if (selectedCustomer) {
+            targetEmail = selectedCustomer.email;
+        } else if (customEmail.trim()) {
+            targetEmail = customEmail.trim();
+        } else {
+            alert('Bitte wählen Sie einen Kunden aus oder geben Sie eine E-Mail-Adresse ein.');
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(targetEmail)) {
+            alert('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+            return;
+        }
+
+        setEmailLoading(true);
+        try {
+            const pdfBlob = await generatePDF();
+            await sendEmailToCustomer(pdfBlob, targetEmail);
+            alert(`PDF wurde erfolgreich an ${targetEmail} gesendet!`);
+            
+            if (customEmail) {
+                setCustomEmail('');
+            }
+        } catch (error) {
+            console.error('Error sending email:', error);
+            alert('Fehler beim Senden der E-Mail. Bitte versuchen Sie es erneut.');
+        } finally {
+            setEmailLoading(false);
+        }
     };
 
     const selectedExercises = exercises.filter((ex: Exercise) => selected.includes(ex.id));
@@ -120,7 +166,7 @@ export default function FootExercises() {
     return (
         <div className="mb-20">
             {/* Loading Spinner Overlay */}
-            {loading && (
+            {(printLoading || emailLoading) && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
                     <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
@@ -137,9 +183,17 @@ export default function FootExercises() {
                     <div className='relative'>
                         <input 
                             type='text' 
-                            placeholder='Kundenname oder E-Mail eingeben' 
+                            placeholder='Kundenname, E-Mail oder beliebige E-Mail-Adresse eingeben' 
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => {
+                                setSearchQuery(e.target.value);
+                                // If it looks like an email, set it as custom email
+                                if (e.target.value.includes('@') && e.target.value.includes('.')) {
+                                    setCustomEmail(e.target.value);
+                                } else {
+                                    setCustomEmail('');
+                                }
+                            }}
                             onFocus={() => searchQuery && setShowSuggestions(true)}
                             className='w-full p-3 rounded-md border border-gray-300 pl-10 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent' 
                         />
@@ -213,6 +267,8 @@ export default function FootExercises() {
                         </div>
                     </div>
                 )}
+
+
             </div>
 
             {Object.entries(categories).map(([cat, items], catIdx) => (
@@ -342,7 +398,7 @@ export default function FootExercises() {
                                 height: '100%'
                             }}>
                                 <p>+43 5950-2330</p>
-                                <p>FeetFirst GmbH</p>
+                                <p>FeetF1rst GmbH</p>
                                 <p>info@feetf1rst.com</p>
                             </div>
                         </div>
@@ -356,20 +412,34 @@ export default function FootExercises() {
                     <button
                         className={`flex items-center justify-center w-36 h-24 rounded-full bg-[#F5F5F5] cursor-pointer shadow-md hover:bg-gray-200 transition-all ${selectedExercises.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                         onClick={handlePrint}
-                        disabled={selectedExercises.length === 0}
+                        disabled={selectedExercises.length === 0 || printLoading}
+                        title="PDF herunterladen"
                     >
-                        <PrinterIcon className="w-12 h-12" />
+                        {printLoading ? (
+                            <div className="w-8 h-8 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                            <PrinterIcon className="w-12 h-12" />
+                        )}
                     </button>
                     <span className="text-base font-normal mt-3">DRUCKEN</span>
                 </div>
                 <div className="flex flex-col items-center">
                     <button
-                        className={`flex items-center justify-center w-36 h-24 rounded-full bg-[#F5F5F5] cursor-pointer shadow-md hover:bg-gray-200 transition-all ${selectedExercises.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        disabled={selectedExercises.length === 0}
+                        className={`flex items-center justify-center w-36 h-24 rounded-full bg-[#F5F5F5] cursor-pointer shadow-md hover:bg-gray-200 transition-all ${selectedExercises.length === 0 || (!selectedCustomer && !customEmail.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        onClick={handleEmail}
+                        disabled={selectedExercises.length === 0 || (!selectedCustomer && !customEmail.trim()) || emailLoading}
+                        title={!selectedCustomer && !customEmail.trim() ? 'Bitte wählen Sie einen Kunden aus oder geben Sie eine E-Mail-Adresse ein' : 'PDF per E-Mail senden'}
                     >
-                        <MailIcon className="w-10 h-10" />
+                        {emailLoading ? (
+                            <div className="w-6 h-6 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                            <MailIcon className="w-10 h-10" />
+                        )}
                     </button>
                     <span className="text-base font-normal mt-3">E-MAIL</span>
+                    {!selectedCustomer && !customEmail.trim() && (
+                        <span className="text-xs text-gray-500 mt-1 text-center">Kunde auswählen oder E-Mail eingeben</span>
+                    )}
                 </div>
             </div>
         </div>

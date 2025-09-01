@@ -2,7 +2,6 @@
 import React, { useState } from 'react'
 import { useParams } from 'next/navigation'
 import Image from 'next/image'
-import fxImg from '@/public/images/scanning/fax.png'
 import folderImg from '@/public/images/scanning/folder.png'
 import userImg from '@/public/images/scanning/user.png'
 import shoesImg from '@/public/images/scanning/shoes.png'
@@ -19,19 +18,9 @@ import { FaMoneyBillWave } from 'react-icons/fa'
 export default function ScanningData() {
     const params = useParams();
     const { customer: scanData, loading, error, updateCustomer, refreshCustomer } = useSingleCustomer(String(params.id));
-    const [supply] = useState(
-        "Rohling 339821769, mit Pelotte Nr. 10 und Micro Elastisch"
-    );
+   
 
-    // Add this state for the modal
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
-
-
-    const handleWerkstattzettleClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        setIsModalOpen(true);
-    };
 
 
     const handlePriceClick = (e: React.MouseEvent) => {

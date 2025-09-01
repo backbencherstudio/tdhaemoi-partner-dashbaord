@@ -8,6 +8,7 @@ import { useScanningFormData } from '@/hooks/customer/useScanningFormData';
 import Image from 'next/image';
 import { useCreateOrder } from '@/hooks/orders/useCreateOrder';
 import InvoiceGeneratePdfModal from '../PdfModal/InvoiceGeneratePdf/InvoiceGeneratePdfModal';
+import InvoicePage from '../PdfModal/InvoiceGeneratePdf/InvoicePage';
 import {
     Dialog,
     DialogContent,
@@ -101,26 +102,59 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
         resolveVersorgungIdFromText,
     } = useScanningFormData(customer, onCustomerUpdate);
 
-    const { createOrder, isCreating } = useCreateOrder();
+    const { createOrderAndGeneratePdf, isCreating } = useCreateOrder();
     const [showPdfModal, setShowPdfModal] = useState(false);
     const [currentOrderId, setCurrentOrderId] = useState<string | undefined>(undefined);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [autoSendToCustomer, setAutoSendToCustomer] = useState(false);
 
-    const handleCreateOrderClick = async () => {
-        const resolvedId = resolveVersorgungIdFromText();
-        if (customer?.id && resolvedId) {
-            try {
-                const result = await createOrder(customer.id, resolvedId);
-                // Extract orderId from the response
-                const orderId = (result as any)?.data?.id ?? (result as any)?.id ?? result?.orderId;
-                if (orderId) {
-                    setCurrentOrderId(orderId);
-                    setShowPdfModal(true);
-                }
-            } catch (error) {
-                console.error('Failed to create order:', error);
+    // Create mock order data for InvoicePage component
+    const createMockOrderData = () => {
+        if (!customer) return null;
+        
+        return {
+            id: 'temp-id',
+            customerId: customer.id,
+            partnerId: 'temp-partner-id',
+            fußanalyse: 50,
+            einlagenversorgung: 150,
+            totalPrice: 200,
+            productId: 'temp-product-id',
+            orderStatus: 'Started',
+            statusUpdate: new Date().toISOString(),
+            invoice: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            customer: {
+                id: customer.id,
+                customerNumber: parseInt(customer.id) || 0,
+                vorname: customer.vorname || '',
+                nachname: customer.nachname || '',
+                email: customer.email || '',
+                telefonnummer: '',
+                wohnort: ''
+            },
+            partner: {
+                id: 'temp-partner-id',
+                name: 'FeetFirst Partner',
+                email: 'partner@feetfirst.com',
+                image: '/images/pdfLogo.png',
+                role: 'Partner'
+            },
+            product: {
+                id: 'temp-product-id',
+                name: selectedEinlage || 'Einlage',
+                rohlingHersteller: 'Standard',
+                artikelHersteller: 'Standard',
+                versorgung: supply || 'Standard Versorgung',
+                material: 'Standard Material',
+                langenempfehlung: {},
+                status: 'Active',
+                diagnosis_status: diagnosis || null,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
             }
-        }
+        };
     };
 
     const handleClosePdfModal = () => {
@@ -132,7 +166,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
         const resolvedId = resolveVersorgungIdFromText();
         if (customer?.id && resolvedId) {
             try {
-                const result = await createOrder(customer.id, resolvedId);
+                const result = await createOrderAndGeneratePdf(customer.id, resolvedId, autoSendToCustomer);
                 const orderId = (result as any)?.data?.id ?? (result as any)?.id ?? result?.orderId;
                 if (orderId) {
                     setCurrentOrderId(orderId);
@@ -144,6 +178,8 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
         }
         setShowConfirmModal(false);
     };
+
+    const mockOrderData = createMockOrderData();
 
     return (
         <div>
@@ -403,6 +439,27 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                     </div>
                 </div>
 
+                {/* PDF Options Section */}
+                <div className="flex flex-col md:flex-row md:items-start md:space-x-8 mb-8">
+                    <div className="mb-2 md:mb-0 min-w-max font-semibold flex items-center" style={{ fontWeight: 600 }}>
+                        PDF Optionen
+                    </div>
+                    <div className="flex flex-col space-y-3">
+                        <label className="flex items-center space-x-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                className="w-5 h-5"
+                                checked={autoSendToCustomer}
+                                onChange={(e) => setAutoSendToCustomer(e.target.checked)}
+                            />
+                            <span>PDF automatisch an Kunden senden</span>
+                        </label>
+                        <div className="text-sm text-gray-600 ml-7">
+                            Wenn aktiviert, wird das PDF nach der Bestellerstellung automatisch an den Kunden gesendet.
+                        </div>
+                    </div>
+                </div>
+
                 {/* Manual Entry Data Display */}
                 {manualEntry && (manualEntryData.marke || manualEntryData.modell || manualEntryData.kategorie || manualEntryData.grosse) && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -550,6 +607,18 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 onClose={handleClosePdfModal}
                 orderId={currentOrderId}
             />
+
+            {/* Hidden InvoicePage component for PDF generation */}
+            {mockOrderData && (
+                <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+                    <InvoicePage 
+                        data={mockOrderData}
+                        isGenerating={false}
+                        onGenerateStart={() => {}}
+                        onGenerateComplete={() => {}}
+                    />
+                </div>
+            )}
         </div>
     );
 }

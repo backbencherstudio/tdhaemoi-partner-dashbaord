@@ -19,11 +19,10 @@ export const getSingleOrder = async (orderId: string) => {
     }
 }
 
-
-// pdf send to customer 
-export const pdfSendToCustomer = async (orderId: string, formData: FormData) => {
+// invoice pdf save 
+export const saveInvoicePdf = async (orderId: string, formData: FormData) => {
     try {
-        const response = await axiosClient.post(`/customer-orders/upload-invoice/${orderId}?sendToClient=true`, formData, {
+        const response = await axiosClient.post(`/customer-orders/upload-invoice-only/${orderId}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -33,6 +32,19 @@ export const pdfSendToCustomer = async (orderId: string, formData: FormData) => 
         throw error;
     }
 }
+
+
+// pdf send to customer  /customer-orders/send-invoice/3990f6ed-77fe-4b7d-8f31-3c2f715e3114
+export const pdfSendToCustomer = async (orderId: string, formData: FormData) => {
+    try {
+        const response = await axiosClient.post(`/customer-orders/send-invoice/${orderId}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+
 
 
 // get all orders  customer-orders?page=1&limit=10&days=7
@@ -64,3 +76,6 @@ export const deleteOrder = async (orderId: string) => {
         throw error;
     }
 }
+
+
+

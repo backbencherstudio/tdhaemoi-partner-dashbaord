@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { pdfSendToCustomer } from '@/apis/productsOrder';
 import InvoicePage from './InvoicePage';
 import toast from 'react-hot-toast';
+import { generatePdfFromElement, pdfPresets } from '@/lib/pdfGenerator';
 import {
     FileText,
     Send,
@@ -35,35 +36,8 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
         try {
             setIsSending(true);
 
-            // Generate PDF without downloading (just for sending)
-            const pdfContainer = document.getElementById('invoice-print-area');
-            if (!pdfContainer) {
-                toast.error('Print area not found');
-                return;
-            }
-
-            // Import html2canvas and jsPDF dynamically
-            const html2canvas = (await import('html2canvas')).default;
-            const jsPDF = (await import('jspdf')).default;
-
-            const canvas = await html2canvas(pdfContainer, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                width: 794,
-                height: 1123
-            });
-
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-
-            const imgWidth = 210;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-
-            // Convert PDF to Blob for file upload (NO download)
-            const pdfBlob = pdf.output('blob');
+            // Use shared PDF generation utility
+            const pdfBlob = await generatePdfFromElement('invoice-print-area', pdfPresets.balanced);
 
             // Send to customer (without downloading)
             await handleSendToCustomer(pdfBlob);
@@ -135,9 +109,6 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
                     <div className="space-y-6">
                         {/* Order Info */}
                         <div className="text-center">
-                            {/* <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                Order #{orderData.id}
-                            </h3> */}
                             <p className="text-gray-600">
                                 Customer: {orderData.customer.vorname} {orderData.customer.nachname}
                             </p>
@@ -181,13 +152,9 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
                                     </>
                                 )}
                             </button>
-
-
                         </div>
-
                     </div>
                 )}
-
             </DialogContent>
         </Dialog>
     );

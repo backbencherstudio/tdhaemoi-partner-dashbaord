@@ -1,7 +1,6 @@
 import React from 'react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import toast from 'react-hot-toast';
+import { generatePdfFromElement, pdfPresets } from '@/lib/pdfGenerator';
 
 export interface OrderPdfData {
     id: string;
@@ -68,36 +67,22 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
             // Notify parent that generation has started
             onGenerateStart?.();
 
-            // Use the hidden printable area (same as FootExercises)
-            const pdfContainer = document.getElementById('invoice-print-area');
-            if (!pdfContainer) {
-                toast.error('Print area not found');
-                return false;
-            }
+            // Use shared PDF generation utility with balanced preset
+            const pdfBlob = await generatePdfFromElement('invoice-print-area', pdfPresets.balanced);
 
-            // Convert to canvas
-            const canvas = await html2canvas(pdfContainer, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                width: 794,
-                height: 1123
-            });
-
-            // Create PDF - Single page only
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'mm', 'a4');
-
-            const imgWidth = 210; // A4 width in mm
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            // Add single page - fit content to page
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-
-            // Save the PDF
-            const fileName = `order_${data.customer.vorname}_${data.customer.nachname}_${new Date().toISOString().split('T')[0]}.pdf`;
-            pdf.save(fileName);
+            // Create download link
+            const url = URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `order_${data.customer.vorname}_${data.customer.nachname}_${new Date().toISOString().split('T')[0]}.pdf`;
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up
+            URL.revokeObjectURL(url);
 
             toast.success('PDF generated successfully!');
             return true;
@@ -110,8 +95,6 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
             onGenerateComplete?.();
         }
     };
-
-
 
     return (
         <div>
@@ -359,7 +342,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                         }}>
                             <p>+43 595024330</p>
                             <p>FeetFirst GmbH</p>
-                            <p>info@feetf1rst.com</p>
+                            <p>info@feetfirst.com</p>
                         </div>
                     </div>
                 </div>

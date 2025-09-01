@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { createOrder as createOrderApi, saveInvoicePdf, pdfSendToCustomer } from '@/apis/productsOrder';
+import { createOrder as createOrderApi, saveInvoicePdf, pdfSendToCustomer, getSingleOrder } from '@/apis/productsOrder';
 import { generatePdfFromElement, pdfPresets } from '@/lib/pdfGenerator';
 
 export const useCreateOrder = () => {
@@ -38,7 +38,18 @@ export const useCreateOrder = () => {
             setLastOrderId(orderId);
 
             try {
-                // Use shared PDF generation utility with balanced preset
+                const orderResponse = await getSingleOrder(orderId);
+                if (!orderResponse.success) {
+                    throw new Error('Failed to fetch order data');
+                }
+
+                const updateEvent = new CustomEvent('orderDataUpdated', { 
+                    detail: { orderData: orderResponse.data } 
+                });
+                window.dispatchEvent(updateEvent);
+
+                await new Promise(resolve => setTimeout(resolve, 100));
+
                 const pdfBlob = await generatePdfFromElement('invoice-print-area', pdfPresets.balanced);
                 
                 // Save the PDF

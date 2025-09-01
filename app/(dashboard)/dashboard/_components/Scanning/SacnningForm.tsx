@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BiSolidEdit } from 'react-icons/bi';
 import { ImSpinner2 } from 'react-icons/im';
 import { TiArrowSortedDown } from "react-icons/ti";
@@ -107,11 +107,31 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
     const [currentOrderId, setCurrentOrderId] = useState<string | undefined>(undefined);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [autoSendToCustomer, setAutoSendToCustomer] = useState(false);
+    const [realOrderData, setRealOrderData] = useState<any>(null);
 
-    // Create mock order data for InvoicePage component
-    const createMockOrderData = () => {
+    // Listen for order data updates from useCreateOrder hook
+    useEffect(() => {
+        const handleOrderDataUpdate = (event: any) => {
+            setRealOrderData(event.detail.orderData);
+        };
+
+        window.addEventListener('orderDataUpdated', handleOrderDataUpdate);
+        
+        return () => {
+            window.removeEventListener('orderDataUpdated', handleOrderDataUpdate);
+        };
+    }, []);
+
+    // Create order data for InvoicePage component - use real data if available, otherwise mock data
+    const createOrderData = () => {
         if (!customer) return null;
         
+        // If we have real order data, use it
+        if (realOrderData) {
+            return realOrderData;
+        }
+        
+        // Otherwise, create mock data (fallback)
         return {
             id: 'temp-id',
             customerId: customer.id,
@@ -160,6 +180,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
     const handleClosePdfModal = () => {
         setShowPdfModal(false);
         setCurrentOrderId(undefined);
+        setRealOrderData(null);
     };
 
     const handleConfirmOrder = async () => {
@@ -179,7 +200,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
         setShowConfirmModal(false);
     };
 
-    const mockOrderData = createMockOrderData();
+    const orderData = createOrderData();
 
     return (
         <div>
@@ -609,10 +630,10 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
             />
 
             {/* Hidden InvoicePage component for PDF generation */}
-            {mockOrderData && (
+            {orderData && (
                 <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
                     <InvoicePage 
-                        data={mockOrderData}
+                        data={orderData}
                         isGenerating={false}
                         onGenerateStart={() => {}}
                         onGenerateComplete={() => {}}

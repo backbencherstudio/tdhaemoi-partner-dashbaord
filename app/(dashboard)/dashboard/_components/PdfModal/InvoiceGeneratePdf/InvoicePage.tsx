@@ -341,8 +341,8 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                             height: '100%'
                         }}>
                             <p>+43 595024330</p>
-                            <p>FeetFirst GmbH</p>
-                            <p>info@feetfirst.com</p>
+                            <p>FeetF1rst GmbH</p>
+                            <p>info@feetf1rst.com</p>
                         </div>
                     </div>
                 </div>

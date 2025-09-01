@@ -2,10 +2,12 @@
 import React, { useEffect, useState } from "react";
 import { getAllExercises } from "@/apis/exercisesApis";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import { CheckIcon, MailIcon, PrinterIcon, SearchIcon } from "lucide-react";
+import { CheckIcon, MailIcon, PrinterIcon, SearchIcon, XIcon, UserIcon } from "lucide-react";
 import Image from "next/image";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { useFootExercises } from "@/hooks/footexercises/footexercises";
+import useDebounce from "@/hooks/useDebounce";
 
 
 
@@ -35,9 +37,36 @@ export default function FootExercises() {
     const [expanded, setExpanded] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
+    // Customer search functionality
+    const {
+        searchQuery,
+        setSearchQuery,
+        searchResults,
+        selectedCustomer,
+        isSearching,
+        showSuggestions,
+        handleSearch,
+        handleCustomerSelect,
+        clearSelection,
+        setShowSuggestions
+    } = useFootExercises();
+
+    // Debounce search to avoid too many API calls
+    const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
     useEffect(() => {
         getAllExercises().then((data) => setExercises(data?.exercises || []));
     }, []);
+
+    // Handle search when debounced query changes
+    useEffect(() => {
+        if (debouncedSearchQuery) {
+            handleSearch(debouncedSearchQuery);
+        } else {
+            // Clear results when query is empty
+            setShowSuggestions(false);
+        }
+    }, [debouncedSearchQuery, handleSearch]);
 
     // Group by category
     const categories = exercises.reduce((acc: Record<string, Exercise[]>, ex: Exercise) => {
@@ -56,18 +85,31 @@ export default function FootExercises() {
     const handlePrint = async () => {
         setLoading(true);
         const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+        
         for (let i = 0; i < pages.length; i++) {
             const pageDiv = document.getElementById(`print-page-${i}`);
             if (!pageDiv) continue;
-            const canvas = await html2canvas(pageDiv, { scale: 2, useCORS: true });
-            const imgData = canvas.toDataURL("image/png");
+            
+            // Reduced scale for smaller file size (original was 2, now 1.5)
+            const canvas = await html2canvas(pageDiv, { 
+                scale: 1.5, 
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            
+            const imgData = canvas.toDataURL("image/jpeg", 0.85); 
+            
+            if (i > 0) pdf.addPage();
+            
+            // Get A4 dimensions in points
             const pageWidth = pdf.internal.pageSize.getWidth();
             const imgProps = pdf.getImageProperties(imgData);
             const pdfWidth = pageWidth;
             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            if (i > 0) pdf.addPage();
-            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+            
+            pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
         }
+        
         pdf.save("fussuebungen.pdf");
         setLoading(false);
     };
@@ -85,13 +127,92 @@ export default function FootExercises() {
             )}
             <h1 className='text-3xl font-bold'>Fußübungen</h1>
             <p className='text-base text-gray-500 mt-2'>Wähle gezielt Übungen aus und erstelle einen individuellen Plan für deinen Kunden.</p>
-            {/* search bar  with search icon */}
-            <div className='mt-4'>
-                <div className='relative w-fit'>
-                    <input type='text' placeholder='Kundenname eingeben' className='w-full p-2 rounded-md border border-gray-300 pl-10' />
-                    {/* SearchIcon can be added here if needed */}
-                    <SearchIcon className='w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-gray-500' />
+
+            {/* Customer Search Section */}
+            <div className='mt-6 p-6 bg-gray-50 rounded-lg border'>
+                <h3 className="text-lg font-semibold mb-4">Kunde auswählen</h3>
+                
+                {/* Search Bar */}
+                <div className='relative w-full max-w-md'>
+                    <div className='relative'>
+                        <input 
+                            type='text' 
+                            placeholder='Kundenname oder E-Mail eingeben' 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => searchQuery && setShowSuggestions(true)}
+                            className='w-full p-3 rounded-md border border-gray-300 pl-10 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent' 
+                        />
+                        <SearchIcon className='w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500' />
+                        {searchQuery && (
+                            <button
+                                onClick={clearSelection}
+                                className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
+                            >
+                                <XIcon className='w-5 h-5' />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Search Suggestions Dropdown */}
+                    {showSuggestions && (searchResults.length > 0 || isSearching) && (
+                        <div className='absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg z-50 max-h-60 overflow-y-auto'>
+                            {isSearching ? (
+                                <div className='p-3 text-center text-gray-500'>
+                                    <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2'></div>
+                                    Suche läuft...
+                                </div>
+                            ) : (
+                                searchResults.map((customer) => (
+                                    <div
+                                        key={customer.id}
+                                        onClick={() => handleCustomerSelect(customer)}
+                                        className='p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0'
+                                    >
+                                        <div className='flex items-center gap-3'>
+                                            <div className='w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center'>
+                                                <UserIcon className='w-4 h-4 text-blue-600' />
+                                            </div>
+                                            <div className='flex-1'>
+                                                <div className='font-medium text-gray-900'>{customer.name}</div>
+                                                <div className='text-sm text-gray-500'>{customer.email}</div>
+                                                {customer.phone && (
+                                                    <div className='text-xs text-gray-400'>{customer.phone}</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
                 </div>
+
+                {/* Selected Customer Display */}
+                {selectedCustomer && (
+                    <div className='mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+                        <div className='flex items-center justify-between'>
+                            <div className='flex items-center gap-3'>
+                                <div className='w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center'>
+                                    <UserIcon className='w-5 h-5 text-blue-600' />
+                                </div>
+                                <div>
+                                    <div className='font-semibold text-gray-900'>{selectedCustomer.name}</div>
+                                    <div className='text-sm text-gray-600'>{selectedCustomer.email}</div>
+                                    {selectedCustomer.phone && (
+                                        <div className='text-xs text-gray-500'>{selectedCustomer.phone}</div>
+                                    )}
+                                </div>
+                            </div>
+                            <button
+                                onClick={clearSelection}
+                                className='text-gray-500 hover:text-gray-700'
+                            >
+                                <XIcon className='w-5 h-5' />
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {Object.entries(categories).map(([cat, items], catIdx) => (
@@ -168,7 +289,7 @@ export default function FootExercises() {
                             zIndex: 1
                         }}>
                             <h1 style={{ fontWeight: 'bold', fontSize: '24px', marginBottom: '12px' }}>
-                                Der folgende Übungsplan wurde individuell für [Kundenname] erstellt.
+                                Der folgende Übungsplan wurde individuell für {selectedCustomer ? selectedCustomer.name : '[Kundenname]'} erstellt.
                             </h1>
                             <p style={{ fontSize: '14px', marginBottom: '32px' }}>
                                 Gezielte Fußübungen stärken Muskulatur, Stabilität und Beweglichkeit. Bereits wenige Minuten täglich können spürbare Verbesserungen bewirken – sei es zur Vorbeugung, zur Unterstützung einer Versorgung oder zur aktiven Linderung von Beschwerden.

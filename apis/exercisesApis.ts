@@ -12,5 +12,22 @@ export const getAllExercises = async () => {
 }
 
 
+// send exercises to customer email
+
+export const sendExercisesToCustomerEmail = async (pdf: File, email: string) => {
+    try {
+        const response = await axiosClient.post('/exercises', { pdf, email }, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error sending exercises to customer email:', error);
+        throw error;
+    }
+}
+
+
 
 

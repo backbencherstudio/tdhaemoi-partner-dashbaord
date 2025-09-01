@@ -147,11 +147,9 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     const { orders: apiOrders, loading, error, pagination, refetch } = useGetAllOrders(currentPage, 10, selectedDays);
     const { updateStatus: updateOrderStatusHook } = useUpdateOrderStatus();
 
-    // Load all prioritized orders from API on mount and when days change
     useEffect(() => {
         const loadPrioritizedOrders = async () => {
             try {
-                // Get all orders from first few pages to find prioritized ones
                 const allPrioritizedOrders: OrderData[] = [];
                 for (let page = 1; page <= 3; page++) {
                     const response = await getAllOrders(page, 10, selectedDays);
@@ -161,7 +159,6 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                         allPrioritizedOrders.push(...prioritizedFromPage);
                     }
 
-                    // If no more pages, break
                     if (response.pagination && !response.pagination.hasNextPage) break;
                 }
 
@@ -174,7 +171,6 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         loadPrioritizedOrders();
     }, [selectedDays]);
 
-    // Update orders when API data changes
     useEffect(() => {
         if (apiOrders.length > 0) {
             const mappedOrders = apiOrders.map(mapApiDataToOrderData);
@@ -189,7 +185,6 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         }
     }, [apiOrders]);
 
-    // Reset to first page when days filter changes
     useEffect(() => {
         setCurrentPage(1);
     }, [selectedDays]);
@@ -218,7 +213,6 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                     )
                 );
 
-                // Update prioritized orders
                 setPrioritizedOrders(prevPrioritized => {
                     const updatedOrder = {
                         ...order,
@@ -265,10 +259,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         }
 
         try {
-            // Update status via API
             await updateOrderStatusHook(orderId, nextApiStatus);
-
-            // Update local state with the new API status
             setOrders(prevOrders =>
                 prevOrders.map(o =>
                     o.id === orderId
@@ -327,7 +318,6 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
                 )
             );
 
-            // Also update prioritized orders if this order is prioritized
             setPrioritizedOrders(prevPrioritized =>
                 prevPrioritized.map(o =>
                     o.id === orderId
@@ -394,19 +384,36 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     const deleteOrder = async (orderId: string) => {
         await deleteOrderApi(orderId);
 
-
-        setOrders(prevOrders => prevOrders.filter(o => o.id !== orderId));
+        setOrders(prevOrders => {
+            const newOrders = prevOrders.filter(o => o.id !== orderId);
+            
+            if (prevOrders.length === 1 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            } else if (newOrders.length === 0 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            }
+            
+            return newOrders;
+        });
+        
         setPrioritizedOrders(prevPrioritized => prevPrioritized.filter(o => o.id !== orderId));
-        refetch();
     };
 
     const deleteOrderByUser = async (orderId: string) => {
         await deleteOrderApi(orderId);
 
-
-        setOrders(prevOrders => prevOrders.filter(o => o.id !== orderId));
+        setOrders(prevOrders => {
+            const newOrders = prevOrders.filter(o => o.id !== orderId);
+            if (prevOrders.length === 1 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            } else if (newOrders.length === 0 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            }
+            
+            return newOrders;
+        });
+        
         setPrioritizedOrders(prevPrioritized => prevPrioritized.filter(o => o.id !== orderId));
-        refetch();
     };
 
 

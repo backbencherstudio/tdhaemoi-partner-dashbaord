@@ -23,6 +23,7 @@ interface ConfirmModalProps {
     confirmText?: string;
     cancelText?: string;
     isDeleteAction?: boolean;
+    isLoading?: boolean;
 }
 
 export default function ConfirmModal({
@@ -36,7 +37,8 @@ export default function ConfirmModal({
     onConfirm,
     confirmText = "Ja, Status ändern",
     cancelText = "Abbrechen",
-    isDeleteAction = false
+    isDeleteAction = false,
+    isLoading = false
 }: ConfirmModalProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -79,14 +81,23 @@ export default function ConfirmModal({
                         variant="outline"
                         className="cursor-pointer"
                         onClick={() => onOpenChange(false)}
+                        disabled={isLoading}
                     >
                         {cancelText}
                     </Button>
                     <Button
                         onClick={onConfirm}
+                        disabled={isLoading}
                         className={isDeleteAction ? "bg-red-600 cursor-pointer hover:bg-red-700" : "bg-blue-600 cursor-pointer hover:bg-blue-700"}
                     >
-                        {confirmText}
+                        {isLoading ? (
+                            <div className="flex items-center gap-2">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Löschen...</span>
+                            </div>
+                        ) : (
+                            confirmText
+                        )}
                     </Button>
                 </DialogFooter>
             </DialogContent>

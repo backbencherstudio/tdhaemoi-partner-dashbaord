@@ -42,6 +42,7 @@ export default function ProcessTable() {
 
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [pendingAction, setPendingAction] = useState<{
         type: 'nextStep' | 'priority' | 'delete';
         orderId: string;
@@ -171,6 +172,7 @@ export default function ProcessTable() {
     const executeDeleteOrder = async () => {
         if (!pendingAction) return;
 
+        setIsDeleting(true);
         try {
             // Use context's deleteOrder which handles local state updates
             await deleteOrder(pendingAction.orderId);
@@ -184,6 +186,7 @@ export default function ProcessTable() {
             console.error('Failed to delete order:', error);
             toast.error('Fehler beim Löschen des Auftrags');
         } finally {
+            setIsDeleting(false);
             setShowConfirmModal(false);
             setPendingAction(null);
         }
@@ -231,6 +234,8 @@ export default function ProcessTable() {
             }
         }
     }, [orders, selectedOrderId]);
+
+    const memoizedOrders = React.useMemo(() => orders, [orders]);
 
     // Get status color for each step
     const getStepColor = (stepIndex: number, isActive: boolean) => {
@@ -337,7 +342,7 @@ export default function ProcessTable() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {orders.map((row, idx) => (
+                    {memoizedOrders.map((row, idx) => (
                         <TableRow
                             key={row.id}
                             className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedOrderId === row.id ? 'bg-blue-50' : ''}`}
@@ -434,7 +439,7 @@ export default function ProcessTable() {
             {pagination && (
                 <div className="flex justify-between items-center mt-6 px-4">
                     <div className="text-sm text-gray-600">
-                        Showing {((currentPage - 1) * pagination.itemsPerPage) + 1} to {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} orders
+                        Showing {((currentPage - 1) * pagination.itemsPerPage) + 1} to {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} orders ({memoizedOrders.length} on this page)
                     </div>
                     <div className="flex items-center gap-2">
                         <Button
@@ -486,6 +491,7 @@ export default function ProcessTable() {
                 }}
                 confirmText={pendingAction?.type === 'delete' ? "Ja, löschen" : "Ja, Status ändern"}
                 isDeleteAction={pendingAction?.type === 'delete'}
+                isLoading={isDeleting}
             />
         </div>
     );

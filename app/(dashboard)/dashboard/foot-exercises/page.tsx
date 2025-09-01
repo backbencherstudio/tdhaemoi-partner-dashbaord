@@ -8,6 +8,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useFootExercises } from "@/hooks/footexercises/footexercises";
 import useDebounce from "@/hooks/useDebounce";
+import toast from "react-hot-toast";
 
 interface Exercise {
     id: number;
@@ -118,8 +119,10 @@ export default function FootExercises() {
             link.download = "fussuebungen.pdf";
             link.click();
             URL.revokeObjectURL(url);
+            toast.success('PDF wurde erfolgreich heruntergeladen!');
         } catch (error) {
             console.error('Error generating PDF:', error);
+            toast.error('Fehler beim Generieren des PDFs. Bitte versuchen Sie es erneut.');
         } finally {
             setPrintLoading(false);
         }
@@ -133,13 +136,13 @@ export default function FootExercises() {
         } else if (customEmail.trim()) {
             targetEmail = customEmail.trim();
         } else {
-            alert('Bitte wählen Sie einen Kunden aus oder geben Sie eine E-Mail-Adresse ein.');
+            toast.error('Bitte wählen Sie einen Kunden aus oder geben Sie eine gültige E-Mail-Adresse ein.');
             return;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(targetEmail)) {
-            alert('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+            toast.error('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
             return;
         }
 
@@ -147,14 +150,16 @@ export default function FootExercises() {
         try {
             const pdfBlob = await generatePDF();
             await sendEmailToCustomer(pdfBlob, targetEmail);
-            alert(`PDF wurde erfolgreich an ${targetEmail} gesendet!`);
+            toast.success(`PDF wurde erfolgreich an ${targetEmail} gesendet!`);
             
+            // Clear search and custom email after successful send
+            setSearchQuery('');
             if (customEmail) {
                 setCustomEmail('');
             }
         } catch (error) {
             console.error('Error sending email:', error);
-            alert('Fehler beim Senden der E-Mail. Bitte versuchen Sie es erneut.');
+            toast.error('Fehler beim Senden der E-Mail. Bitte versuchen Sie es erneut.');
         } finally {
             setEmailLoading(false);
         }
@@ -171,6 +176,8 @@ export default function FootExercises() {
                     <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
                 </div>
             )}
+
+          
             <h1 className='text-3xl font-bold'>Fußübungen</h1>
             <p className='text-base text-gray-500 mt-2'>Wähle gezielt Übungen aus und erstelle einen individuellen Plan für deinen Kunden.</p>
 
@@ -185,27 +192,32 @@ export default function FootExercises() {
                             type='text' 
                             placeholder='Kundenname, E-Mail oder beliebige E-Mail-Adresse eingeben' 
                             value={searchQuery}
-                            onChange={(e) => {
-                                setSearchQuery(e.target.value);
-                                // If it looks like an email, set it as custom email
-                                if (e.target.value.includes('@') && e.target.value.includes('.')) {
-                                    setCustomEmail(e.target.value);
-                                } else {
-                                    setCustomEmail('');
-                                }
-                            }}
+                                                         onChange={(e) => {
+                                 const value = e.target.value;
+                                 setSearchQuery(value);
+                                 // Only set as custom email if it's a valid email format
+                                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                 if (emailRegex.test(value)) {
+                                     setCustomEmail(value);
+                                 } else {
+                                     setCustomEmail('');
+                                 }
+                             }}
                             onFocus={() => searchQuery && setShowSuggestions(true)}
                             className='w-full p-3 rounded-md border border-gray-300 pl-10 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent' 
                         />
                         <SearchIcon className='w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500' />
-                        {searchQuery && (
-                            <button
-                                onClick={clearSelection}
-                                className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
-                            >
-                                <XIcon className='w-5 h-5' />
-                            </button>
-                        )}
+                                                 {searchQuery && (
+                             <button
+                                 onClick={() => {
+                                     clearSelection();
+                                     setCustomEmail('');
+                                 }}
+                                 className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
+                             >
+                                 <XIcon className='w-5 h-5' />
+                             </button>
+                         )}
                     </div>
 
                     {/* Search Suggestions Dropdown */}
@@ -240,6 +252,18 @@ export default function FootExercises() {
                             )}
                         </div>
                     )}
+
+                    {/* Email Validation Message */}
+                    {/* {customEmail && !selectedCustomer && (
+                        <div className='mt-2 p-2 bg-green-50 border border-green-200 rounded-md'>
+                            <div className='flex items-center gap-2'>
+                                <CheckCircle className='w-4 h-4 text-green-600' />
+                                <span className='text-sm text-green-700'>
+                                    Gültige E-Mail erkannt: <strong>{customEmail}</strong>
+                                </span>
+                            </div>
+                        </div>
+                    )} */}
                 </div>
 
                 {/* Selected Customer Display */}
@@ -437,9 +461,7 @@ export default function FootExercises() {
                         )}
                     </button>
                     <span className="text-base font-normal mt-3">E-MAIL</span>
-                    {!selectedCustomer && !customEmail.trim() && (
-                        <span className="text-xs text-gray-500 mt-1 text-center">Kunde auswählen oder E-Mail eingeben</span>
-                    )}
+                  
                 </div>
             </div>
         </div>

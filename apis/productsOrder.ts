@@ -33,8 +33,7 @@ export const saveInvoicePdf = async (orderId: string, formData: FormData) => {
     }
 }
 
-
-// pdf send to customer  /customer-orders/send-invoice/3990f6ed-77fe-4b7d-8f31-3c2f715e3114
+// pdf send to customer  
 export const pdfSendToCustomer = async (orderId: string, formData: FormData) => {
     try {
         const response = await axiosClient.post(`/customer-orders/send-invoice/${orderId}`);
@@ -44,10 +43,7 @@ export const pdfSendToCustomer = async (orderId: string, formData: FormData) => 
     }
 }
 
-
-
-
-// get all orders  customer-orders?page=1&limit=10&days=7
+// get all orders 
 export const getAllOrders = async (page: number, limit: number, days: number) => {
     try {
         const response = await axiosClient.get(`/customer-orders?page=${page}&limit=${limit}&days=${days}`);
@@ -71,6 +67,17 @@ export const updateOrderStatus = async (orderId: string, orderStatus: string) =>
 export const deleteOrder = async (orderId: string) => {
     try {
         const response = await axiosClient.delete(`/customer-orders/${orderId}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+// dashabord data for order /customer-orders/stats/ratio
+export const RevenueOverview = async () => {
+    try {
+        const response = await axiosClient.get('/customer-orders/stats/retio');
         return response.data;
     } catch (error) {
         throw error;

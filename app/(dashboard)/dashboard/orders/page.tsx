@@ -7,25 +7,7 @@ import { Button } from '@/components/ui/button';
 import HighPriorityCard from '@/components/OrdersPage/HighPriorityCard/HighPriorityCard';
 import ProcessTable from '@/components/OrdersPage/ProccessTable/ProcessTable';
 import { OrdersProvider } from '@/contexts/OrdersContext';
-
-const chartData = [
-    { date: '01.06', value: 1500 },
-    { date: '02.06', value: 3200 },
-    { date: '03.06', value: 800 },
-    { date: '04.06', value: 4200 },
-    { date: '05.06', value: 2100 },
-    { date: '06.06', value: 500 },
-    { date: '07.06', value: 3700 },
-    { date: '08.06', value: 2900 },
-    { date: '09.06', value: 4700 },
-    { date: '10.06', value: 1200 },
-];
-
-// Helper for German currency formatting
-// const formatEuro = (amount: number) =>
-//     amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '\u202F€';
-
-
+import { useRevenueOverview } from '@/hooks/orders/useRevenueOverview';
 
 // Mock orders data
 const mockOrders = [
@@ -113,26 +95,47 @@ function AuftragssucheCard() {
 }
 
 export default function Orders() {
+    const { data, processedChartData, loading, error } = useRevenueOverview();
+
+    // Helper for currency formatting with comma and decimals
+    const formatEuro = (amount: number) =>
+        amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
     return (
         <OrdersProvider>
             <div className='mb-20'>
 
                 <div className='py-5 px-8 bg-white rounded-xl shadow'>
                     <div className="text-2xl font-bold mb-5">Revenue Overview</div>
-                    <div className='flex flex-col xl:flex-row items-stretch w-full gap-6'>
-                        {/* left side card  */}
-                        <div className="bg-white rounded-lg p-8 flex flex-col items-center justify-center min-w-[250px] border mb-4 md:mb-0 xl:w-4/12">
-                            <div className="text-2xl font-bold text-center mb-2">Geschäftsumsatz<br />(letzten 30 Tage)</div>
-                            <div className="text-4xl font-extrabold mt-4">-€</div>
-                        </div>
 
-                        {/* right side line chart */}
-                        <div className="w-full overflow-x-auto xl:w-8/12 flex items-stretch" style={{ minWidth: 0 }}>
-                            <LineChartComponent chartData={chartData} />
+                    {loading ? (
+                        <div className="w-full h-64 flex items-center justify-center">
+                            <div className="text-lg">Loading revenue data...</div>
                         </div>
-                    </div>
+                    ) : error ? (
+                        <div className="w-full h-64 flex items-center justify-center">
+                            <div className="text-lg text-red-500">Error: {error}</div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className='flex flex-col xl:flex-row items-stretch w-full gap-6'>
+                                {/* left side card  */}
+                                <div className="bg-white rounded-lg p-8 flex flex-col items-center justify-center min-w-[250px] border mb-4 md:mb-0 xl:w-4/12">
+                                    <div className="text-2xl font-bold text-center mb-2">Geschäftsumsatz<br />(letzten 40 Tage)</div>
+                                    <div className="text-4xl font-extrabold mt-4">
+                                        {data?.statistics?.totalRevenue ? formatEuro(data.statistics.totalRevenue) : '-€'}
+                                    </div>
+                                </div>
 
-                    <hr className='my-5 border-gray-200 border' />
+                                {/* right side line chart */}
+                                <div className="w-full overflow-x-auto xl:w-8/12 flex items-stretch" style={{ minWidth: 0 }}>
+                                    <LineChartComponent chartData={processedChartData} />
+                                </div>
+                            </div>
+
+                            <hr className='my-5 border-gray-200 border' />
+                        </>
+                    )}
 
                     {/* card bottom  */}
                     <div className="flex flex-col md:flex-row justify-between items-stretch w-full gap-0">

@@ -49,13 +49,13 @@ export const useCreateOrder = () => {
                 if (autoSendToCustomer) {
                     try {
                         await sendPdfToCustomer(orderId);
-                        toast.success('Order created successfully! PDF generated and sent to customer.');
+                        toast.success('Order created successfully!');
                     } catch (sendError) {
-                        toast.success('Order created successfully! PDF generated and saved.');
+                        toast.success('Order created successfully!');
                         toast.error('PDF saved but failed to send to customer');
                     }
                 } else {
-                    toast.success('Order created successfully! PDF generated and saved.');
+                    toast.success('Order created successfully!');
                 }
             } catch (pdfError) {
                 console.error('Failed to generate/save PDF:', pdfError);

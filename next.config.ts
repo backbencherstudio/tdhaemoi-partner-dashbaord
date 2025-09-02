@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'mysql-entertainment-sporting-health.trycloudflare.com',
+        hostname: 'magical-eye-broader-counters.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

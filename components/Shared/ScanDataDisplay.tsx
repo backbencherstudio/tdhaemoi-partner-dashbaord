@@ -190,7 +190,7 @@ export default function ScanDataDisplay({
                     <div className="flex justify-center mb-4">
                         <button
                             onClick={toggleZoom}
-                            className="bg-red-500 cursor-pointer hover:bg-red-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg shadow-lg transition-all duration-300 ease-out flex items-center gap-1 md:gap-2 text-sm md:text-base"
+                            className="bg-red-500 cursor-pointer hover:bg-red-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg transition-all duration-300 ease-out flex items-center gap-1 md:gap-2 text-sm md:text-base"
                             title="Exit zoom mode"
                         >
                             <span>✕</span>
@@ -210,7 +210,7 @@ export default function ScanDataDisplay({
                                         alt="Left foot scan - Plantaransicht"
                                         width={400}
                                         height={600}
-                                        className="w-full h-auto rounded-lg shadow-lg"
+                                        className="w-full h-auto rounded-lg "
                                     />
                                 ) : (
                                     <div className="w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px] bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 text-sm md:text-base">
@@ -230,7 +230,7 @@ export default function ScanDataDisplay({
                                         alt="Right foot scan - Plantaransicht"
                                         width={400}
                                         height={600}
-                                        className="w-full h-auto rounded-lg shadow-lg"
+                                        className="w-full h-auto rounded-lg"
                                     />
                                 ) : (
                                     <div className="w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px] bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 text-sm md:text-base">

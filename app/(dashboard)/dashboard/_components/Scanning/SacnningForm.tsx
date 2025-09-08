@@ -460,26 +460,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                     </div>
                 </div>
 
-                {/* PDF Options Section */}
-                <div className="flex flex-col md:flex-row md:items-start md:space-x-8 mb-8">
-                    <div className="mb-2 md:mb-0 min-w-max font-semibold flex items-center" style={{ fontWeight: 600 }}>
-                        PDF Optionen
-                    </div>
-                    <div className="flex flex-col space-y-3">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                className="w-5 h-5"
-                                checked={autoSendToCustomer}
-                                onChange={(e) => setAutoSendToCustomer(e.target.checked)}
-                            />
-                            <span>PDF automatisch an Kunden senden</span>
-                        </label>
-                        <div className="text-sm text-gray-600 ml-7">
-                            Wenn aktiviert, wird das PDF nach der Bestellerstellung automatisch an den Kunden gesendet.
-                        </div>
-                    </div>
-                </div>
+            
 
                 {/* Manual Entry Data Display */}
                 {manualEntry && (manualEntryData.marke || manualEntryData.modell || manualEntryData.kategorie || manualEntryData.grosse) && (

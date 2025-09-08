@@ -1,174 +1,120 @@
 "use client"
-import React, { useState, useEffect, useRef } from "react";
-import { v4 as uuidv4 } from "uuid";
-import { FaCamera } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+
 import { Input } from "@/components/ui/input";
-import Image from "next/image";
-import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { RiUserAddLine } from "react-icons/ri";
+import Benutzerverwaltung from "@/components/DashboardSettings/Benutzerverwaltung";
+import ProfileImage from "@/components/DashboardSettings/ProfileImage";
+import { useAuth } from "@/contexts/AuthContext";
+import { RiEdit2Line } from "react-icons/ri";
+import { useUpdatePartnerInfo } from "@/hooks/updatePartnerInfo/useUpdatePartnerInfo";
+import toast from 'react-hot-toast'
 
-export function ProfileAvatar({ logo, onLogoChange }: { logo: string | null, onLogoChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <div
-      className="relative w-28 h-28 mb-4 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border-4 border-gray-200 shadow-md group cursor-pointer transition-all duration-200"
-      tabIndex={0}
-      onClick={() => fileInputRef.current?.click()}
-      onKeyPress={e => { if (e.key === "Enter") fileInputRef.current?.click(); }}
-      title="Logo hochladen"
-    >
-      {logo ? (
-        <Image
-          width={100}
-          height={100}
-          src={logo}
-          alt="Logo Preview"
-          className="w-full h-full object-cover"
-        />
-      ) : (
-        <span className="text-gray-300 text-4xl">+</span>
-      )}
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        className="hidden"
-        onChange={onLogoChange}
-      />
-      {/* Camera Icon Overlay */}
-      <div
-        className="absolute bottom-3 right-3 bg-black/90 group-hover:bg-blue-600 border-2 border-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg transition-all duration-200"
-        onClick={e => {
-          e.stopPropagation();
-          fileInputRef.current?.click();
-        }}
-        title="Logo ändern"
-      >
-        <FaCamera className="text-white text-lg" />
-      </div>
-    </div>
-  );
-}
 
 export default function UserManagementAccessRights() {
-  const [partnerId, setPartnerId] = useState("");
-  const [logo, setLogo] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  // User management state
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [expandedUserIndex, setExpandedUserIndex] = useState<number | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [users, setUsers] = useState([
-    {
-      accountName: "Accountname 1",
-      employeeName: "Mitarbeiter 1",
-      email: "user1@example.com",
-      password: "••••••••",
-      financeAccess: true,
-    },
-    {
-      accountName: "Accountname 2",
-      employeeName: "Mitarbeiter 2",
-      email: "user2@example.com",
-      password: "••••••••",
-      financeAccess: false,
-    },
-    {
-      accountName: "Accountname 3",
-      employeeName: "Mitarbeiter 3",
-      email: "user3@example.com",
-      password: "••••••••",
-      financeAccess: true,
-    },
-  ]);
-  // Add user form state
-  const [newUser, setNewUser] = useState({
-    accountName: "",
-    employeeName: "",
-    email: "",
-    password: "",
-    financeAccess: false,
-  });
+
+  const { user, setUser } = useAuth()
+
+  const [isEditing, setIsEditing] = useState(false)
+  const [businessName, setBusinessName] = useState("")
+  const [accountName, setAccountName] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
+
+  const { update, isLoading } = useUpdatePartnerInfo()
 
   useEffect(() => {
-    let storedId = localStorage.getItem("partnerId");
-    if (!storedId) {
-      storedId = uuidv4();
-      localStorage.setItem("partnerId", storedId);
-    }
-    setPartnerId(storedId);
-  }, []);
+    setAccountName(user?.name ?? "")
+    setPreviewImageUrl(user?.image ?? null)
+  }, [user])
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (ev) => setLogo(ev.target?.result as string);
-      reader.readAsDataURL(e.target.files[0]);
+  const handleImageChange = (file: File, dataUrl: string) => {
+    setSelectedImageFile(file)
+    setPreviewImageUrl(dataUrl)
+  }
+
+  const handleToggle = async () => {
+    if (isEditing) {
+      try {
+        const res = await update({ name: accountName, businessName, phone: phoneNumber, image: selectedImageFile })
+        if (user) {
+          const newImage = (res?.user?.image as string) || previewImageUrl || user.image || null
+          setUser({ ...user, name: accountName, image: newImage })
+        }
+        toast.success('Profil erfolgreich aktualisiert')
+      } catch (e: any) {
+        toast.error(e?.message || 'Aktualisierung fehlgeschlagen')
+        return
+      }
     }
-  };
+    setIsEditing(prev => !prev)
+  }
+
+  const handleCancel = () => {
+    // revert local changes and exit edit
+    setAccountName(user?.name ?? "")
+    setBusinessName("")
+    setPhoneNumber("")
+    setSelectedImageFile(null)
+    setPreviewImageUrl(user?.image ?? null)
+    setIsEditing(false)
+  }
 
   return (
-    <div className="">
-      {/* Profile Card */}
-      <div className=" flex flex-col items-center relative">
-        {/* Logo Avatar with Camera Icon */}
-        <div className="relative mb-4">
-          <div
-            className="relative w-28 h-28 rounded-full bg-gray-100 flex items-center justify-center border-2 border-[#62A07C] overflow-hidden shadow-md group cursor-pointer transition-all duration-200"
-            tabIndex={0}
-            onClick={() => fileInputRef.current?.click()}
-            onKeyPress={e => { if (e.key === "Enter") fileInputRef.current?.click(); }}
-            title="Logo hochladen"
+    <div className="relative pt-10">
+      <div className="absolute right-0 top-0 flex items-center gap-2 z-20">
+        {isEditing && (
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={isLoading}
+            className="px-3 py-1.5 rounded-md border border-gray-200 bg-white text-gray-700 text-sm hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+            title="Änderungen verwerfen"
           >
-            {logo ? (
-              <Image
-                width={100}
-                height={100}
-                src={logo}
-                alt="Logo Preview"
-                className="w-full h-full object-cover"
-              />
+            Abbrechen
+          </button>
+        )}
+        <button
+          type="button"
+          aria-label={isEditing ? "Fertig" : "Bearbeiten"}
+          title={isEditing ? "Fertig" : "Bearbeiten"}
+          className={`flex cursor-pointer items-center gap-2 px-3 py-1.5 rounded-md border text-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${isEditing ? 'bg-[#4a8a6a] text-white border-[#4a8a6a] hover:bg-[#4a8a6a]/80' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+          onClick={handleToggle}
+          disabled={isLoading}
+          aria-busy={isLoading}
+        >
+          {isEditing ? (
+            isLoading ? (
+              <>
+                <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Speichern…
+              </>
             ) : (
-              <span className="text-gray-300 text-4xl">+</span>
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              ref={fileInputRef}
-              className="hidden"
-              onChange={handleLogoChange}
-            />
-          </div>
-          {/* Camera Icon Overlay - positioned outside the overflow-hidden container */}
-          <div
-            className="absolute bottom-0 -right-0 bg-black/90 group-hover:bg-blue-600 border border-white rounded-full w-9 h-9 flex items-center justify-center shadow-lg transition-all duration-200 cursor-pointer z-10"
-            onClick={e => {
-              e.stopPropagation();
-              fileInputRef.current?.click();
-            }}
-            title="Logo ändern"
-          >
-            <FaCamera className="text-white text-lg" />
-          </div>
-        </div>
-        <p className="text-sm text-gray-500 mt-4 text-center max-w-lg">Laden Sie hier Ihr Firmenlogo hoch, um es an verschiedenen Stellen wie Werkstattzetteln, Rechnungen und der Partnerübersicht anzuzeigen.</p>
+              <>
+                <RiEdit2Line className="text-base" />
+                Fertig
+              </>
+            )
+          ) : (
+            <>
+              <RiEdit2Line className="text-base" />
+              Bearbeiten
+            </>
+          )}
+        </button>
       </div>
+
+      {/* Profile Image (extracted) */}
+      <ProfileImage src={previewImageUrl ?? user?.image ?? null} editable={isEditing} onChange={handleImageChange} />
 
       {/* Partner ID */}
       <div className="text-center flex flex-col items-center mb-14 mt-5">
         <h1 className="font-bold text-lg tracking-wide mb-1">Partner ID</h1>
         <Input
-          value={partnerId}
+          value={user?.id ?? ''}
           readOnly
           className="w-80 text-center bg-gray-100 border border-gray-200 rounded-lg mt-1 text-base font-semibold text-gray-700 py-2 tracking-wide cursor-not-allowed"
         />
@@ -182,7 +128,13 @@ export default function UserManagementAccessRights() {
         <div className="flex flex-col md:flex-row gap-4 w-full">
           <div className="w-full md:w-1/2">
             <label className="block text-sm font-medium mb-1">Geschäftsname</label>
-            <Input type="text" className="w-full" />
+            <Input
+              type="text"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              readOnly={!isEditing}
+              className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
+            />
           </div>
 
           <div className="w-full md:w-1/2">
@@ -191,7 +143,7 @@ export default function UserManagementAccessRights() {
               type="email"
               className="w-full bg-gray-100 cursor-not-allowed"
               readOnly
-              value="partner@example.com"
+              value={user?.email ?? ''}
             />
 
           </div>
@@ -200,44 +152,39 @@ export default function UserManagementAccessRights() {
         {/* account name and create account button */}
         <div className="flex flex-col md:flex-row md:items-end gap-2 w-full">
           <div className="w-full md:w-1/2">
-            <label className="block text-sm font-medium mb-1">Account-Name / Mitarbeiternamen</label>
-            <Input type="text" className="w-full" />
+            <label className="block text sm font-medium mb-1">Account-Name / Mitarbeiternamen</label>
+            <Input
+              type="text"
+              value={accountName}
+              onChange={(e) => setAccountName(e.target.value)}
+              readOnly={!isEditing}
+              className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
+            />
           </div>
-          <div className="w-full md:w-1/2">
-            <button
-              type="button"
-              className="md:ml-4 cursor-pointer underline hover:text-blue-600 transition-colors"
-              onClick={() => setShowAddUserModal(true)}
-            >
-              Neuen Account für Mitarbeiter erstellen
-            </button>
-          </div>
-        </div>
-
-
-        {/* main and other locations */}
-        <div className="flex flex-col md:flex-row gap-4 w-full">
-          <div className="w-full md:w-1/2">
-            <label className="block text-sm font-medium mb-1">Hauptstandort</label>
-            <Input type="text" className="w-full" />
-          </div>
-
-          <div className="w-full md:w-1/2">
-            <label className="block text-sm font-medium mb-1">Weitere Standorte</label>
-            <Input type="text" className="w-full" />
-          </div>
+          <div className="w-full md:w-1/2"></div>
         </div>
 
         {/* email and phone number of business */}
         <div className="flex flex-col md:flex-row gap-4 w-full">
           <div className="w-full md:w-1/2">
             <label className="block text-sm font-medium mb-1">Absender-E-Mail für Kundenmails</label>
-            <Input type="email" className="w-full" />
+            <Input
+              type="email"
+              value={user?.email ?? ''}
+              readOnly
+              className="w-full bg-gray-100 cursor-not-allowed"
+            />
           </div>
 
           <div className="w-full md:w-1/2">
             <label className="block text-sm font-medium mb-1">Telefonnummer Geschäft</label>
-            <Input type="text" className="w-full" />
+            <Input
+              type="text"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              readOnly={!isEditing}
+              className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
+            />
           </div>
         </div>
 
@@ -282,181 +229,8 @@ export default function UserManagementAccessRights() {
           </div>
         </div>
       </div>
-
-
-      {/* User Management Section */}
-      <div className="my-16">
-        <h2 className="font-bold text-2xl">Benutzerverwaltung</h2>
-        <div className="mt-6">
-          <div className="font-semibold text-lg mb-5 flex items-center gap-2">
-            <span>Benutzer</span>
-            <span
-              className="text-xl cursor-pointer hover:text-blue-600 transition-colors"
-              onClick={() => setShowAddUserModal(true)}
-              title="Neuen Benutzer hinzufügen"
-            >
-              <RiUserAddLine className="text-2xl" />
-            </span>
-
-          </div>
-          <div className=" space-y-2">
-            {users.map((user, idx) => (
-              <div key={idx} className="bg-white rounded-lg border border-gray-200 p-3 hover:shadow-sm transition-all duration-200">
-                <div
-                  className="flex items-center justify-between cursor-pointer group"
-                  onClick={() => setExpandedUserIndex(expandedUserIndex === idx ? null : idx)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold text-sm">
-                        {user.employeeName.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-900">{user.accountName}</span>
-                      <div className="text-xs text-gray-500">{user.email}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-400 group-hover:text-blue-600 transition-colors">
-                      {expandedUserIndex === idx ? "▲" : "▼"}
-                    </span>
-                  </div>
-                </div>
-                {expandedUserIndex === idx && (
-                  <div className="ml-11 mt-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 w-full max-w-lg shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Accountname</label>
-                          <div className="p-2 bg-white rounded border border-gray-200 text-sm">
-                            {user.accountName}
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Mitarbeitername</label>
-                          <div className="p-2 bg-white rounded border border-gray-200 text-sm">
-                            {user.employeeName}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">E-Mail-Adresse</label>
-                          <div className="p-2 bg-white rounded border border-gray-200 text-sm">
-                            {user.email}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <label className="block text-sm font-medium text-gray-700">Finanz-Zugriff:</label>
-                          <div className="flex items-center gap-2">
-                            <Switch checked={user.financeAccess} disabled />
-                            <span className={`text-sm px-2 py-1 rounded-full ${user.financeAccess
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-600'
-                              }`}>
-                              {user.financeAccess ? "Aktiviert" : "Deaktiviert"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      {/* Add User Modal */}
-      <Dialog open={showAddUserModal} onOpenChange={setShowAddUserModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Neuen Benutzer hinzufügen</DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={e => {
-              e.preventDefault();
-              setUsers([...users, newUser]);
-              setNewUser({
-                accountName: "",
-                employeeName: "",
-                email: "",
-                password: "",
-                financeAccess: false,
-              });
-              setShowAddUserModal(false);
-            }}
-            className="space-y-3"
-          >
-            <div>
-              <label className="block text-sm font-medium mb-1">Accountname</label>
-              <Input
-                type="text"
-                className="w-full"
-                required
-                value={newUser.accountName}
-                onChange={e => setNewUser({ ...newUser, accountName: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Mitarbeitername</label>
-              <Input
-                type="text"
-                className="w-full"
-                required
-                value={newUser.employeeName}
-                onChange={e => setNewUser({ ...newUser, employeeName: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">E-Mail-Adresse</label>
-              <Input
-                type="email"
-                className="w-full"
-                required
-                value={newUser.email}
-                onChange={e => setNewUser({ ...newUser, email: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Passwort</label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  className="w-full pr-10"
-                  required
-                  value={newUser.password}
-                  onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  {showPassword ? "👁️" : "👁️‍🗨️"}
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <label className="block text-sm font-medium">Zugriff auf Finanzen:</label>
-              <Switch
-                checked={newUser.financeAccess}
-                onCheckedChange={checked => setNewUser({ ...newUser, financeAccess: checked })}
-              />
-              <span className="text-xs">{newUser.financeAccess ? "Ja" : "Nein"}</span>
-            </div>
-            <DialogFooter>
-              <button
-                type="submit"
-                className="w-full mt-4 py-2 rounded bg-zinc-900 text-white border-none hover:bg-zinc-800 transition"
-              >
-                Benutzer hinzufügen
-              </button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {/* User Management Section (extracted) */}
+      <Benutzerverwaltung />
     </div>
   );
 }

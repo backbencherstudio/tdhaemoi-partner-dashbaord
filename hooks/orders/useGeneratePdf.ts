@@ -32,6 +32,11 @@ export interface OrderPdfData {
         email: string;
         image: string;
         role: string;
+        phone: string;
+        absenderEmail: string;
+        bankName: string;
+        bankNumber: string;
+        busnessName: string;
     };
     product: {
         id: string;

@@ -18,6 +18,9 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import UserInfoUpdateModal from './UserInfoUpdateModal';
+import { ScanData } from '@/types/scan';
+import { FiEdit } from 'react-icons/fi';
 
 
 interface Customer {
@@ -108,6 +111,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [autoSendToCustomer, setAutoSendToCustomer] = useState(false);
     const [realOrderData, setRealOrderData] = useState<any>(null);
+    const [showUserInfoUpdateModal, setShowUserInfoUpdateModal] = useState(false);
 
     // Listen for order data updates from useCreateOrder hook
     useEffect(() => {
@@ -560,6 +564,10 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 </div>
             </div>
 
+            <button onClick={() => setShowUserInfoUpdateModal(true)}>
+                <FiEdit className='text-2xl cursor-pointer' />
+            </button>
+
             {/* Manual Entry Modal */}
             <ManualEntryModal
                 isOpen={showManualEntryModal}
@@ -574,6 +582,16 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 onClose={handleFeetFirstModalClose}
                 onSave={handleFeetFirstModalSave}
             />
+
+            {/* User Info Update Modal */}
+            <UserInfoUpdateModal
+                isOpen={showUserInfoUpdateModal}
+                onOpenChange={setShowUserInfoUpdateModal}
+                scanData={customer as ScanData}
+                onInfoUpdate={() => {}}
+            />
+
+         
 
             {/* Confirmation Modal */}
             <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
@@ -602,6 +620,8 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+
 
             {/* PDF Generation Modal */}
             <InvoiceGeneratePdfModal

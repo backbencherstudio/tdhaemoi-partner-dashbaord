@@ -8,9 +8,9 @@ import shoesImg from '@/public/images/scanning/shoes.png'
 import emailImg from '@/public/images/scanning/email.png'
 import logoImg from '@/public/images/scanning/logo.png'
 import Link from 'next/link';
-import SacnningForm from '../../_components/Scanning/SacnningForm';
-import ScannningDataPage from '../../_components/ScannningData/ScannningDataPage';
-import SetPriceModal from '../../_components/Scanning/SetPriceModal';
+import SacnningForm from '@/app/(dashboard)/dashboard/_components/Scanning/SacnningForm';
+import ScannningDataPage from '@/app/(dashboard)/dashboard/_components/ScannningData/ScannningDataPage';
+import SetPriceModal from '@/app/(dashboard)/dashboard/_components/Scanning/SetPriceModal';
 import { useSingleCustomer } from '@/hooks/customer/useSingleCustomer'
 import { FaMoneyBillWave } from 'react-icons/fa'
 

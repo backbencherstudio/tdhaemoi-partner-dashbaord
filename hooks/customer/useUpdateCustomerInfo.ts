@@ -28,6 +28,7 @@ interface CustomerUpdateData {
     // Pricing information
     fußanalyse?: number
     einlagenversorgung?: number
+    zusatzpreis?: number
 }
 
 interface UseUpdateCustomerInfoReturn {

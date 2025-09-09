@@ -1,50 +1,7 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 import { generatePdfFromElement, pdfPresets } from '@/lib/pdfGenerator';
-
-export interface OrderPdfData {
-    id: string;
-    customerId: string;
-    partnerId: string;
-    fußanalyse: number;
-    einlagenversorgung: number;
-    totalPrice: number;
-    productId: string;
-    orderStatus: string;
-    statusUpdate: string;
-    invoice: any;
-    createdAt: string;
-    updatedAt: string;
-    customer: {
-        id: string;
-        customerNumber: number;
-        vorname: string;
-        nachname: string;
-        email: string;
-        telefonnummer: string;
-        wohnort: string;
-    };
-    partner: {
-        id: string;
-        name: string;
-        email: string;
-        image: string;
-        role: string;
-    };
-    product: {
-        id: string;
-        name: string;
-        rohlingHersteller: string;
-        artikelHersteller: string;
-        versorgung: string;
-        material: string;
-        langenempfehlung: Record<string, number>;
-        status: string;
-        diagnosis_status: string | null;
-        createdAt: string;
-        updatedAt: string;
-    };
-}
+import { OrderPdfData } from '@/hooks/orders/useGeneratePdf';
 
 interface InvoicePageProps {
     data: OrderPdfData;
@@ -138,7 +95,11 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                     }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start' }}>
                             <div style={{ width: '70px', height: '120px', marginRight: '30px', flexShrink: 0 }}>
-                                <img src="/images/pdfLogo.png" alt="FeetFirst Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                                <img 
+                                    src={data.partner.image || "/images/pdfLogo.png"} 
+                                    alt={`${data.partner.busnessName || data.partner.name} Logo`} 
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                                />
                             </div>
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: 'bold', fontSize: '20px', marginBottom: '12px', textAlign: 'left' }}>
@@ -340,9 +301,9 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                             padding: '0 40px',
                             height: '100%'
                         }}>
-                            <p>+43 595024330</p>
-                            <p>FeetF1rst GmbH</p>
-                            <p>info@feetf1rst.com</p>
+                            <p>{data.partner.phone || '+43 595024330'}</p>
+                            <p>{data.partner.busnessName || 'FeetF1rst GmbH'}</p>
+                            <p>{data.partner.absenderEmail || data.partner.email || 'info@feetf1rst.com'}</p>
                         </div>
                     </div>
                 </div>

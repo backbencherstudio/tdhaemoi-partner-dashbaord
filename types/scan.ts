@@ -26,6 +26,13 @@ export interface ScanData {
     geburtsdatum?: string;
     strasse?: string;
     land?: string;
+    // Workshop slip fields
+    mitarbeiter?: string;
+    versorgung?: string;
+    datumAuftrag?: string;
+    geschaeftsstandort?: string;
+    fertigstellungBis?: string;
+    bezahlt?: string;
     // Measurements
     fusslange1: string;
     fusslange2: string;

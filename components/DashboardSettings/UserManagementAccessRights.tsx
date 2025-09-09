@@ -18,6 +18,10 @@ export default function UserManagementAccessRights() {
   const [businessName, setBusinessName] = useState("")
   const [accountName, setAccountName] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
+  const [absenderEmail, setAbsenderEmail] = useState("")
+  const [busnessName, setBusnessName] = useState("")
+  const [bankName, setBankName] = useState("")
+  const [bankNumber, setBankNumber] = useState("")
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
 
@@ -25,6 +29,11 @@ export default function UserManagementAccessRights() {
 
   useEffect(() => {
     setAccountName(user?.name ?? "")
+    setPhoneNumber(user?.phone ?? "")
+    setAbsenderEmail(user?.absenderEmail ?? "")
+    setBusnessName(user?.busnessName ?? "")
+    setBankName(user?.bankName ?? "")
+    setBankNumber(user?.bankNumber ?? "")
     setPreviewImageUrl(user?.image ?? null)
   }, [user])
 
@@ -36,10 +45,28 @@ export default function UserManagementAccessRights() {
   const handleToggle = async () => {
     if (isEditing) {
       try {
-        const res = await update({ name: accountName, businessName, phone: phoneNumber, image: selectedImageFile })
+        const res = await update({ 
+          name: accountName, 
+          businessName, 
+          phone: phoneNumber, 
+          absenderEmail,
+          busnessName,
+          bankName,
+          bankNumber,
+          image: selectedImageFile 
+        })
         if (user) {
           const newImage = (res?.user?.image as string) || previewImageUrl || user.image || null
-          setUser({ ...user, name: accountName, image: newImage })
+          setUser({ 
+            ...user, 
+            name: accountName, 
+            phone: phoneNumber,
+            absenderEmail: absenderEmail,
+            busnessName: busnessName,
+            bankName: bankName,
+            bankNumber: bankNumber,
+            image: newImage 
+          })
         }
         toast.success('Profil erfolgreich aktualisiert')
       } catch (e: any) {
@@ -54,7 +81,11 @@ export default function UserManagementAccessRights() {
     // revert local changes and exit edit
     setAccountName(user?.name ?? "")
     setBusinessName("")
-    setPhoneNumber("")
+    setPhoneNumber(user?.phone ?? "")
+    setAbsenderEmail(user?.absenderEmail ?? "")
+    setBusnessName(user?.busnessName ?? "")
+    setBankName(user?.bankName ?? "")
+    setBankNumber(user?.bankNumber ?? "")
     setSelectedImageFile(null)
     setPreviewImageUrl(user?.image ?? null)
     setIsEditing(false)
@@ -130,8 +161,8 @@ export default function UserManagementAccessRights() {
             <label className="block text-sm font-medium mb-1">Geschäftsname</label>
             <Input
               type="text"
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
+              value={busnessName}
+              onChange={(e) => setBusnessName(e.target.value)}
               readOnly={!isEditing}
               className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
             />
@@ -148,6 +179,7 @@ export default function UserManagementAccessRights() {
 
           </div>
         </div>
+
 
         {/* account name and create account button */}
         <div className="flex flex-col md:flex-row md:items-end gap-2 w-full">
@@ -170,9 +202,10 @@ export default function UserManagementAccessRights() {
             <label className="block text-sm font-medium mb-1">Absender-E-Mail für Kundenmails</label>
             <Input
               type="email"
-              value={user?.email ?? ''}
-              readOnly
-              className="w-full bg-gray-100 cursor-not-allowed"
+              value={absenderEmail}
+              onChange={(e) => setAbsenderEmail(e.target.value)}
+              readOnly={!isEditing}
+              className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
             />
           </div>
 
@@ -194,38 +227,56 @@ export default function UserManagementAccessRights() {
             <label className="block text-sm font-medium mb-1">Bankname für den Empfang von Auszahlungen durch FeetF1rst</label>
             <Input
               type="text"
-              className="w-full bg-gray-100 cursor-not-allowed"
-              readOnly
-              value="Deutsche Bank"
+              value={bankName}
+              onChange={(e) => setBankName(e.target.value)}
+              readOnly={!isEditing || (user?.bankName !== null && user?.bankName !== "")}
+              className={`${(!isEditing || (user?.bankName !== null && user?.bankName !== "")) ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              This field  cannot be changed manually. If you believe the information is incorrect or needs to be updated, please click "Send Request to FeetF1rst" to submit a change request. Our team will review and update the data accordingly.
-            </p>
-            <button
-              type="button"
-              className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              Send Request to FeetF1rst
-            </button>
+            {user?.bankName !== null && user?.bankName !== "" ? (
+              <>
+                <p className="text-xs text-gray-500 mt-1">
+                  This field cannot be changed manually. If you believe the information is incorrect or needs to be updated, please click "Send Request to FeetF1rst" to submit a change request. Our team will review and update the data accordingly.
+                </p>
+                <button
+                  type="button"
+                  className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  Send Request to FeetF1rst
+                </button>
+              </>
+            ) : (
+              <p className="text-xs text-gray-500 mt-1">
+                Enter your bank name for receiving payments from FeetF1rst.
+              </p>
+            )}
           </div>
 
           <div className="w-full md:w-1/2">
             <label className="block text-sm font-medium mb-1">IBAN für den Empfang von Auszahlungen durch FeetF1rst</label>
             <Input
               type="text"
-              className="w-full bg-gray-100 cursor-not-allowed"
-              readOnly
-              value="DE89 3704 0044 0532 0130 00"
+              value={bankNumber}
+              onChange={(e) => setBankNumber(e.target.value)}
+              readOnly={!isEditing || (user?.bankNumber !== null && user?.bankNumber !== "")}
+              className={`${(!isEditing || (user?.bankNumber !== null && user?.bankNumber !== "")) ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
             />
-            <p className="text-xs text-gray-500 mt-1">
-              This field cannot be changed manually. If you believe the information is incorrect or needs to be updated, please click "Send Request to FeetF1rst" to submit a change request. Our team will review and update the data accordingly.
-            </p>
-            <button
-              type="button"
-              className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              Send Request to FeetF1rst
-            </button>
+            {user?.bankNumber !== null && user?.bankNumber !== "" ? (
+              <>
+                <p className="text-xs text-gray-500 mt-1">
+                  This field cannot be changed manually. If you believe the information is incorrect or needs to be updated, please click "Send Request to FeetF1rst" to submit a change request. Our team will review and update the data accordingly.
+                </p>
+                <button
+                  type="button"
+                  className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  Send Request to FeetF1rst
+                </button>
+              </>
+            ) : (
+              <p className="text-xs text-gray-500 mt-1">
+                Enter your IBAN for receiving payments from FeetF1rst.
+              </p>
+            )}
           </div>
         </div>
       </div>

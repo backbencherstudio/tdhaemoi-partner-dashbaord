@@ -9,6 +9,13 @@ interface User {
   email: string;
   image: string | null;
   role: string;
+  phone: string | null;
+  absenderEmail: string | null;
+  bankName: string | null;
+  bankNumber: string | null;
+  busnessName: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface AuthContextType {

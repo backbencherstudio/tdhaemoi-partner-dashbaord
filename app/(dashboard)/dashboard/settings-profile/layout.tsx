@@ -13,6 +13,7 @@ import {
     Monitor,
     ClipboardList,
     FootprintsIcon,
+    Lock,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -24,6 +25,12 @@ const sidebarData = [
         icon: Settings,
         label: "Grundeinstellungen",
         href: "/dashboard/settings-profile"
+    },
+    {
+        id: "changes-password",
+        icon: Lock,
+        label: "Passwort ändern",
+        href: "/dashboard/settings-profile/changes-password"
     },
     {
         id: "communication",

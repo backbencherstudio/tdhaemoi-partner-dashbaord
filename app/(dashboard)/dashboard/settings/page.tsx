@@ -3,7 +3,7 @@ import React from 'react'
 import Link from 'next/link'
 import { BiCube } from 'react-icons/bi'
 import { BiMessageDetail } from 'react-icons/bi'
-import { FiSettings, FiUser } from 'react-icons/fi'
+import { FiSettings } from 'react-icons/fi'
 import { TbBrandFeedly } from 'react-icons/tb'
 import { BiSupport } from 'react-icons/bi'
 import { BiGlobe } from 'react-icons/bi'
@@ -47,13 +47,7 @@ export default function Settingss() {
             className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors",
             alt: "Settings",
         },
-        {
-            label: "Profil",
-            href: "/dashboard/profile",
-            icon: FiUser,
-            className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors",
-            alt: "Settings",
-        },
+
         {
             label: "Software",
             href: "/dashboard/software",
@@ -90,7 +84,7 @@ export default function Settingss() {
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">Accountverwaltung</h1>
 
-            <Link href="/dashboard/account" className="block mb-8 w-full lg:w-[40%]">
+            <Link href="/dashboard/settings-profile/users" className="block mb-8 w-full lg:w-[40%]">
                 <div className="flex items-center border-2 border-gray-600 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors p-4">
                     <div className="w-50 h-30 bg-gray-900 rounded-md mr-4"></div>
                     <div className='flex justify-between items-center w-full'>

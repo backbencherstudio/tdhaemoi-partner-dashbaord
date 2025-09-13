@@ -14,6 +14,7 @@ interface User {
   bankName: string | null;
   bankNumber: string | null;
   busnessName: string | null;
+  mainBusinessLocation: string | null;
   createdAt: string;
   updatedAt: string;
 }

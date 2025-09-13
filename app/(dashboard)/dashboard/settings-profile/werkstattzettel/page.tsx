@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useRef, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -8,14 +8,45 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { useWerkstattzettel } from "@/hooks/settings/useWerkstattzettel";
 
 export default function WerkstattzettelPage() {
-  const [mitarbeiter, setMitarbeiter] = useState("");
-  const [werktage, setWerktage] = useState("5");
-  const [abholstandort, setAbholstandort] = useState<"geschaeft" | "eigen">("geschaeft");
-  const [firmenlogo, setFirmenlogo] = useState<"ja" | "nein">("ja");
-  const [auftragSofort, setAuftragSofort] = useState<"ja" | "manuell">("ja");
-  const [versorgungsart, setVersorgungsart] = useState<"ja" | "nein">("ja");
+  const {
+    settings,
+    employeeSearch,
+    employees,
+    isSearching,
+    showSuggestions,
+    hasSearched,
+    isSaving,
+    handleEmployeeSelect,
+    handleEmployeeSearchChange,
+    updateSetting,
+    setShowSuggestions,
+    saveWerkstattzettel,
+  } = useWerkstattzettel();
+
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        inputRef.current &&
+        !inputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [setShowSuggestions]);
 
   return (
     <div className="max-w-3xl mx-auto mt-10 font-sans">
@@ -25,14 +56,79 @@ export default function WerkstattzettelPage() {
       </p>
 
       {/* Mitarbeiter */}
-      <div className="mb-6">
+      <div className="mb-6 relative">
         <label className="font-semibold block mb-2">Mitarbeiter</label>
-        <Input
-          placeholder="Mitarbeitername"
-          value={mitarbeiter}
-          onChange={e => setMitarbeiter(e.target.value)}
-          className="border border-gray-600"
-        />
+        <div className="relative">
+          <Input
+            ref={inputRef}
+            placeholder="Mitarbeitername eingeben..."
+            value={employeeSearch}
+            onChange={e => handleEmployeeSearchChange(e.target.value)}
+            onFocus={() => {
+              if (employees.length > 0) {
+                setShowSuggestions(true);
+              }
+            }}
+            onBlur={() => {
+              // Small delay to allow click on suggestion before closing
+              setTimeout(() => setShowSuggestions(false), 150);
+            }}
+            className="border border-gray-600"
+          />
+          {isSearching && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+            </div>
+          )}
+        </div>
+
+        {/* Employee Suggestions Dropdown */}
+        {showSuggestions && (
+          <div
+            ref={suggestionsRef}
+            className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+          >
+            {isSearching ? (
+              <div className="px-4 py-3 text-center text-gray-500">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                  <span>Suche Mitarbeiter...</span>
+                </div>
+              </div>
+            ) : employees.length > 0 ? (
+              employees.map((employee) => (
+                <div
+                  key={employee.id}
+                  className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // Prevent input blur
+                    handleEmployeeSelect(employee);
+                  }}
+                >
+                  <div className="font-medium text-gray-900">{employee.employeeName}</div>
+                  <div className="text-sm text-gray-500">{employee.email}</div>
+                </div>
+              ))
+            ) : hasSearched ? (
+              <div className="px-4 py-3 text-center text-gray-500">
+                <div className="flex items-center justify-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.709" />
+                  </svg>
+                  <span>Keine Mitarbeiter gefunden</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {/* Selected Employee Display */}
+        {settings.mitarbeiter && (
+          <div className="mt-2 p-2 bg-gray-50 rounded-md">
+            <span className="text-sm text-gray-600">Ausgewählter Mitarbeiter: </span>
+            <span className="font-medium">{settings.mitarbeiter}</span>
+          </div>
+        )}
       </div>
 
       {/* Werktage Dropdown */}
@@ -40,7 +136,7 @@ export default function WerkstattzettelPage() {
         <label className="font-semibold block mb-2">
           Standardberechnung des Fertigstellungsdatums
         </label>
-        <Select value={werktage} onValueChange={setWerktage}>
+        <Select value={settings.werktage} onValueChange={(value) => updateSetting('werktage', value)}>
           <SelectTrigger>
             <SelectValue placeholder="Werktage wählen" />
           </SelectTrigger>
@@ -61,8 +157,8 @@ export default function WerkstattzettelPage() {
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={abholstandort === "geschaeft"}
-              onChange={() => setAbholstandort("geschaeft")}
+              checked={settings.abholstandort === "geschaeft"}
+              onChange={() => updateSetting('abholstandort', "geschaeft")}
               className="w-6 h-6 accent-black"
             />
             Dieselben wie Geschäftsstandorte
@@ -70,8 +166,8 @@ export default function WerkstattzettelPage() {
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={abholstandort === "eigen"}
-              onChange={() => setAbholstandort("eigen")}
+              checked={settings.abholstandort === "eigen"}
+              onChange={() => updateSetting('abholstandort', "eigen")}
               className="w-6 h-6 accent-black"
             />
             Eigene definieren
@@ -88,8 +184,8 @@ export default function WerkstattzettelPage() {
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              checked={firmenlogo === "ja"}
-              onChange={() => setFirmenlogo("ja")}
+              checked={settings.firmenlogo === "ja"}
+              onChange={() => updateSetting('firmenlogo', "ja")}
               className="w-6 h-6 accent-black"
             />
             Ja
@@ -97,8 +193,8 @@ export default function WerkstattzettelPage() {
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              checked={firmenlogo === "nein"}
-              onChange={() => setFirmenlogo("nein")}
+              checked={settings.firmenlogo === "nein"}
+              onChange={() => updateSetting('firmenlogo', "nein")}
               className="w-6 h-6 accent-black"
             />
             Nein
@@ -115,8 +211,8 @@ export default function WerkstattzettelPage() {
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              checked={auftragSofort === "ja"}
-              onChange={() => setAuftragSofort("ja")}
+              checked={settings.auftragSofort === "ja"}
+              onChange={() => updateSetting('auftragSofort', "ja")}
               className="w-6 h-6 accent-black"
             />
             Ja
@@ -124,8 +220,8 @@ export default function WerkstattzettelPage() {
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              checked={auftragSofort === "manuell"}
-              onChange={() => setAuftragSofort("manuell")}
+              checked={settings.auftragSofort === "manuell"}
+              onChange={() => updateSetting('auftragSofort', "manuell")}
               className="w-6 h-6 accent-black"
             />
             Nein, manuell bestätigen
@@ -142,8 +238,8 @@ export default function WerkstattzettelPage() {
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              checked={versorgungsart === "ja"}
-              onChange={() => setVersorgungsart("ja")}
+              checked={settings.versorgungsart === "ja"}
+              onChange={() => updateSetting('versorgungsart', "ja")}
               className="w-6 h-6 accent-black"
             />
             Ja
@@ -151,14 +247,31 @@ export default function WerkstattzettelPage() {
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              checked={versorgungsart === "nein"}
-              onChange={() => setVersorgungsart("nein")}
+              checked={settings.versorgungsart === "nein"}
+              onChange={() => updateSetting('versorgungsart', "nein")}
               className="w-6 h-6 accent-black"
             />
             Nein
           </label>
         </div>
       </div>
+       {/* Save Button */}
+       <div className="mt-8">
+         <button 
+           onClick={saveWerkstattzettel}
+           disabled={isSaving || !settings.mitarbeiterId}
+           className={`px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer capitalize transform hover:scale-105 flex items-center justify-center gap-2 ${
+             isSaving || !settings.mitarbeiterId
+               ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+               : 'bg-[#62A07C] text-white hover:bg-[#4A8A6A]'
+           }`}
+         >
+           {isSaving && (
+             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+           )}
+           {isSaving ? 'Speichern...' : 'Speichern'}
+         </button>
+       </div>
     </div>
   );
 }

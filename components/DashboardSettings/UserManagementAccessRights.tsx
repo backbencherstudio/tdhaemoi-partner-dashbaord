@@ -15,10 +15,10 @@ export default function UserManagementAccessRights() {
   const { user, setUser } = useAuth()
 
   const [isEditing, setIsEditing] = useState(false)
-  const [businessName, setBusinessName] = useState("")
   const [accountName, setAccountName] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [absenderEmail, setAbsenderEmail] = useState("")
+  const [mainBusinessLocation, setMainBusinessLocation] = useState("")
   const [busnessName, setBusnessName] = useState("")
   const [bankName, setBankName] = useState("")
   const [bankNumber, setBankNumber] = useState("")
@@ -32,6 +32,7 @@ export default function UserManagementAccessRights() {
     setPhoneNumber(user?.phone ?? "")
     setAbsenderEmail(user?.absenderEmail ?? "")
     setBusnessName(user?.busnessName ?? "")
+    setMainBusinessLocation(user?.mainBusinessLocation ?? "")
     setBankName(user?.bankName ?? "")
     setBankNumber(user?.bankNumber ?? "")
     setPreviewImageUrl(user?.image ?? null)
@@ -45,27 +46,28 @@ export default function UserManagementAccessRights() {
   const handleToggle = async () => {
     if (isEditing) {
       try {
-        const res = await update({ 
-          name: accountName, 
-          businessName, 
-          phone: phoneNumber, 
+        const res = await update({
+          name: accountName,
+          mainBusinessLocation,
+          phone: phoneNumber,
           absenderEmail,
           busnessName,
           bankName,
           bankNumber,
-          image: selectedImageFile 
+          image: selectedImageFile
         })
         if (user) {
           const newImage = (res?.user?.image as string) || previewImageUrl || user.image || null
-          setUser({ 
-            ...user, 
-            name: accountName, 
+          setUser({
+            ...user,
+            name: accountName,
+            mainBusinessLocation: mainBusinessLocation,
             phone: phoneNumber,
             absenderEmail: absenderEmail,
             busnessName: busnessName,
             bankName: bankName,
             bankNumber: bankNumber,
-            image: newImage 
+            image: newImage
           })
         }
         toast.success('Profil erfolgreich aktualisiert')
@@ -80,7 +82,7 @@ export default function UserManagementAccessRights() {
   const handleCancel = () => {
     // revert local changes and exit edit
     setAccountName(user?.name ?? "")
-    setBusinessName("")
+    setMainBusinessLocation(user?.mainBusinessLocation ?? "")
     setPhoneNumber(user?.phone ?? "")
     setAbsenderEmail(user?.absenderEmail ?? "")
     setBusnessName(user?.busnessName ?? "")
@@ -182,7 +184,18 @@ export default function UserManagementAccessRights() {
 
 
         {/* account name and create account button */}
-        <div className="flex flex-col md:flex-row md:items-end gap-2 w-full">
+        <div className="flex flex-col md:flex-row md:items-end gap-4 w-full">
+
+          <div className="w-full md:w-1/2">
+            <label className="block text-sm font-medium mb-1">Hauptstandort</label>
+            <Input
+              type="text"
+              value={mainBusinessLocation}
+              onChange={(e) => setMainBusinessLocation(e.target.value)}
+              readOnly={!isEditing}
+              className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
+            />
+          </div>
           <div className="w-full md:w-1/2">
             <label className="block text sm font-medium mb-1">Account-Name / Mitarbeiternamen</label>
             <Input
@@ -193,7 +206,7 @@ export default function UserManagementAccessRights() {
               className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
             />
           </div>
-          <div className="w-full md:w-1/2"></div>
+
         </div>
 
         {/* email and phone number of business */}

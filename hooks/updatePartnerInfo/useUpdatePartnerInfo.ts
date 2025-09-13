@@ -10,6 +10,7 @@ export type PartnerProfileUpdatePayload = {
   bankName?: string
   bankNumber?: string
   image?: File | null
+  mainBusinessLocation?: string
 }
 
 export function useUpdatePartnerInfo() {
@@ -28,6 +29,7 @@ export function useUpdatePartnerInfo() {
       if (payload.busnessName !== undefined) form.append('busnessName', payload.busnessName)
       if (payload.bankName !== undefined) form.append('bankName', payload.bankName)
       if (payload.bankNumber !== undefined) form.append('bankNumber', payload.bankNumber)
+      if (payload.mainBusinessLocation !== undefined) form.append('mainBusinessLocation', payload.mainBusinessLocation)
       if (payload.image) form.append('image', payload.image)
 
       const res = await updateUserProfile(form)

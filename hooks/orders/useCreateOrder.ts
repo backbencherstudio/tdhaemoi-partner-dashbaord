@@ -18,9 +18,10 @@ export const useCreateOrder = () => {
             try { if (typeof window !== 'undefined') localStorage.removeItem('werkstattzettelId'); } catch { }
             toast.success('Order created successfully');
             return response;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to create order', error);
-            toast.error('Failed to create order');
+            const apiMessage = error?.response?.data?.message || error?.message || 'Failed to create order';
+            toast.error(apiMessage);
             throw error;
         } finally {
             setIsCreating(false);
@@ -78,9 +79,10 @@ export const useCreateOrder = () => {
             }
 
             return response;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to create order', error);
-            toast.error('Failed to create order');
+            const apiMessage = error?.response?.data?.message || error?.message || 'Failed to create order';
+            toast.error(apiMessage);
             throw error;
         } finally {
             setIsCreating(false);

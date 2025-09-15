@@ -32,12 +32,12 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
             const link = document.createElement('a');
             link.href = url;
             link.download = `order_${data.customer.vorname}_${data.customer.nachname}_${new Date().toISOString().split('T')[0]}.pdf`;
-            
+
             // Trigger download
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             // Clean up
             URL.revokeObjectURL(url);
 
@@ -95,10 +95,10 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                     }}>
                         <div style={{ display: 'flex', alignItems: 'flex-start' }}>
                             <div style={{ width: '70px', height: '120px', marginRight: '30px', flexShrink: 0 }}>
-                                <img 
-                                    src={data.partner.image || "/images/pdfLogo.png"} 
-                                    alt={`${data.partner.busnessName || data.partner.name} Logo`} 
-                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                                <img
+                                    src={data.partner.image || "/images/pdfLogo.png"}
+                                    alt={`${data.partner.busnessName || data.partner.name} Logo`}
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                 />
                             </div>
                             <div style={{ flex: 1 }}>
@@ -130,10 +130,10 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                     }}>
                         {/* Kundendaten Section */}
                         <div style={{ marginBottom: '30px', paddingTop: '20px' }}>
-                            <h2 style={{ 
-                                fontSize: '18px', 
-                                fontWeight: 'bold', 
-                                marginBottom: '20px', 
+                            <h2 style={{
+                                fontSize: '18px',
+                                fontWeight: 'bold',
+                                marginBottom: '20px',
                                 color: '#333',
                                 textAlign: 'left'
                             }}>
@@ -161,10 +161,10 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
 
                         {/* Bearbeitung & Terminierung Section */}
                         <div style={{ marginBottom: '30px' }}>
-                            <h2 style={{ 
-                                fontSize: '18px', 
-                                fontWeight: 'bold', 
-                                marginBottom: '20px', 
+                            <h2 style={{
+                                fontSize: '18px',
+                                fontWeight: 'bold',
+                                marginBottom: '20px',
                                 color: '#333',
                                 textAlign: 'left'
                             }}>
@@ -173,18 +173,30 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
                                 <div style={{ textAlign: 'left' }}>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Mitarbeiter: {data.partner.name}</p>
+                                        <p style={{ margin: 0 }}>
+                                            Mitarbeiter: {(
+                                                (data as any)?.partner?.workshopNote?.employeeName ||
+                                                (data as any)?.werkstattzettel?.mitarbeiter ||
+                                                data.partner.name
+                                            )}
+                                        </p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Auftragsdatum: {formatDate(data.createdAt)}</p>
+                                        <p style={{ margin: 0 }}>
+                                            Auftragsdatum: {formatDate(((data as any)?.werkstattzettel?.auftragsDatum) || data.createdAt)}
+                                        </p>
                                     </div>
                                 </div>
                                 <div style={{ textAlign: 'left' }}>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Fertigstellung bis: {formatDate(data.statusUpdate)}</p>
+                                        <p style={{ margin: 0 }}>
+                                            Fertigstellung bis: {formatDate(((data as any)?.partner?.workshopNote?.completionDays) || ((data as any)?.werkstattzettel?.fertigstellungBis) || data.statusUpdate)}
+                                        </p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Abholung: Bremen</p>
+                                        <p style={{ margin: 0 }}>
+                                            Abholung: {((data as any)?.werkstattzettel?.geschaeftsstandort) || (data as any)?.partner?.hauptstandort || '-'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -192,10 +204,10 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
 
                         {/* Versorgung & Materialien Section */}
                         <div style={{ marginBottom: '30px' }}>
-                            <h2 style={{ 
-                                fontSize: '18px', 
-                                fontWeight: 'bold', 
-                                marginBottom: '20px', 
+                            <h2 style={{
+                                fontSize: '18px',
+                                fontWeight: 'bold',
+                                marginBottom: '20px',
                                 color: '#333',
                                 textAlign: 'left'
                             }}>
@@ -203,34 +215,33 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                             </h2>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
                                 <div style={{ textAlign: 'left' }}>
-                                    <h3 style={{ 
-                                        fontSize: '16px', 
-                                        fontWeight: 'bold', 
-                                        marginBottom: '15px', 
+                                    <h3 style={{
+                                        fontSize: '16px',
+                                        fontWeight: 'bold',
+                                        marginBottom: '15px',
                                         color: '#555',
                                         textAlign: 'left'
                                     }}>
                                         Versorgung
                                     </h3>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Versorgung: {data.product.versorgung || data.product.status}</p>
+                                        <p style={{ margin: 0 }}>Versorgung:{data.product.status}</p>
+                                        <p style={{ margin: 0 }}>{data.product.versorgung || data.product.status}</p>
                                     </div>
-                                    <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Rohling: {data.product.rohlingHersteller}</p>
-                                    </div>
+
                                 </div>
                                 <div style={{ textAlign: 'left' }}>
-                                    <h3 style={{ 
-                                        fontSize: '16px', 
-                                        fontWeight: 'bold', 
-                                        marginBottom: '15px', 
+                                    <h3 style={{
+                                        fontSize: '16px',
+                                        fontWeight: 'bold',
+                                        marginBottom: '15px',
                                         color: '#555',
                                         textAlign: 'left'
                                     }}>
                                         Materialien
                                     </h3>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Rohling: {data.product.artikelHersteller}</p>
+                                        <p style={{ margin: 0 }}>Rohling: {data.product.rohlingHersteller}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
                                         <p style={{ margin: 0 }}>Pelotte: -</p>
@@ -244,10 +255,10 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
 
                         {/* Zahlung & Abholung Section */}
                         <div style={{ marginBottom: '30px' }}>
-                            <h2 style={{ 
-                                fontSize: '18px', 
-                                fontWeight: 'bold', 
-                                marginBottom: '20px', 
+                            <h2 style={{
+                                fontSize: '18px',
+                                fontWeight: 'bold',
+                                marginBottom: '20px',
                                 color: '#333',
                                 textAlign: 'left'
                             }}>
@@ -262,9 +273,9 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                                         <p style={{ margin: 0 }}>Fußanalyse: {formatPrice(data.fußanalyse)}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ 
-                                            margin: 0, 
-                                            fontWeight: 'bold', 
+                                        <p style={{
+                                            margin: 0,
+                                            fontWeight: 'bold',
                                             fontSize: '16px'
                                         }}>
                                             Gesamtpreis: {formatPrice(data.totalPrice)}

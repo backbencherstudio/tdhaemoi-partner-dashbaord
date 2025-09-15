@@ -1,8 +1,8 @@
 import axiosClient from "@/lib/axiosClient";
 // create order 
-export const createOrder = async (customerId: string, versorgungId: string) => {
+export const createOrder = async (customerId: string, versorgungId: string, werkstattzettelId?: string) => {
     try {
-        const response = await axiosClient.post('/customer-orders/create', { customerId, versorgungId });
+        const response = await axiosClient.post('/customer-orders/create', { customerId, versorgungId, werkstattzettelId });
         return response.data;
     } catch (error) {
         throw error;
@@ -85,4 +85,15 @@ export const RevenueOverview = async () => {
 }
 
 
+
+
+// custom order create (user info custom) customer-orders/werkstattzettel/:custommerId
+export const customOrderCreate = async (customerId: string, payload: Record<string, any>) => {
+    try {
+        const response = await axiosClient.post(`/customer-orders/werkstattzettel/${customerId}`, payload);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
 

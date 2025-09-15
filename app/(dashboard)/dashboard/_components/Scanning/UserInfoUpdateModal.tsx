@@ -5,8 +5,9 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ScanData } from '@/types/scan'
-import { useUpdateCustomerInfo } from '@/hooks/customer/useUpdateCustomerInfo'
 import { usePriceManagement } from '@/hooks/priceManagement/usePriceManagement'
+import { useCreateOrder } from '@/hooks/orders/useCreateOrder'
+import { useUpdateCustomerInfo } from '@/hooks/customer/useUpdateCustomerInfo'
 import toast from 'react-hot-toast'
 
 interface UserInfoUpdateModalProps {
@@ -39,8 +40,9 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
   const [customFootPrice, setCustomFootPrice] = useState<string>('')
   const [customInsolePrice, setCustomInsolePrice] = useState<string>('')
 
-  const { updateCustomerInfo, isUpdating, error } = useUpdateCustomerInfo()
   const { prices, loading: pricesLoading, fetchPrices } = usePriceManagement()
+  const { customOrderCreates, isCreating } = useCreateOrder()
+  const { updateCustomerInfo, isUpdating } = useUpdateCustomerInfo()
 
   useEffect(() => {
     if (scanData) {
@@ -49,11 +51,21 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
       setEmail(scanData.email || '')
       setTelefonnummer(scanData.telefonnummer || '')
       setWohnort(scanData.wohnort || '')
-      setMitarbeiter(scanData.mitarbeiter || '')
+      // prefer workshopNote.employeeName
+      const employeeName = (scanData as any)?.workshopNote?.employeeName
+      setMitarbeiter(employeeName || scanData.mitarbeiter || '')
       setVersorgung(scanData.versorgung || '')
-      setDatumAuftrag(scanData.datumAuftrag || '')
-      setGeschaeftsstandort(scanData.geschaeftsstandort || '')
-      setFertigstellungBis(scanData.fertigstellungBis || '')
+      // Datum des Auftrags defaults to today if not provided
+      const today = new Date().toISOString().slice(0, 10)
+      setDatumAuftrag((scanData as any)?.datumAuftrag || today)
+      // Geschäftsstandort from partner when sameAsBusiness is true; else blank
+      const sameAsBusiness = (scanData as any)?.workshopNote?.sameAsBusiness
+      const partnerHauptstandort = (scanData as any)?.partner?.hauptstandort
+      setGeschaeftsstandort(sameAsBusiness ? (partnerHauptstandort || '') : '')
+      // Fertigstellung bis from workshopNote.completionDays if present
+      const completionDays = (scanData as any)?.workshopNote?.completionDays as string | undefined
+      const formattedCompletion = completionDays ? completionDays.slice(0, 10) : ''
+      setFertigstellungBis(formattedCompletion || scanData.fertigstellungBis || '')
       setBezahlt(scanData.bezahlt || '')
       setFootAnalysisPrice(
         typeof scanData.fußanalyse === 'number' ? String(scanData.fußanalyse) : (scanData.fußanalyse || '')
@@ -78,33 +90,48 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
     }
 
     try {
-      // Only update prices, not other customer information
       const parsedFoot = Number(footAnalysisPrice)
       const parsedInsole = Number(insoleSupplyPrice)
 
-      const updateData = {
+      // First update prices on the customer record
+      const priceUpdateSuccess = await updateCustomerInfo(scanData.id, {
         fußanalyse: isNaN(parsedFoot) ? 0 : parsedFoot,
         einlagenversorgung: isNaN(parsedInsole) ? 0 : parsedInsole
+      })
+
+      if (!priceUpdateSuccess) {
+        toast.error('Preis-Update fehlgeschlagen')
+        return
       }
 
-      const success = await updateCustomerInfo(scanData.id, updateData)
-
-      if (success) {
-        // Update the local scanData to reflect the changes immediately
-        if (scanData) {
-          scanData.fußanalyse = parsedFoot
-          scanData.einlagenversorgung = parsedInsole
-        }
-        // onInfoUpdate?.()
-        
-        // Close this modal and show order confirmation modal
-        onOpenChange(false)
-        onShowOrderConfirmation?.()
-      } else {
-        toast.error('Failed to update prices')
+      const auftragsIso = datumAuftrag ? `${datumAuftrag}T00:00:00.000Z` : undefined
+      const fertigIso = fertigstellungBis ? `${fertigstellungBis}T00:00:00.000Z` : undefined
+      const payload = {
+        kundenName: `${vorname} ${nachname}`.trim(),
+        auftragsDatum: auftragsIso,
+        wohnort: wohnort || undefined,
+        telefon: telefonnummer || undefined,
+        email: email || undefined,
+        geschaeftsstandort: geschaeftsstandort || undefined,
+        mitarbeiter: mitarbeiter || undefined,
+        fertigstellungBis: fertigIso,
+        versorgung: versorgung || undefined,
+        bezahlt: Boolean(bezahlt === 'Ja' || bezahlt === 'true' || bezahlt === 'True'),
+        fussanalysePreis: isNaN(parsedFoot) ? 0 : parsedFoot,
+        einlagenversorgungPreis: isNaN(parsedInsole) ? 0 : parsedInsole,
       }
-    } catch (err) {
-      toast.error('Error updating prices')
+
+      const res = await customOrderCreates(scanData.id, payload)
+      const createdId = (res as any)?.data?.id ?? (res as any)?.id
+      if (createdId) {
+        try { localStorage.setItem('werkstattzettelId', createdId) } catch { }
+      }
+
+      onOpenChange(false)
+      onShowOrderConfirmation?.()
+    } catch (err: any) {
+      const apiMessage = err?.response?.data?.message || err?.message || 'Speichern fehlgeschlagen'
+      toast.error(apiMessage)
     }
   }
 
@@ -286,12 +313,7 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
           </div>
         </div>
 
-        {/* Error Display */}
-        {error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
-        )}
+        {/* Error Display intentionally removed; toast handles errors */}
 
         {/* Action Buttons */}
         <div className="flex justify-end space-x-3 mt-6">
@@ -300,12 +322,12 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
             className='cursor-pointer'
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={isUpdating}
+            disabled={isCreating || isUpdating}
           >
             Abbrechen
           </Button>
-          <Button type="button" className='cursor-pointer' onClick={handleSave} disabled={isUpdating}>
-            {isUpdating ? 'loading...' : 'Continue'}
+          <Button type="button" className='cursor-pointer' onClick={handleSave} disabled={isCreating || isUpdating}>
+            {isCreating || isUpdating ? 'loading...' : 'Continue'}
           </Button>
         </div>
       </DialogContent>

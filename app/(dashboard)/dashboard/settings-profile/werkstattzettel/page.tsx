@@ -1,13 +1,13 @@
 "use client";
 import React, { useRef, useEffect } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { de } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import { useWerkstattzettel } from "@/hooks/settings/useWerkstattzettel";
 
 export default function WerkstattzettelPage() {
@@ -131,23 +131,38 @@ export default function WerkstattzettelPage() {
         )}
       </div>
 
-      {/* Werktage Dropdown */}
+      {/* Fertigstellungsdatum Date Picker */}
       <div className="mb-6">
         <label className="font-semibold block mb-2">
           Standardberechnung des Fertigstellungsdatums
         </label>
-        <Select value={settings.werktage} onValueChange={(value) => updateSetting('werktage', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Werktage wählen" />
-          </SelectTrigger>
-          <SelectContent>
-            {[...Array(8)].map((_, i) => (
-              <SelectItem key={i + 3} value={(i + 3).toString()}>
-                {i + 3} Werktage
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !settings.werktage && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {settings.werktage ? (
+                format(settings.werktage, "PPP", { locale: de })
+              ) : (
+                <span>Datum auswählen</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              mode="single"
+              selected={settings.werktage}
+              onSelect={(date) => updateSetting('werktage', date)}
+              initialFocus
+              locale={de}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Abholstandorte */}
@@ -259,9 +274,9 @@ export default function WerkstattzettelPage() {
        <div className="mt-8">
          <button 
            onClick={saveWerkstattzettel}
-           disabled={isSaving || !settings.mitarbeiterId}
+           disabled={isSaving || !settings.mitarbeiterId || !settings.werktage}
            className={`px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer capitalize transform hover:scale-105 flex items-center justify-center gap-2 ${
-             isSaving || !settings.mitarbeiterId
+             isSaving || !settings.mitarbeiterId || !settings.werktage
                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
                : 'bg-[#62A07C] text-white hover:bg-[#4A8A6A]'
            }`}

@@ -2,19 +2,20 @@
 
 import { useCallback, useState } from 'react';
 import toast from 'react-hot-toast';
-import { createOrder as createOrderApi, saveInvoicePdf, pdfSendToCustomer, getSingleOrder } from '@/apis/productsOrder';
+import { createOrder as createOrderApi, saveInvoicePdf, pdfSendToCustomer, getSingleOrder, customOrderCreate } from '@/apis/productsOrder';
 import { generatePdfFromElement, pdfPresets } from '@/lib/pdfGenerator';
 
 export const useCreateOrder = () => {
     const [isCreating, setIsCreating] = useState(false);
     const [lastOrderId, setLastOrderId] = useState<string | null>(null);
 
-    const createOrder = useCallback(async (customerId: string, versorgungId: string) => {
+    const createOrder = useCallback(async (customerId: string, versorgungId: string, werkstattzettelId?: string) => {
         setIsCreating(true);
         setLastOrderId(null);
         try {
-            const response = await createOrderApi(customerId, versorgungId);
+            const response = await createOrderApi(customerId, versorgungId, werkstattzettelId);
             setLastOrderId((response as any)?.data?.id ?? (response as any)?.id ?? response?.orderId);
+            try { if (typeof window !== 'undefined') localStorage.removeItem('werkstattzettelId'); } catch { }
             toast.success('Order created successfully');
             return response;
         } catch (error) {
@@ -30,12 +31,14 @@ export const useCreateOrder = () => {
         setIsCreating(true);
         setLastOrderId(null);
         try {
-            const response = await createOrderApi(customerId, versorgungId);
+            const werkstattzettelId = typeof window !== 'undefined' ? localStorage.getItem('werkstattzettelId') || undefined : undefined;
+            const response = await createOrderApi(customerId, versorgungId, werkstattzettelId);
             const orderId = (response as any)?.data?.id ?? (response as any)?.id ?? response?.orderId;
             if (!orderId) {
                 throw new Error('Order ID not received from API');
             }
             setLastOrderId(orderId);
+            try { if (typeof window !== 'undefined') localStorage.removeItem('werkstattzettelId'); } catch { }
 
             try {
                 const orderResponse = await getSingleOrder(orderId);
@@ -43,15 +46,15 @@ export const useCreateOrder = () => {
                     throw new Error('Failed to fetch order data');
                 }
 
-                const updateEvent = new CustomEvent('orderDataUpdated', { 
-                    detail: { orderData: orderResponse.data } 
+                const updateEvent = new CustomEvent('orderDataUpdated', {
+                    detail: { orderData: orderResponse.data }
                 });
                 window.dispatchEvent(updateEvent);
 
                 await new Promise(resolve => setTimeout(resolve, 100));
 
                 const pdfBlob = await generatePdfFromElement('invoice-print-area', pdfPresets.balanced);
-                
+
                 // Save the PDF
                 const formData = new FormData();
                 formData.append('invoice', pdfBlob, `order_${orderId}.pdf`);
@@ -88,7 +91,7 @@ export const useCreateOrder = () => {
         try {
             // Use shared PDF generation utility
             const pdfBlob = await generatePdfFromElement('invoice-print-area', pdfPresets.balanced);
-            
+
             const formData = new FormData();
             formData.append('invoice', pdfBlob, `order_${orderId}.pdf`);
 
@@ -109,13 +112,26 @@ export const useCreateOrder = () => {
         }
     }, []);
 
+
+    // custom order create
+    const customOrderCreates = useCallback(async (customerId: string, payload: Record<string, any>) => {
+        try {
+            const res = await customOrderCreate(customerId, payload);
+            return res;
+        } catch (error) {
+            console.error('Failed to create custom order', error);
+            throw error;
+        }
+    }, []);
+
     return {
         createOrder,
         createOrderAndGeneratePdf,
         generatePdfFromInvoicePage,
         sendPdfToCustomer,
         isCreating,
-        lastOrderId
+        lastOrderId,
+        customOrderCreates
     } as const;
 };
 

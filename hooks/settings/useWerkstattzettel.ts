@@ -17,7 +17,7 @@ interface Employee {
 interface WerkstattzettelSettings {
   mitarbeiter: string;
   mitarbeiterId: string;
-  werktage: string;
+  werktage: Date | undefined;
   abholstandort: "geschaeft" | "eigen";
   firmenlogo: "ja" | "nein";
   auftragSofort: "ja" | "manuell";
@@ -28,7 +28,7 @@ export const useWerkstattzettel = () => {
   const [settings, setSettings] = useState<WerkstattzettelSettings>({
     mitarbeiter: "",
     mitarbeiterId: "",
-    werktage: "5",
+    werktage: undefined,
     abholstandort: "geschaeft",
     firmenlogo: "ja",
     auftragSofort: "ja",
@@ -111,12 +111,17 @@ export const useWerkstattzettel = () => {
       return;
     }
 
+    if (!settings.werktage) {
+      toast.error('Bitte wählen Sie ein Fertigstellungsdatum aus.');
+      return;
+    }
+
     setIsSaving(true);
 
     try {
       const werkstattzettelData = {
         employeeId: settings.mitarbeiterId,
-        completionDays: `${settings.werktage} Werktage`,
+        completionDays: settings.werktage.toISOString().split('T')[0], // Format as YYYY-MM-DD
         pickupLocation: settings.abholstandort === "geschaeft" ? "Geschäftsstandort" : "Eigene Definition",
         sameAsBusiness: settings.abholstandort === "geschaeft",
         showCompanyLogo: settings.firmenlogo === "ja",

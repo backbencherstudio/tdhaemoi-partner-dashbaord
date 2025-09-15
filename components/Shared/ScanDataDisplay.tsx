@@ -5,6 +5,8 @@ import { MdZoomOutMap } from 'react-icons/md'
 import { TfiReload } from 'react-icons/tfi'
 import { RiArrowDownSLine } from 'react-icons/ri'
 import { ScanData } from '@/types/scan'
+import { useAuth } from '@/contexts/AuthContext'
+import { generateFeetPdf } from '@/lib/FootPdfGenerate'
 
 interface ScanDataDisplayProps {
     scanData: ScanData
@@ -31,12 +33,14 @@ export default function ScanDataDisplay({
     children,
     onDataChange
 }: ScanDataDisplayProps) {
+    const { user } = useAuth();
     // Date filter state
     const [selectedScanDate, setSelectedScanDate] = useState<string>('');
     const [showDateDropdown, setShowDateDropdown] = useState(false);
 
     // Zoom state
     const [isZoomed, setIsZoomed] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     // Toggle zoom mode
     const toggleZoom = () => {
@@ -143,8 +147,74 @@ export default function ScanDataDisplay({
         );
     };
 
+    // download pdfs for both feet
+
+    const handleDownloadFeetPdf = async () => {
+        try {
+            if (isDownloading) return;
+            setIsDownloading(true);
+            const leftUrl = getLatestData('picture_23');
+            const rightUrl = getLatestData('picture_24');
+            if (!leftUrl || !rightUrl) {
+                alert('Left or right foot image not available.');
+                return;
+            }
+
+            // Unified call: get both blobs, then download right first, left second
+            const baseName = (scanData as any)?.customerNumber || scanData.id;
+            const headerBase = {
+                logoUrl: user?.image || null,
+                customerFullName: `${scanData.vorname || ''} ${scanData.nachname || ''}`.trim(),
+                customerNumber: (scanData as any)?.customerNumber ?? null,
+                dateOfBirthText: '23.07.1997'
+            } as const;
+
+            const { right, left } = await generateFeetPdf({
+                rightImageUrl: rightUrl,
+                leftImageUrl: leftUrl,
+                header: headerBase
+            });
+
+            if (right) {
+                const rightUrlBlob = URL.createObjectURL(right);
+                const a1 = document.createElement('a');
+                a1.href = rightUrlBlob;
+                a1.download = `right_foot_${baseName}.pdf`;
+                document.body.appendChild(a1);
+                a1.click();
+                document.body.removeChild(a1);
+                URL.revokeObjectURL(rightUrlBlob);
+            }
+            if (left) {
+                const leftUrlBlob = URL.createObjectURL(left);
+                const a2 = document.createElement('a');
+                a2.href = leftUrlBlob;
+                a2.download = `left_foot_${baseName}.pdf`;
+                document.body.appendChild(a2);
+                a2.click();
+                document.body.removeChild(a2);
+                URL.revokeObjectURL(leftUrlBlob);
+            }
+        } catch (err) {
+            console.error('Failed to generate PDF:', err);
+            alert('PDF generation failed.');
+        } finally {
+            // Ensure loading is visible briefly
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            setIsDownloading(false);
+        }
+    };
+
     return (
-        <div className="mb-6">
+        <div className="mb-6" aria-busy={isDownloading}>
+            {isDownloading && (
+                <div className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                    <div className="bg-white rounded-lg shadow-lg px-6 py-5 flex items-center gap-3">
+                        <div className="h-6 w-6 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
+                        <span className="text-gray-900 font-medium">Generating PDFs...</span>
+                    </div>
+                </div>
+            )}
             <div className="mt-2 relative mb-4">
                 <div
                     className={`flex w-fit items-center gap-2 p-2 rounded transition-colors ${availableScanDates.length > 0
@@ -273,8 +343,8 @@ export default function ScanDataDisplay({
                             >
                                 <MdZoomOutMap className={`text-4xl ${isZoomed ? 'text-blue-600' : 'text-gray-600'}`} />
                             </div>
-                            <div className='border border-gray-500 rounded p-1 cursor-pointer hover:bg-gray-100 transition'>
-                                <TfiReload className='text-gray-600 text-4xl' />
+                            <div className={`border border-gray-500 rounded p-1 ${isDownloading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'} transition`} onClick={handleDownloadFeetPdf} title='Download PDFs (right then left)'>
+                                <TfiReload className={`text-4xl ${isDownloading ? 'text-gray-400' : 'text-gray-600'}`} />
                             </div>
 
                             {/* Additional content (like save button, etc.) */}

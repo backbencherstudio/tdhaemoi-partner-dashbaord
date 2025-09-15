@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ScanData } from '@/types/scan'
 import { useUpdateCustomerInfo } from '@/hooks/customer/useUpdateCustomerInfo'
+import { usePriceManagement } from '@/hooks/priceManagement/usePriceManagement'
 import toast from 'react-hot-toast'
 
 interface UserInfoUpdateModalProps {
@@ -13,9 +14,12 @@ interface UserInfoUpdateModalProps {
   onOpenChange: (open: boolean) => void
   scanData: ScanData | null
   onInfoUpdate?: () => void
+  onContinue?: () => void
+  onCustomerUpdate?: (updatedCustomer: any) => void
+  onShowOrderConfirmation?: () => void
 }
 
-export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, onInfoUpdate }: UserInfoUpdateModalProps) {
+export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, onInfoUpdate, onContinue, onShowOrderConfirmation }: UserInfoUpdateModalProps) {
   // Customer Information State
   const [vorname, setVorname] = useState('')
   const [nachname, setNachname] = useState('')
@@ -36,6 +40,7 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
   const [customInsolePrice, setCustomInsolePrice] = useState<string>('')
 
   const { updateCustomerInfo, isUpdating, error } = useUpdateCustomerInfo()
+  const { prices, loading: pricesLoading, fetchPrices } = usePriceManagement()
 
   useEffect(() => {
     if (scanData) {
@@ -59,6 +64,13 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
     }
   }, [scanData, isOpen])
 
+  // Fetch prices when modal opens (only once)
+  useEffect(() => {
+    if (isOpen && prices.length === 0) {
+      fetchPrices(1, 100)
+    }
+  }, [isOpen, fetchPrices, prices.length])
+
   const handleSave = async () => {
     if (!scanData?.id) {
       toast.error('Customer ID not found')
@@ -66,25 +78,11 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
     }
 
     try {
-      // Handle custom prices
-      const finalFootPrice = footAnalysisPrice === 'custom' ? customFootPrice : footAnalysisPrice
-      const finalInsolePrice = insoleSupplyPrice === 'custom' ? customInsolePrice : insoleSupplyPrice
-
-      const parsedFoot = Number(finalFootPrice)
-      const parsedInsole = Number(finalInsolePrice)
+      // Only update prices, not other customer information
+      const parsedFoot = Number(footAnalysisPrice)
+      const parsedInsole = Number(insoleSupplyPrice)
 
       const updateData = {
-        vorname,
-        nachname,
-        email,
-        telefonnummer,
-        wohnort,
-        mitarbeiter,
-        versorgung,
-        datumAuftrag,
-        geschaeftsstandort,
-        fertigstellungBis,
-        bezahlt,
         fußanalyse: isNaN(parsedFoot) ? 0 : parsedFoot,
         einlagenversorgung: isNaN(parsedInsole) ? 0 : parsedInsole
       }
@@ -92,14 +90,21 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
       const success = await updateCustomerInfo(scanData.id, updateData)
 
       if (success) {
-        toast.success('Customer information updated successfully!')
-        onInfoUpdate?.()
+        // Update the local scanData to reflect the changes immediately
+        if (scanData) {
+          scanData.fußanalyse = parsedFoot
+          scanData.einlagenversorgung = parsedInsole
+        }
+        // onInfoUpdate?.()
+        
+        // Close this modal and show order confirmation modal
         onOpenChange(false)
+        onShowOrderConfirmation?.()
       } else {
-        toast.error('Failed to update customer information')
+        toast.error('Failed to update prices')
       }
     } catch (err) {
-      toast.error('Error updating customer information')
+      toast.error('Error updating prices')
     }
   }
 
@@ -230,27 +235,16 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
                 <Label className="text-base font-semibold">Fußanalyse</Label>
                 <Select value={footAnalysisPrice} onValueChange={setFootAnalysisPrice}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Preis auswählen" />
+                    <SelectValue placeholder={pricesLoading ? "Lade Preise..." : "Preis auswählen"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">Kostenlos</SelectItem>
-                    <SelectItem value="25">25€</SelectItem>
-                    <SelectItem value="30">30€</SelectItem>
-                    <SelectItem value="35">35€</SelectItem>
-                    <SelectItem value="40">40€</SelectItem>
-                    <SelectItem value="45">45€</SelectItem>
-                    <SelectItem value="50">50€</SelectItem>
-                    <SelectItem value="55">55€</SelectItem>
-                    <SelectItem value="60">60€</SelectItem>
-                    <SelectItem value="65">65€</SelectItem>
-                    <SelectItem value="70">70€</SelectItem>
-                    <SelectItem value="75">75€</SelectItem>
-                    <SelectItem value="80">80€</SelectItem>
-                    <SelectItem value="85">85€</SelectItem>
-                    <SelectItem value="90">90€</SelectItem>
-                    <SelectItem value="95">95€</SelectItem>
-                    <SelectItem value="100">100€</SelectItem>
-                    <SelectItem value="custom">Andere (manuell eingeben)</SelectItem>
+
+                    {prices.map((price) => (
+                      <SelectItem className='cursor-pointer' key={`foot-${price.id}`} value={String(price.fußanalyse)}>
+                        {price.fußanalyse}€
+                      </SelectItem>
+                    ))}
+
                   </SelectContent>
                 </Select>
                 {footAnalysisPrice === 'custom' && (
@@ -268,29 +262,14 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
                 <Label className="text-base font-semibold">Einlagenversorgung</Label>
                 <Select value={insoleSupplyPrice} onValueChange={setInsoleSupplyPrice}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Preis auswählen" />
+                    <SelectValue placeholder={pricesLoading ? "Lade Preise..." : "Preis auswählen"} />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Kostenlos</SelectItem>
-                    <SelectItem value="80">80€</SelectItem>
-                    <SelectItem value="90">90€</SelectItem>
-                    <SelectItem value="100">100€</SelectItem>
-                    <SelectItem value="110">110€</SelectItem>
-                    <SelectItem value="120">120€</SelectItem>
-                    <SelectItem value="130">130€</SelectItem>
-                    <SelectItem value="140">140€</SelectItem>
-                    <SelectItem value="150">150€</SelectItem>
-                    <SelectItem value="160">160€</SelectItem>
-                    <SelectItem value="170">170€</SelectItem>
-                    <SelectItem value="180">180€</SelectItem>
-                    <SelectItem value="190">190€</SelectItem>
-                    <SelectItem value="200">200€</SelectItem>
-                    <SelectItem value="220">220€</SelectItem>
-                    <SelectItem value="240">240€</SelectItem>
-                    <SelectItem value="250">250€</SelectItem>
-                    <SelectItem value="280">280€</SelectItem>
-                    <SelectItem value="300">300€</SelectItem>
-                    <SelectItem value="custom">Andere (manuell eingeben)</SelectItem>
+                  <SelectContent >
+                    {prices.map((price) => (
+                      <SelectItem className='cursor-pointer' key={`insole-${price.id}`} value={String(price.einlagenversorgung)}>
+                        {price.einlagenversorgung}€
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {insoleSupplyPrice === 'custom' && (
@@ -326,7 +305,7 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
             Abbrechen
           </Button>
           <Button type="button" className='cursor-pointer' onClick={handleSave} disabled={isUpdating}>
-            {isUpdating ? 'Speichern...' : 'Speichern'}
+            {isUpdating ? 'loading...' : 'Continue'}
           </Button>
         </div>
       </DialogContent>

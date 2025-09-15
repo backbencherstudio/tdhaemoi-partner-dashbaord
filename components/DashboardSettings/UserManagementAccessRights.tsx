@@ -18,7 +18,7 @@ export default function UserManagementAccessRights() {
   const [accountName, setAccountName] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [absenderEmail, setAbsenderEmail] = useState("")
-  const [mainBusinessLocation, setMainBusinessLocation] = useState("")
+  const [hauptstandort, sethauptstandort] = useState("")
   const [busnessName, setBusnessName] = useState("")
   const [bankName, setBankName] = useState("")
   const [bankNumber, setBankNumber] = useState("")
@@ -32,7 +32,7 @@ export default function UserManagementAccessRights() {
     setPhoneNumber(user?.phone ?? "")
     setAbsenderEmail(user?.absenderEmail ?? "")
     setBusnessName(user?.busnessName ?? "")
-    setMainBusinessLocation(user?.mainBusinessLocation ?? "")
+    sethauptstandort(user?.hauptstandort ?? "")
     setBankName(user?.bankName ?? "")
     setBankNumber(user?.bankNumber ?? "")
     setPreviewImageUrl(user?.image ?? null)
@@ -48,7 +48,7 @@ export default function UserManagementAccessRights() {
       try {
         const res = await update({
           name: accountName,
-          mainBusinessLocation,
+          hauptstandort,
           phone: phoneNumber,
           absenderEmail,
           busnessName,
@@ -61,7 +61,7 @@ export default function UserManagementAccessRights() {
           setUser({
             ...user,
             name: accountName,
-            mainBusinessLocation: mainBusinessLocation,
+            hauptstandort: hauptstandort,
             phone: phoneNumber,
             absenderEmail: absenderEmail,
             busnessName: busnessName,
@@ -82,7 +82,7 @@ export default function UserManagementAccessRights() {
   const handleCancel = () => {
     // revert local changes and exit edit
     setAccountName(user?.name ?? "")
-    setMainBusinessLocation(user?.mainBusinessLocation ?? "")
+    sethauptstandort(user?.hauptstandort ?? "")
     setPhoneNumber(user?.phone ?? "")
     setAbsenderEmail(user?.absenderEmail ?? "")
     setBusnessName(user?.busnessName ?? "")
@@ -190,8 +190,8 @@ export default function UserManagementAccessRights() {
             <label className="block text-sm font-medium mb-1">Hauptstandort</label>
             <Input
               type="text"
-              value={mainBusinessLocation}
-              onChange={(e) => setMainBusinessLocation(e.target.value)}
+              value={hauptstandort}
+              onChange={(e) => sethauptstandort(e.target.value)}
               readOnly={!isEditing}
               className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
             />

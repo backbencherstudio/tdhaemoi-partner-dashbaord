@@ -10,7 +10,7 @@ import logoImg from '@/public/images/scanning/logo.png'
 import Link from 'next/link';
 import SacnningForm from '@/app/(dashboard)/dashboard/_components/Scanning/SacnningForm';
 import ScannningDataPage from '@/app/(dashboard)/dashboard/_components/ScannningData/ScannningDataPage';
-import SetPriceModal from '@/app/(dashboard)/dashboard/_components/Scanning/SetPriceModal';
+
 import { useSingleCustomer } from '@/hooks/customer/useSingleCustomer'
 import { FaMoneyBillWave } from 'react-icons/fa'
 
@@ -18,15 +18,7 @@ import { FaMoneyBillWave } from 'react-icons/fa'
 export default function ScanningData() {
     const params = useParams();
     const { customer: scanData, loading, error, updateCustomer, refreshCustomer } = useSingleCustomer(String(params.id));
-   
 
-    const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
-
-
-    const handlePriceClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        setIsPriceModalOpen(true);
-    };
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
@@ -42,19 +34,12 @@ export default function ScanningData() {
                 onCustomerUpdate={(updatedCustomer) => {
                     updateCustomer(updatedCustomer);
                 }}
+                onDataRefresh={() => {
+                    refreshCustomer();
+                }}
             />
             {/* Bottom Action Links */}
-            <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 text-center mb-20">
-
-                <div className='flex flex-col items-center'>
-                    <div
-                        onClick={handlePriceClick}
-                        className='p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full mb-2 relative transition-all duration-300 flex items-center justify-center'
-                    >
-                        <FaMoneyBillWave className='text-4xl' />
-                    </div>
-                    <span className="text-sm capitalize">set price</span>
-                </div>
+            <div className="mt-14 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 text-center mb-20 ">
 
                 {/* <div className="flex flex-col items-center">
                     <div
@@ -103,18 +88,6 @@ export default function ScanningData() {
                     <span className="text-sm">Zugang FeetFirst<br />App</span>
                 </div>
             </div>
-
-
-            {/* Set Price Modal */}
-            <SetPriceModal
-                scanData={scanData}
-                isOpen={isPriceModalOpen}
-                onOpenChange={setIsPriceModalOpen}
-                onPriceUpdate={() => {
-                    // Refresh the customer data after price update
-                    refreshCustomer()
-                }}
-            />
         </div>
     );
 }

@@ -9,18 +9,10 @@ import Image from 'next/image';
 import { useCreateOrder } from '@/hooks/orders/useCreateOrder';
 import InvoiceGeneratePdfModal from '../PdfModal/InvoiceGeneratePdf/InvoiceGeneratePdfModal';
 import InvoicePage from '../PdfModal/InvoiceGeneratePdf/InvoicePage';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import UserInfoUpdateModal from './UserInfoUpdateModal';
 import { ScanData } from '@/types/scan';
-import { FiEdit } from 'react-icons/fi';
+import OrderConfirmationModal from './OrderConfirmationModal';
 
 
 interface Customer {
@@ -47,9 +39,10 @@ interface Customer {
 interface ScanningFormProps {
     customer?: Customer;
     onCustomerUpdate?: (updatedCustomer: Customer) => void;
+    onDataRefresh?: () => void;
 }
 
-export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFormProps) {
+export default function SacnningForm({ customer, onCustomerUpdate, onDataRefresh }: ScanningFormProps) {
     const {
         diagnosisOptions,
         // dropdowns
@@ -120,7 +113,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
         };
 
         window.addEventListener('orderDataUpdated', handleOrderDataUpdate);
-        
+
         return () => {
             window.removeEventListener('orderDataUpdated', handleOrderDataUpdate);
         };
@@ -129,12 +122,12 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
     // Create order data for InvoicePage component - use real data if available, otherwise mock data
     const createOrderData = () => {
         if (!customer) return null;
-        
+
         // If we have real order data, use it
         if (realOrderData) {
             return realOrderData;
         }
-        
+
         // Otherwise, create mock data (fallback)
         return {
             id: 'temp-id',
@@ -464,7 +457,7 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                     </div>
                 </div>
 
-            
+
 
                 {/* Manual Entry Data Display */}
                 {manualEntry && (manualEntryData.marke || manualEntryData.modell || manualEntryData.kategorie || manualEntryData.grosse) && (
@@ -556,17 +549,13 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                     <Button
                         type="button"
                         className="bg-black cursor-pointer transform duration-300 text-white rounded-full px-12 py-2 text-sm font-semibold focus:outline-none hover:bg-gray-800 transition-colors flex items-center justify-center min-w-[160px]"
-                        onClick={() => setShowConfirmModal(true)}
+                        onClick={() => setShowUserInfoUpdateModal(true)}
                         disabled={isCreating}
                     >
                         {isCreating ? 'Speichern...' : 'Speichern'}
                     </Button>
                 </div>
             </div>
-
-            <button onClick={() => setShowUserInfoUpdateModal(true)}>
-                <FiEdit className='text-2xl cursor-pointer' />
-            </button>
 
             {/* Manual Entry Modal */}
             <ManualEntryModal
@@ -588,40 +577,15 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
                 isOpen={showUserInfoUpdateModal}
                 onOpenChange={setShowUserInfoUpdateModal}
                 scanData={customer as ScanData}
-                onInfoUpdate={() => {}}
+                onInfoUpdate={() => {
+                    // Refresh the customer data to show updated prices
+                    onDataRefresh?.()
+                }}
+                onShowOrderConfirmation={() => setShowConfirmModal(true)}
             />
 
-         
-
-            {/* Confirmation Modal */}
-            <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Bestellung bestätigen</DialogTitle>
-                        <DialogDescription>
-                            Sind Sie sicher, dass Sie eine neue Bestellung für diesen Kunden erstellen möchten?
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter>
-                        <Button
-                            className='cursor-pointer'
-                            variant="outline"
-                            onClick={() => setShowConfirmModal(false)}
-                        >
-                            Abbrechen
-                        </Button>
-                        <Button
-                            className='cursor-pointer'
-                            onClick={handleConfirmOrder}
-                            disabled={isCreating}
-                        >
-                            {isCreating ? 'Erstelle...' : 'Ja, erstellen'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-
+            {/* Order Confirmation Modal */}
+            <OrderConfirmationModal showConfirmModal={showConfirmModal} setShowConfirmModal={setShowConfirmModal} handleConfirmOrder={handleConfirmOrder} isCreating={isCreating} />
 
             {/* PDF Generation Modal */}
             <InvoiceGeneratePdfModal
@@ -633,11 +597,11 @@ export default function SacnningForm({ customer, onCustomerUpdate }: ScanningFor
             {/* Hidden InvoicePage component for PDF generation */}
             {orderData && (
                 <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-                    <InvoicePage 
+                    <InvoicePage
                         data={orderData}
                         isGenerating={false}
-                        onGenerateStart={() => {}}
-                        onGenerateComplete={() => {}}
+                        onGenerateStart={() => { }}
+                        onGenerateComplete={() => { }}
                     />
                 </div>
             )}

@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { FaEye } from 'react-icons/fa';
+import { Switch } from '@/components/ui/switch';
 
 const DEFAULT_MESSAGES = [
     {
@@ -40,14 +41,48 @@ const DEFAULT_MESSAGES = [
     },
 ];
 
+const SWITCH_MESSAGES = [
+    {
+        label: 'Fertigstellung & Abholung',
+        description: 'Automatisch • Übermittlung abgelegten Störchen Sie zu.gmoux No Meferem)',
+        enabled: true,
+        hasIcons: true
+    },
+    {
+        label: 'Termin & Kalender',
+        description: 'Erinnerung Abholung ⚡ Nif9an aut 24.3 tegn Sie (Aronatise herver',
+        enabled: false,
+        hasIcons: true
+    },
+    {
+        label: 'Erinnerung Abholung',
+        description: 'No-Show- Erinnerung • Bilte auf 3.05-20 3 isch/Vershorben',
+        enabled: true,
+        hasIcons: true
+    },
+    {
+        label: 'Dokumente & Unterschrift-',
+        description: '',
+        enabled: true,
+        hasIcons: true
+    }
+];
+
 export default function CustomerCommunication() {
     const [messages, setMessages] = useState(DEFAULT_MESSAGES);
+    const [switchMessages, setSwitchMessages] = useState(SWITCH_MESSAGES);
     const [modalOpen, setModalOpen] = useState(false);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [editValue, setEditValue] = useState('');
 
     const handleCheckbox = (idx: number) => {
         setMessages(msgs =>
+            msgs.map((m, i) => i === idx ? { ...m, enabled: !m.enabled } : m)
+        );
+    };
+
+    const handleSwitch = (idx: number) => {
+        setSwitchMessages(msgs =>
             msgs.map((m, i) => i === idx ? { ...m, enabled: !m.enabled } : m)
         );
     };
@@ -74,7 +109,7 @@ export default function CustomerCommunication() {
     };
 
     return (
-        <div className=" bg-white p-8 rounded-lg shadow-md mt-8">
+        <div className=" bg-white p-8 rounded-lg shadow-md mb-20">
             <h2 className="text-2xl font-bold mb-2">Kundenkommunikation</h2>
             <p className="text-gray-700 mb-8">
                 Erstellen und verwalten Sie automatisierte Nachrichten für Ihre Kunden.
@@ -99,6 +134,32 @@ export default function CustomerCommunication() {
                     </li>
                 ))}
             </ul>
+
+            {/* New Section with Switch Components */}
+            <div className="mt-12">
+                {/* <h3 className="text-xl font-semibold mb-6 text-gray-800">Kundenkommunikation</h3> */}
+                <ul className="space-y-6">
+                    {switchMessages.map((item, idx) => (
+                        <li key={`switch-${idx}`} className="flex items-center justify-between">
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <h4 className="text-gray-900 font-semibold text-base">{item.label}</h4>
+                                </div>
+                                {item.description && (
+                                    <p className="text-gray-500 text-sm">{item.description}</p>
+                                )}
+                            </div>
+                            <div className="ml-4">
+                            <Switch
+                                        checked={item.enabled}
+                                        className='cursor-pointer'
+                                        onCheckedChange={() => handleSwitch(idx)}
+                                    />
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </div>
 
             {/* Modal for preview/edit */}
             {modalOpen && activeIndex !== null && (

@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'magical-eye-broader-counters.trycloudflare.com',
+        hostname: 'lowest-unemployment-astrology-injured.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

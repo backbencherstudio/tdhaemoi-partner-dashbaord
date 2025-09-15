@@ -303,7 +303,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                         }}>
                             <p>{data.partner.phone || '+43 595024330'}</p>
                             <p>{data.partner.busnessName || 'FeetF1rst GmbH'}</p>
-                            <p>{data.partner.absenderEmail || data.partner.email || 'info@feetf1rst.com'}</p>
+                            <p>{data.partner.email || 'info@feetf1rst.com'}</p>
                         </div>
                     </div>
                 </div>

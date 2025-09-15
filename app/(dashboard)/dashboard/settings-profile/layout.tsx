@@ -92,30 +92,18 @@ const sidebarData = [
         label: "Design & Logo",
         href: "/dashboard/settings-profile/design"
     },
-    {
-        id: "language",
-        icon: Globe,
-        label: "Sprache & Zeitzone",
-        href: "/dashboard/settings-profile/language"
-    },
+    // {
+    //     id: "language",
+    //     icon: Globe,
+    //     label: "Sprache & Zeitzone",
+    //     href: "/dashboard/settings-profile/language"
+    // },
     {
         id: "users",
         icon: Users,
         label: "Benutzerverwaltung & Zugriffsrechte",
         href: "/dashboard/settings-profile/users"
-    },
-    {
-        id: "arbeitszettel",
-        icon: ClipboardList,
-        label: "Arbeitszettel",
-        href: "/dashboard/settings-profile/arbeitszettel"
-    },
-    {
-        id: "einlagen",
-        icon: FootprintsIcon,
-        label: "Einlagen",
-        href: "/dashboard/settings-profile/einlagen"
-    },
+    }
 ];
 
 export default function SettingsProfileLayout({

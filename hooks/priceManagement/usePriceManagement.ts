@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   createPrice, 
   getAllPrices, 
@@ -54,7 +54,7 @@ export const usePriceManagement = () => {
   });
 
   // Get all prices with pagination
-  const fetchPrices = async (page: number = 1, limit: number = 10) => {
+  const fetchPrices = useCallback(async (page: number = 1, limit: number = 10) => {
     setLoading(true);
     setError(null);
     try {
@@ -66,7 +66,7 @@ export const usePriceManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Create new price
   const createNewPrice = async (priceData: CreatePriceData) => {

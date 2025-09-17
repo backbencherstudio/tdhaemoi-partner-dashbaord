@@ -9,6 +9,7 @@ import html2canvas from "html2canvas";
 import { useFootExercises } from "@/hooks/footexercises/footexercises";
 import useDebounce from "@/hooks/useDebounce";
 import toast from "react-hot-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Exercise {
     id: number;
@@ -36,6 +37,9 @@ export default function FootExercises() {
     const [printLoading, setPrintLoading] = useState(false);
     const [emailLoading, setEmailLoading] = useState(false);
     const [customEmail, setCustomEmail] = useState('');
+
+    // Get partner data from auth context
+    const { user: partner } = useAuth();
 
     // Customer search functionality
     const {
@@ -83,29 +87,29 @@ export default function FootExercises() {
 
     const generatePDF = async (): Promise<Blob> => {
         const pdf = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
-        
+
         for (let i = 0; i < pages.length; i++) {
             const pageDiv = document.getElementById(`print-page-${i}`);
             if (!pageDiv) continue;
-            
-            const canvas = await html2canvas(pageDiv, { 
-                scale: 1.5, 
+
+            const canvas = await html2canvas(pageDiv, {
+                scale: 1.5,
                 useCORS: true,
                 backgroundColor: '#ffffff'
             });
-            
-            const imgData = canvas.toDataURL("image/jpeg", 0.85); 
-            
+
+            const imgData = canvas.toDataURL("image/jpeg", 0.85);
+
             if (i > 0) pdf.addPage();
-            
+
             const pageWidth = pdf.internal.pageSize.getWidth();
             const imgProps = pdf.getImageProperties(imgData);
             const pdfWidth = pageWidth;
             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            
+
             pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
         }
-        
+
         return pdf.output('blob');
     };
 
@@ -130,7 +134,7 @@ export default function FootExercises() {
 
     const handleEmail = async () => {
         let targetEmail = '';
-        
+
         if (selectedCustomer) {
             targetEmail = selectedCustomer.email;
         } else if (customEmail.trim()) {
@@ -151,7 +155,7 @@ export default function FootExercises() {
             const pdfBlob = await generatePDF();
             await sendEmailToCustomer(pdfBlob, targetEmail);
             toast.success(`PDF wurde erfolgreich an ${targetEmail} gesendet!`);
-            
+
             // Clear search and custom email after successful send
             setSearchQuery('');
             if (customEmail) {
@@ -177,47 +181,47 @@ export default function FootExercises() {
                 </div>
             )}
 
-          
+
             <h1 className='text-3xl font-bold'>Fußübungen</h1>
             <p className='text-base text-gray-500 mt-2'>Wähle gezielt Übungen aus und erstelle einen individuellen Plan für deinen Kunden.</p>
 
             {/* Customer Search Section */}
             <div className='mt-6 p-6 bg-gray-50 rounded-lg border'>
                 <h3 className="text-lg font-semibold mb-4">Kunde auswählen</h3>
-                
+
                 {/* Search Bar */}
                 <div className='relative w-full max-w-md'>
                     <div className='relative'>
-                        <input 
-                            type='text' 
-                            placeholder='Kundenname, E-Mail oder beliebige E-Mail-Adresse eingeben' 
+                        <input
+                            type='text'
+                            placeholder='Kundenname, E-Mail oder beliebige E-Mail-Adresse eingeben'
                             value={searchQuery}
-                                                         onChange={(e) => {
-                                 const value = e.target.value;
-                                 setSearchQuery(value);
-                                 // Only set as custom email if it's a valid email format
-                                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                                 if (emailRegex.test(value)) {
-                                     setCustomEmail(value);
-                                 } else {
-                                     setCustomEmail('');
-                                 }
-                             }}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                setSearchQuery(value);
+                                // Only set as custom email if it's a valid email format
+                                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                if (emailRegex.test(value)) {
+                                    setCustomEmail(value);
+                                } else {
+                                    setCustomEmail('');
+                                }
+                            }}
                             onFocus={() => searchQuery && setShowSuggestions(true)}
-                            className='w-full p-3 rounded-md border border-gray-300 pl-10 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent' 
+                            className='w-full p-3 rounded-md border border-gray-300 pl-10 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                         />
                         <SearchIcon className='w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500' />
-                                                 {searchQuery && (
-                             <button
-                                 onClick={() => {
-                                     clearSelection();
-                                     setCustomEmail('');
-                                 }}
-                                 className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
-                             >
-                                 <XIcon className='w-5 h-5' />
-                             </button>
-                         )}
+                        {searchQuery && (
+                            <button
+                                onClick={() => {
+                                    clearSelection();
+                                    setCustomEmail('');
+                                }}
+                                className='absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700'
+                            >
+                                <XIcon className='w-5 h-5' />
+                            </button>
+                        )}
                     </div>
 
                     {/* Search Suggestions Dropdown */}
@@ -360,7 +364,7 @@ export default function FootExercises() {
                         }}
                     >
                         {/* Header */}
-                        <div style={{ 
+                        <div style={{
                             padding: '40px 40px 20px 40px',
                             position: 'absolute',
                             top: 0,
@@ -368,22 +372,58 @@ export default function FootExercises() {
                             right: 0,
                             zIndex: 1
                         }}>
-                            <h1 style={{ fontWeight: 'bold', fontSize: '24px', marginBottom: '12px' }}>
-                                Der folgende Übungsplan wurde individuell für {selectedCustomer ? selectedCustomer.name : '[Kundenname]'} erstellt.
-                            </h1>
-                            <p style={{ fontSize: '14px', marginBottom: '32px' }}>
-                                Gezielte Fußübungen stärken Muskulatur, Stabilität und Beweglichkeit. Bereits wenige Minuten täglich können spürbare Verbesserungen bewirken – sei es zur Vorbeugung, zur Unterstützung einer Versorgung oder zur aktiven Linderung von Beschwerden.
-                            </p>
+                            {/* Header with Logo and Text in Flex */}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '20px',
+                                marginBottom: '32px',
+                                minHeight: '80px'
+                            }}>
+                                {/* Header Text */}
+                                <div style={{ flex: 1 }}>
+                                    <h1 style={{ fontWeight: 'bold', fontSize: '24px', marginBottom: '12px', margin: '0 0 12px 0' }}>
+                                        Der folgende Übungsplan wurde individuell für {selectedCustomer ? selectedCustomer.name : '[Kundenname]'} erstellt.
+                                    </h1>
+                                    <p style={{ fontSize: '14px', margin: 0 }}>
+                                        Gezielte Fußübungen stärken Muskulatur, Stabilität und Beweglichkeit. Bereits wenige Minuten täglich können spürbare Verbesserungen bewirken – sei es zur Vorbeugung, zur Unterstützung einer Versorgung oder zur aktiven Linderung von Beschwerden.
+                                    </p>
+                                </div>
+
+                                {/* Partner Logo */}
+                                {partner?.image && (
+                                    <div style={{
+                                        flexShrink: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        height: '80px'
+                                    }}>
+                                        <img
+                                            src={partner.image}
+                                            alt="Partner Logo"
+                                            style={{
+                                                maxWidth: '180px',
+                                                maxHeight: '80px',
+                                                width: 'auto',
+                                                height: 'auto',
+                                                objectFit: 'contain'
+                                            }}
+                                            crossOrigin="anonymous"
+                                        />
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        
+
                         {/* Content */}
                         <div style={{
                             padding: '0 40px',
                             position: 'absolute',
-                            top: '220px',
+                            top: '210px',
                             left: 0,
                             right: 0,
-                            bottom: '60px', 
+                            bottom: '60px',
                             overflow: 'hidden'
                         }}>
                             {page.map((ex: Exercise) => (
@@ -402,7 +442,7 @@ export default function FootExercises() {
                                 </div>
                             ))}
                         </div>
-                        
+
                         {/* Footer - Fixed at bottom */}
                         <div style={{
                             position: 'absolute',
@@ -421,9 +461,9 @@ export default function FootExercises() {
                                 padding: '0 40px',
                                 height: '100%'
                             }}>
-                                <p>+43 5950-2330</p>
-                                <p>FeetF1rst GmbH</p>
-                                <p>info@feetf1rst.com</p>
+                                <p>{partner?.phone || '+43 5950-2330'}</p>
+                                <p>{partner?.busnessName || 'FeetF1rst GmbH'}</p>
+                                <p>{partner?.email || 'info@feetf1rst.com'}</p>
                             </div>
                         </div>
                     </div>
@@ -461,7 +501,7 @@ export default function FootExercises() {
                         )}
                     </button>
                     <span className="text-base font-normal mt-3">E-MAIL</span>
-                  
+
                 </div>
             </div>
         </div>

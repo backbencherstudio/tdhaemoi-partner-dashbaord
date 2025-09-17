@@ -41,4 +41,13 @@ export const deleteEmployee = async (id: string) => {
     }
 }
 
-// get employee by id /employees/:id        
+
+//  search employee
+export const searchEmployee = async (page: number, limit: number, search: string) => {
+    try {
+        const response = await axiosClient.get(`/employees/search?page=${page}&limit=${limit}&search=${search}`);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

@@ -13,6 +13,7 @@ import { de } from "date-fns/locale";
 import { UseFormReturn } from "react-hook-form";
 import { Calendar } from "../ui/calendar";
 import { useSearchCustomer } from "@/hooks/customer/useSearchCustomer";
+import { useSearchEmployee } from "@/hooks/employee/useSearchEmployee";
 
 interface AppointmentFormData {
     isClientEvent: boolean;
@@ -54,6 +55,35 @@ export default function AppointmentModal({
     buttonText
 }: AppointmentModalProps) {
     const [submitting, setSubmitting] = React.useState(false);
+    const isClientEvent = form.watch('isClientEvent');
+    const kundeContainerRef = React.useRef<HTMLDivElement | null>(null);
+    const employeeContainerRef = React.useRef<HTMLDivElement | null>(null);
+
+    const clientTerminOptions = [
+        { value: 'fussanalyse-laufanalyse', label: 'Fußanalyse / Laufanalyse' },
+        { value: 'massnehmen', label: 'Maßnehmen' },
+        { value: 'anprobe-abholung', label: 'Anprobe / Abholung' },
+        { value: 'kontrolle-nachkontrolle', label: 'Kontrolle / Nachkontrolle' },
+        { value: 'beratung-rezept-einloesung', label: 'Beratung / Rezept-Einlösung' },
+        { value: 'hausbesuch', label: 'Hausbesuch' },
+        { value: 'sonstiges', label: 'Sonstiges' },
+    ];
+
+    const otherTerminOptions = [
+        { value: 'teammeeting-fallbesprechung', label: 'Teammeeting / Fallbesprechung' },
+        { value: 'fortbildung-schulung', label: 'Fortbildung / Schulung' },
+        { value: 'verwaltung-dokumentation', label: 'Verwaltung / Dokumentation' },
+        { value: 'interne-sprechstunde-besprechung', label: 'Interne Sprechstunde / Besprechung' },
+        { value: 'externe-termine-kooperation', label: 'Externe Termine / Kooperation' },
+    ];
+
+    React.useEffect(() => {
+        const currentTermin = form.getValues('termin');
+        const validValues = (isClientEvent ? clientTerminOptions : otherTerminOptions).map((o) => o.value);
+        if (currentTermin && !validValues.includes(currentTermin)) {
+            form.setValue('termin', '');
+        }
+    }, [isClientEvent]);
 
     const {
         searchName,
@@ -67,6 +97,36 @@ export default function AppointmentModal({
         setShowNameSuggestions,
         clearSearch,
     } = useSearchCustomer();
+
+    const {
+        searchText: employeeSearchText,
+        setSearchText: setEmployeeSearchText,
+        suggestions: employeeSuggestions,
+        loading: employeeSuggestionLoading,
+        showSuggestions: showEmployeeSuggestions,
+        setShowSuggestions: setShowEmployeeSuggestions,
+        handleChange: handleEmployeeChange,
+        clearSearch: clearEmployeeSearch,
+        inputRef: employeeInputRef,
+    } = useSearchEmployee();
+
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+            const target = event.target as Node;
+            if (kundeContainerRef.current && !kundeContainerRef.current.contains(target)) {
+                setShowNameSuggestions(false);
+            }
+            if (employeeContainerRef.current && !employeeContainerRef.current.contains(target)) {
+                setShowEmployeeSuggestions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('touchstart', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, [setShowNameSuggestions, setShowEmployeeSuggestions]);
 
     if (!isOpen) return null;
 
@@ -123,11 +183,11 @@ export default function AppointmentModal({
                                             onCheckedChange={(v) => {
                                                 field.onChange(v);
                                                 if (!v) {
-                                                
+
                                                     clearSearch();
                                                     form.setValue('customerId', undefined);
                                                 } else {
-                                                   
+
                                                     if (searchName) form.setValue('kunde', searchName);
                                                 }
                                             }}
@@ -148,7 +208,7 @@ export default function AppointmentModal({
                                 <FormItem>
                                     <FormLabel>Kunde<span className="text-red-500">*</span></FormLabel>
                                     {form.getValues('isClientEvent') ? (
-                                        <div className="relative">
+                                        <div className="relative" ref={kundeContainerRef}>
                                             <Input
                                                 ref={nameInputRef}
                                                 placeholder="Kunde suchen"
@@ -157,7 +217,7 @@ export default function AppointmentModal({
                                                     handleNameChange(e.target.value);
                                                     setSearchName(e.target.value);
                                                     form.setValue('kunde', e.target.value);
-                                                   
+
                                                     form.setValue('customerId', undefined);
                                                 }}
                                             />
@@ -202,13 +262,13 @@ export default function AppointmentModal({
                                                     type="time"
                                                     className="time-input pr-10 cursor-pointer"
                                                     onClick={(e) => {
-                                                        try { (e.currentTarget as any).showPicker?.(); } catch {}
+                                                        try { (e.currentTarget as any).showPicker?.(); } catch { }
                                                     }}
                                                     onFocus={(e) => {
-                                                        try { (e.currentTarget as any).showPicker?.(); } catch {}
+                                                        try { (e.currentTarget as any).showPicker?.(); } catch { }
                                                     }}
                                                     onTouchStart={(e) => {
-                                                        try { (e.currentTarget as any).showPicker?.(); } catch {}
+                                                        try { (e.currentTarget as any).showPicker?.(); } catch { }
                                                     }}
                                                     {...field}
                                                 />
@@ -275,9 +335,11 @@ export default function AppointmentModal({
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            <SelectItem value="meeting" className="cursor-pointer">Meeting</SelectItem>
-                                            <SelectItem value="analyse" className="cursor-pointer">Analyse</SelectItem>
-                                            <SelectItem value="consultation" className="cursor-pointer">Consultation</SelectItem>
+                                            {(isClientEvent ? clientTerminOptions : otherTerminOptions).map((opt) => (
+                                                <SelectItem key={opt.value} value={opt.value} className="cursor-pointer">
+                                                    {opt.label}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </FormItem>
@@ -290,9 +352,46 @@ export default function AppointmentModal({
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Mitarbeiter</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Mitarbeiter" {...field} />
-                                    </FormControl>
+                                    <div className="relative" ref={employeeContainerRef}>
+                                        <Input
+                                            ref={employeeInputRef}
+                                            placeholder="Mitarbeiter suchen"
+                                            value={employeeSearchText || field.value || ''}
+                                            onChange={(e) => {
+                                                handleEmployeeChange(e.target.value);
+                                                setEmployeeSearchText(e.target.value);
+                                                field.onChange(e.target.value);
+                                            }}
+                                            onFocus={() => {
+                                                setShowEmployeeSuggestions(true);
+                                                if (!(employeeSearchText || field.value)) {
+                                                    handleEmployeeChange('');
+                                                }
+                                            }}
+                                        />
+                                        {employeeSuggestionLoading && (
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">...</div>
+                                        )}
+                                        {showEmployeeSuggestions && employeeSuggestions.length > 0 && (
+                                            <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded shadow">
+                                                {employeeSuggestions.map((s) => (
+                                                    <button
+                                                        type="button"
+                                                        key={s.id}
+                                                        className="w-full text-left px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                                                        onClick={() => {
+                                                            field.onChange(s.employeeName);
+                                                            setEmployeeSearchText(s.employeeName);
+                                                            setShowEmployeeSuggestions(false);
+                                                        }}
+                                                    >
+                                                        <div className="font-medium">{s.employeeName}</div>
+                                                        <div className="text-xs text-gray-500">{s.email || ''}</div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </FormItem>
                             )}
                         />

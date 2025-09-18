@@ -25,7 +25,7 @@ export default function WerkstattzettelPage() {
     saveWerkstattzettel,
   } = useWerkstattzettel();
 
-  // Calculate minimum selectable date (5 days from today)
+  // Calculate minimum selectable date (exactly 5 days from today)
   const getMinimumDate = () => {
     const today = new Date();
     const minDate = new Date(today);
@@ -172,7 +172,13 @@ export default function WerkstattzettelPage() {
               mode="single"
               selected={settings.werktage}
               onSelect={(date) => updateSetting('werktage', date)}
-              disabled={(date) => date < getMinimumDate()}
+              disabled={(date) => {
+                const minDate = getMinimumDate();
+                // Reset time to compare only dates, not time
+                const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                const minDateOnly = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+                return dateOnly < minDateOnly;
+              }}
               initialFocus
             />
           </PopoverContent>
@@ -284,23 +290,22 @@ export default function WerkstattzettelPage() {
           </label>
         </div>
       </div>
-       {/* Save Button */}
-       <div className="mt-8">
-         <button 
-           onClick={saveWerkstattzettel}
-           disabled={isSaving || !settings.mitarbeiterId || !settings.werktage}
-           className={`px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer capitalize transform hover:scale-105 flex items-center justify-center gap-2 ${
-             isSaving || !settings.mitarbeiterId || !settings.werktage
-               ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-               : 'bg-[#62A07C] text-white hover:bg-[#4A8A6A]'
-           }`}
-         >
-           {isSaving && (
-             <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-           )}
-           {isSaving ? 'Speichern...' : 'Speichern'}
-         </button>
-       </div>
+      {/* Save Button */}
+      <div className="mt-8">
+        <button
+          onClick={saveWerkstattzettel}
+          disabled={isSaving || !settings.mitarbeiterId || !settings.werktage}
+          className={`px-8 py-3 rounded-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg cursor-pointer capitalize transform hover:scale-105 flex items-center justify-center gap-2 ${isSaving || !settings.mitarbeiterId || !settings.werktage
+              ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+              : 'bg-[#62A07C] text-white hover:bg-[#4A8A6A]'
+            }`}
+        >
+          {isSaving && (
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+          )}
+          {isSaving ? 'Speichern...' : 'Speichern'}
+        </button>
+      </div>
     </div>
   );
 }

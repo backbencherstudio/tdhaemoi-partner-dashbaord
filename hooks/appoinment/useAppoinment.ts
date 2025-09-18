@@ -9,6 +9,8 @@ interface Event {
     title: string;
     subtitle: string;
     type: string;
+    assignedTo: string;
+    reason: string;
 }
 
 interface AppointmentData {
@@ -41,7 +43,7 @@ export const useAppoinment = () => {
     const [refreshKey, setRefreshKey] = useState(0);
     
     // Debug logging when events state changes
-    console.log('useAppoinment hook - events state changed:', events.length, 'events');
+    // console.log('useAppoinment hook - events state changed:', events.length, 'events');
 
     // Fetch all appointments
     const fetchAppointments = useCallback(async () => {
@@ -60,10 +62,12 @@ export const useAppoinment = () => {
                     time: apt.time,
                     title: apt.customer_name.toUpperCase(),
                     subtitle: apt.details?.toUpperCase(),
-                    type: apt.isClient ? 'user' : 'others'
+                    type: apt.isClient ? 'user' : 'others',
+                    assignedTo: apt.assignedTo || '',
+                    reason: apt.reason || ''
                 }));
                 setEvents(formattedEvents);
-                console.log('Events state updated with', formattedEvents.length, 'events');
+                // console.log('Events state updated with', formattedEvents.length, 'events');
             }
         } catch (error) {
             toast.error('Failed to load appointments');

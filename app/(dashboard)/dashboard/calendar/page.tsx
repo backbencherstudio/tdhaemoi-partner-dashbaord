@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { useAppoinment } from '@/hooks/appoinment/useAppoinment';
 import AppointmentModal from '@/components/AppointmentModal/AppointmentModal';
 import { useWeeklyCalendar } from '@/hooks/calendar/useWeeklyCalendar';
+import MiniCalendar from '@/components/AppoinmentData/MiniCalendar';
 
 interface Event {
     id: number;
@@ -14,6 +15,8 @@ interface Event {
     title: string;
     subtitle: string;
     type: string;
+    assignedTo: string;
+    reason: string;
 }
 
 interface AppointmentData {
@@ -76,6 +79,7 @@ const WeeklyCalendar = () => {
     const [selectedAppointment, setSelectedAppointment] = React.useState<AppointmentData | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
     const [isDeleting, setIsDeleting] = React.useState(false);
+    const [visibleDaysCount, setVisibleDaysCount] = React.useState(7);
 
     // Use the custom hook
     const {
@@ -119,6 +123,44 @@ const WeeklyCalendar = () => {
         fetchAppointments();
     }, [fetchAppointments]);
 
+    // Generate dates based on selected month from mini calendar
+    const getSelectedMonthDates = () => {
+        const selectedYear = miniCalendarDate.getFullYear();
+        const selectedMonth = miniCalendarDate.getMonth();
+        const dates = [];
+
+        // Check if selected month is current month
+        const isCurrentMonth = selectedYear === today.getFullYear() && selectedMonth === today.getMonth();
+
+        // If it's current month, start from today, otherwise start from 1st of selected month
+        const startDate = isCurrentMonth ?
+            new Date(today) :
+            new Date(selectedYear, selectedMonth, 1);
+
+        const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0);
+
+        // Generate dates from start date to end of selected month
+        for (let date = new Date(startDate); date <= endOfMonth; date.setDate(date.getDate() + 1)) {
+            dates.push(new Date(date));
+        }
+
+        return dates;
+    };
+
+    const selectedMonthDates = getSelectedMonthDates();
+    const visibleDates = selectedMonthDates.slice(0, visibleDaysCount);
+    const hasMoreDates = visibleDaysCount < selectedMonthDates.length;
+
+
+    const handleSeeMore = () => {
+        setVisibleDaysCount(prev => Math.min(prev + 7, selectedMonthDates.length));
+    };
+
+    // Reset visible days when month changes in mini calendar
+    React.useEffect(() => {
+        setVisibleDaysCount(7);
+    }, [miniCalendarDate.getMonth(), miniCalendarDate.getFullYear()]);
+
     const handleDateClick = (date: Date) => {
         // Prevent adding appointments to past dates
         if (isPastDate(date)) {
@@ -130,9 +172,6 @@ const WeeklyCalendar = () => {
         form.setValue('selectedEventDate', date);
         setShowAddForm(true);
     };
-
-
-
 
 
     const onSubmit = async (data: { selectedEventDate: string | undefined; isClientEvent: boolean; kunde: string; uhrzeit: string; termin: string; bemerk: string; mitarbeiter: string }) => {
@@ -151,8 +190,6 @@ const WeeklyCalendar = () => {
         }
     };
 
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
 
     const handleAppointmentClick = async (appointmentId: number) => {
         const apt = await getAppointmentById(appointmentId.toString());
@@ -212,249 +249,33 @@ const WeeklyCalendar = () => {
             </div>
 
             <div className="p-4 sm:p-6">
+                <MiniCalendar
+                    isMobile={isMobile}
+                    miniCalendarDate={miniCalendarDate}
+                    showYearMonthPicker={showYearMonthPicker}
+                    setShowYearMonthPicker={setShowYearMonthPicker}
+                    navigateMiniCalendarMonth={navigateMiniCalendarMonth}
+                    handleYearMonthChange={handleYearMonthChange}
+                    miniCalendarDays={miniCalendarDays}
+                    visibleDates={visibleDates}
+                    today={today}
+                    monthNames={monthNames}
+                    dayNames={dayNames}
+                    isSameDay={isSameDay}
+                    isPastDate={isPastDate}
+                    handleMiniCalendarDateClick={handleMiniCalendarDateClick}
+                    getEventsForDate={getEventsForDate}
+                    currentDate={currentDate}
+                />
+
                 <div className={`${isMobile ? 'block' : 'flex gap-8'}`}>
-
-                    {/* Weekly Calendar */}
+                    {/* Monthly Calendar */}
                     <div className="flex-1">
-                        <div className="space-y-6 grid grid-cols-1 sm:grid-cols-2 gap-10">
-                            <div className='flex flex-col xl:flex-row xl:items-start items-center gap-4 justify-between'>
-                                {/* Week Navigation */}
-                                <div className="flex items-center justify-between mb-4">
-                                    <button
-                                        onClick={() => navigateWeek(-1)}
-                                        disabled={isNavigating}
-                                        className={`p-2 block lg:hidden rounded transition-colors ${isNavigating
-                                            ? 'text-gray-400 cursor-not-allowed'
-                                            : 'hover:bg-gray-100 text-gray-700'
-                                            }`}
-                                        title="Previous Week"
-                                    >
-                                        {isNavigating ? (
-                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-700"></div>
-                                        ) : (
-                                            <ChevronLeft className="w-5 h-5" />
-                                        )}
-                                    </button>
-                                    <h2 className="text-base sm:text-lg font-semibold text-center mx-4">
-                                        {isNavigating ? 'Loading...' : `Week of ${monthNames[weekDates[0].getMonth()].slice(0, 3)}. ${weekDates[0].getDate()}, ${weekDates[0].getFullYear()}`}
-                                    </h2>
-                                    <button
-                                        onClick={() => navigateWeek(1)}
-                                        disabled={isNavigating}
-                                        className={`p-2 block lg:hidden rounded transition-colors ${isNavigating
-                                            ? 'text-gray-400 cursor-not-allowed'
-                                            : 'hover:bg-gray-100 text-gray-700'
-                                            }`}
-                                        title="Next Week"
-                                    >
-                                        {isNavigating ? (
-                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-700"></div>
-                                        ) : (
-                                            <ChevronRight className="w-5 h-5" />
-                                        )}
-                                    </button>
-                                </div>
-
-
-                                {/* Mini Calendar - Hidden on mobile */}
-                                {!isMobile && (
-                                    <div className="2xl:w-96 flex-shrink-0 relative">
-                                        <div className="text-center mb-4">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <button
-                                                    onClick={() => navigateMiniCalendarMonth(-1)}
-                                                    className="p-1 cursor-pointer hover:bg-gray-100 rounded"
-                                                >
-                                                    <ChevronLeft className="w-4 h-4" />
-                                                </button>
-
-                                                <button
-                                                    onClick={() => setShowYearMonthPicker(!showYearMonthPicker)}
-                                                    className="font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                                                >
-                                                    {monthNames[miniCalendarDate.getMonth()]} {miniCalendarDate.getFullYear()}
-                                                </button>
-
-                                                <button
-                                                    onClick={() => navigateMiniCalendarMonth(1)}
-                                                    className="p-1 cursor-pointer hover:bg-gray-100 rounded"
-                                                >
-                                                    <ChevronRight className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        {/* Year/Month Picker */}
-                                        {showYearMonthPicker && (
-                                            <div className="absolute top-16 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-4">
-                                                <div className="mb-4">
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-                                                    <select
-                                                        value={miniCalendarDate.getFullYear()}
-                                                        onChange={(e) => handleYearMonthChange(parseInt(e.target.value), miniCalendarDate.getMonth())}
-                                                        className="w-full p-2 border border-gray-300 rounded"
-                                                    >
-                                                        {years.map(year => (
-                                                            <option key={year} value={year}>{year}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className="mb-4">
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Month</label>
-                                                    <select
-                                                        value={miniCalendarDate.getMonth()}
-                                                        onChange={(e) => handleYearMonthChange(miniCalendarDate.getFullYear(), parseInt(e.target.value))}
-                                                        className="w-full p-2 border border-gray-300 rounded"
-                                                    >
-                                                        {monthNames.map((month, index) => (
-                                                            <option key={index} value={index}>{month}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <button
-                                                    onClick={() => setShowYearMonthPicker(false)}
-                                                    className="w-full py-1 border rounded text-sm cursor-pointer hover:bg-gray-100 transform duration-300"
-                                                >
-                                                    Done
-                                                </button>
-                                            </div>
-                                        )}
-
-                                        <div className="grid grid-cols-7 gap-1 text-center text-sm">
-                                            {dayNames.map(day => (
-                                                <div key={day} className="p-2 font-medium text-gray-600">{day}</div>
-                                            ))}
-                                            {miniCalendarDays.map((date, index) => {
-                                                const isCurrentMonth = date.getMonth() === miniCalendarDate.getMonth();
-                                                const isToday = isSameDay(date, today);
-                                                const isSelected = weekDates.some(weekDate => isSameDay(weekDate, date));
-                                                const isCurrentWeek = weekDates.some(weekDate =>
-                                                    Math.abs(date.getTime() - weekDate.getTime()) < 7 * 24 * 60 * 60 * 1000
-                                                );
-                                                const isPast = isPastDate(date);
-
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className={`p-2 cursor-pointer hover:bg-gray-200 rounded transition-colors ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-900'
-                                                            } ${isToday ? 'bg-[#62A07C] text-white font-bold' : ''
-                                                            } ${isSelected && !isToday ? 'bg-blue-100 border-2 border-blue-300' : ''
-                                                            } ${isCurrentWeek && !isSelected && !isToday ? 'bg-blue-50 border border-blue-200' : ''
-                                                            } ${isPast && !isToday && !isSelected ? 'opacity-50 text-gray-500' : ''
-                                                            }`}
-                                                        onClick={() => handleMiniCalendarDateClick(date)}
-                                                        title={`${date.toDateString()} - Click to navigate to this week`}
-                                                    >
-                                                        {date.getDate()}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Mobile Mini Calendar */}
-                                {/* {isMobile && (
-                                    <div className="w-full mt-4">
-                                        <div className="text-center mb-4">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <button
-                                                    onClick={() => navigateMiniCalendarMonth(-1)}
-                                                    className="p-2 cursor-pointer hover:bg-gray-100 rounded"
-                                                >
-                                                    <ChevronLeft className="w-5 h-5" />
-                                                </button>
-
-                                                <button
-                                                    onClick={() => setShowYearMonthPicker(!showYearMonthPicker)}
-                                                    className="font-semibold cursor-pointer hover:bg-gray-100 px-3 py-2 rounded"
-                                                >
-                                                    {monthNames[miniCalendarDate.getMonth()]} {miniCalendarDate.getFullYear()}
-                                                </button>
-
-                                                <button
-                                                    onClick={() => navigateMiniCalendarMonth(1)}
-                                                    className="p-2 cursor-pointer hover:bg-gray-100 rounded"
-                                                >
-                                                    <ChevronRight className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        </div>
-
-    
-                                        {showYearMonthPicker && (
-                                            <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 mb-4">
-                                                <div className="mb-4">
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-                                                    <select
-                                                        value={miniCalendarDate.getFullYear()}
-                                                        onChange={(e) => handleYearMonthChange(parseInt(e.target.value), miniCalendarDate.getMonth())}
-                                                        className="w-full p-2 border border-gray-300 rounded"
-                                                    >
-                                                        {years.map(year => (
-                                                            <option key={year} value={year}>{year}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className="mb-4">
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">Month</label>
-                                                    <select
-                                                        value={miniCalendarDate.getMonth()}
-                                                        onChange={(e) => handleYearMonthChange(miniCalendarDate.getFullYear(), parseInt(e.target.value))}
-                                                        className="w-full p-2 border border-gray-300 rounded"
-                                                    >
-                                                        {monthNames.map((month, index) => (
-                                                            <option key={index} value={index}>{month}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <button
-                                                    onClick={() => setShowYearMonthPicker(false)}
-                                                    className="w-full py-2 border rounded text-sm cursor-pointer hover:bg-gray-100 transform duration-300"
-                                                >
-                                                    Done
-                                                </button>
-                                            </div>
-                                        )}
-
-                                        <div className="grid grid-cols-7 gap-1 text-center text-sm">
-                                            {dayNames.map(day => (
-                                                <div key={day} className="p-3 font-medium text-gray-600">{day}</div>
-                                            ))}
-                                            {miniCalendarDays.map((date, index) => {
-                                                const isCurrentMonth = date.getMonth() === miniCalendarDate.getMonth();
-                                                const isToday = isSameDay(date, today);
-                                                const isSelected = weekDates.some(weekDate => isSameDay(weekDate, date));
-                                                const isCurrentWeek = weekDates.some(weekDate =>
-                                                    Math.abs(date.getTime() - weekDate.getTime()) < 7 * 24 * 60 * 60 * 1000
-                                                );
-                                                const isPast = isPastDate(date);
-
-                                                return (
-                                                    <div
-                                                        key={index}
-                                                        className={`p-3 cursor-pointer hover:bg-gray-200 rounded text-sm transition-colors ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-900'
-                                                            } ${isToday ? 'bg-[#62A07C] text-white font-bold' : ''
-                                                            } ${isSelected && !isToday ? 'bg-blue-100 border-2 border-blue-300' : ''
-                                                            } ${isCurrentWeek && !isSelected && !isToday ? 'bg-blue-50 border border-blue-200' : ''
-                                                            } ${isPast && !isToday && !isSelected ? 'opacity-50 text-gray-500' : ''
-                                                            }`}
-                                                        onClick={() => handleMiniCalendarDateClick(date)}
-                                                        title={`${date.toDateString()} - Click to navigate to this week`}
-                                                    >
-                                                        {date.getDate()}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )} */}
-                            </div>
-
-                            {weekDates.map((date, index) => {
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+                            {visibleDates.map((date, index) => {
                                 const dayEvents = getEventsForDate(date);
                                 const isToday = isSameDay(date, today);
-                                const dayColor = index === 0 || index === 6 ? 'text-red-500' : 'text-gray-600';
+                                const dayColor = date.getDay() === 0 || date.getDay() === 6 ? 'text-red-500' : 'text-gray-600';
 
                                 return (
                                     <div key={index} className="border-b border-gray-200 pb-6">
@@ -469,7 +290,7 @@ const WeeklyCalendar = () => {
                                                 <div>
                                                     <div className={`text-sm ${dayColor} ${isPastDate(date) ? 'opacity-60' : ''
                                                         }`}>
-                                                        {dayNamesLong[index]}
+                                                        {dayNamesLong[date.getDay()]}
                                                     </div>
                                                     <div className={`text-xs ${isPastDate(date) ? 'text-gray-400' : 'text-gray-500'
                                                         }`}>
@@ -508,44 +329,18 @@ const WeeklyCalendar = () => {
                                                                         {event.time && (
                                                                             <div className="text-xs opacity-90 mb-1">{event.time}</div>
                                                                         )}
-                                                                        <div className="font-semibold">{event.title}</div>
-                                                                        {event.subtitle && (
-                                                                            <div className="text-xs  opacity-90 mt-1">
-                                                                                {event.subtitle.split(' ').length > 50 ? (
-                                                                                    <div>
-                                                                                        {showFullSubtitle === event.id ? (
-                                                                                            <>
-                                                                                                {event.subtitle}
-                                                                                                <button
-                                                                                                    onClick={(e) => {
-                                                                                                        e.stopPropagation();
-                                                                                                        setShowFullSubtitle(null);
-                                                                                                    }}
-                                                                                                    className="ml-1 cursor-pointer underline hover:no-underline"
-                                                                                                >
-                                                                                                    Read less
-                                                                                                </button>
-                                                                                            </>
-                                                                                        ) : (
-                                                                                            <>
-                                                                                                {truncateWords(event.subtitle, 15)}
-                                                                                                <button
-                                                                                                    onClick={(e) => {
-                                                                                                        e.stopPropagation();
-                                                                                                        setShowFullSubtitle(event.id);
-                                                                                                    }}
-                                                                                                    className="ml-1 cursor-pointer underline hover:no-underline"
-                                                                                                >
-                                                                                                    Read more
-                                                                                                </button>
-                                                                                            </>
-                                                                                        )}
-                                                                                    </div>
-                                                                                ) : (
-                                                                                    event.subtitle
-                                                                                )}
-                                                                            </div>
-                                                                        )}
+                                                                        <h1 className="font-semibold">{event.title}</h1>
+                                                                        {
+                                                                            event.assignedTo && (
+                                                                                <div className="text-xs opacity-90 mb-1">Mitarbeiter: {event.assignedTo}</div>
+                                                                            )
+                                                                        }
+                                                                        {
+                                                                            event.reason && (
+                                                                                <div className="text-xs opacity-90 mb-1">Grund: {event.reason}</div>
+                                                                            )
+                                                                        }
+
                                                                     </div>
                                                                     <button
                                                                         onClick={(e) => {
@@ -593,6 +388,18 @@ const WeeklyCalendar = () => {
                                     </div>
                                 );
                             })}
+
+                            {/* See More Button */}
+                            {hasMoreDates && (
+                                <div className="col-span-full flex justify-center mt-6">
+                                    <button
+                                        onClick={handleSeeMore}
+                                        className="px-6 py-3 bg-[#62A07C] text-white rounded-lg hover:bg-[#4f8a65] transition-colors cursor-pointer"
+                                    >
+                                        See More ({selectedMonthDates.length - visibleDaysCount} more days)
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

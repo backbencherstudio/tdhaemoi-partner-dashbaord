@@ -41,7 +41,7 @@ interface EmailData {
 
 const topTabs = [
   { id: "allgemein", color: "bg-gray-200", label: "Allgemein", short: "A" },
-  { id: "fastfirst", color: "bg-blue-500", label: "FastFirst Nachrichten", short: "F" },
+  { id: "fastfirst", color: "bg-blue-500", label: "FeetF1rst Nachrichten", short: "F" },
   { id: "bestellungen", color: "bg-green-500", label: "Bestellungen", short: "B" },
   { id: "lager", color: "bg-purple-500", label: "Lager-Benachrichtigungen", short: "L" },
   { id: "kunden", color: "bg-orange-500", label: "Kunden-Benachrichtigungen", short: "K" }

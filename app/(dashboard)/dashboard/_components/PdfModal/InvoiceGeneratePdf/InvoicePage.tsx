@@ -109,10 +109,11 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                                     Kdnr: {data.customer.customerNumber}
                                 </div>
                                 <div style={{ fontSize: '14px', marginBottom: '6px', textAlign: 'left' }}>
-                                    Geb.: {formatDate(data.createdAt)}
+                                    Geb:
+                                    {/* {formatDate(data.createdAt)} */}
                                 </div>
                                 <div style={{ fontSize: '14px', textAlign: 'left' }}>
-                                    Scan: {formatDate(data.createdAt)}
+                                    Scan: {formatDate(data.customer.screenerFile?.[0]?.createdAt || data.createdAt)}
                                 </div>
                             </div>
                         </div>
@@ -145,7 +146,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                                         <p style={{ margin: 0 }}>Email: {data.customer.email || '-'}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Telefon: {data.customer.telefonnummer || '-'}</p>
+                                        <p style={{ margin: 0 }}>Telefon: {((data as any)?.werkstattzettel?.telefon) || data.customer.telefonnummer || '-'}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
                                         <p style={{ margin: 0 }}>Wohnort: {data.customer.wohnort || '-'}</p>
@@ -153,7 +154,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                                 </div>
                                 <div style={{ textAlign: 'left' }}>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Diagnose: -</p>
+                                        <p style={{ margin: 0 }}>Diagnose: {data.product.diagnosis_status || '-'}</p>
                                     </div>
                                 </div>
                             </div>

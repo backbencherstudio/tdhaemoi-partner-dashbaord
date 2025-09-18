@@ -4,11 +4,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ScanData } from '@/types/scan'
 import { usePriceManagement } from '@/hooks/priceManagement/usePriceManagement'
 import { useCreateOrder } from '@/hooks/orders/useCreateOrder'
 import { useUpdateCustomerInfo } from '@/hooks/customer/useUpdateCustomerInfo'
+import { useSearchEmployee } from '@/hooks/employee/useSearchEmployee'
 import toast from 'react-hot-toast'
+import { ChevronDown, Check } from 'lucide-react'
 
 interface UserInfoUpdateModalProps {
   isOpen: boolean
@@ -44,6 +47,17 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
   const { customOrderCreates, isCreating } = useCreateOrder()
   const { updateCustomerInfo, isUpdating } = useUpdateCustomerInfo()
 
+  // Employee search functionality
+  const {
+    searchText,
+    suggestions: employeeSuggestions,
+    loading: employeeLoading,
+    setShowSuggestions,
+    handleChange: handleEmployeeSearchChange,
+  } = useSearchEmployee()
+
+  const [isEmployeeDropdownOpen, setIsEmployeeDropdownOpen] = useState(false)
+
   useEffect(() => {
     if (scanData) {
       setVorname(scanData.vorname || '')
@@ -65,7 +79,17 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
       // Fertigstellung bis from workshopNote.completionDays if present
       const completionDays = (scanData as any)?.workshopNote?.completionDays as string | undefined
       const formattedCompletion = completionDays ? completionDays.slice(0, 10) : ''
-      setFertigstellungBis(formattedCompletion || scanData.fertigstellungBis || '')
+      const currentOrderDate = (scanData as any)?.datumAuftrag || today
+      const existingDeliveryDate = formattedCompletion || scanData.fertigstellungBis || ''
+      
+      // If no existing delivery date and order date is today, set minimum delivery date
+      if (!existingDeliveryDate && currentOrderDate === today) {
+        const minimumDelivery = new Date(today)
+        minimumDelivery.setDate(minimumDelivery.getDate() + 5)
+        setFertigstellungBis(minimumDelivery.toISOString().slice(0, 10))
+      } else {
+        setFertigstellungBis(existingDeliveryDate)
+      }
       setBezahlt(scanData.bezahlt || '')
       setFootAnalysisPrice(
         typeof scanData.fußanalyse === 'number' ? String(scanData.fußanalyse) : (scanData.fußanalyse || '')
@@ -82,6 +106,55 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
       fetchPrices(1, 100)
     }
   }, [isOpen, fetchPrices, prices.length])
+
+  // Handle employee selection
+  const handleEmployeeSelect = (employeeName: string) => {
+    setMitarbeiter(employeeName)
+    setIsEmployeeDropdownOpen(false)
+  }
+
+  // Handle dropdown open/close
+  const handleDropdownChange = (open: boolean) => {
+    setIsEmployeeDropdownOpen(open)
+    setShowSuggestions(open)
+  }
+
+  // Helper function to calculate minimum delivery date (5 days from order date)
+  const getMinimumDeliveryDate = (orderDate: string) => {
+    const order = new Date(orderDate)
+    const minimumDelivery = new Date(order)
+    minimumDelivery.setDate(order.getDate() + 5)
+    return minimumDelivery.toISOString().slice(0, 10)
+  }
+
+  // Handle order date change and validate delivery date
+  const handleOrderDateChange = (newOrderDate: string) => {
+    setDatumAuftrag(newOrderDate)
+    
+    if (newOrderDate) {
+      const minimumDeliveryDate = getMinimumDeliveryDate(newOrderDate)
+      
+      // If current delivery date is earlier than minimum, update it
+      if (!fertigstellungBis || new Date(fertigstellungBis) < new Date(minimumDeliveryDate)) {
+        setFertigstellungBis(minimumDeliveryDate)
+      }
+    }
+  }
+
+  // Validate delivery date when it changes
+  const handleDeliveryDateChange = (newDeliveryDate: string) => {
+    if (datumAuftrag && newDeliveryDate) {
+      const minimumDeliveryDate = getMinimumDeliveryDate(datumAuftrag)
+      
+      // If selected delivery date is earlier than minimum, show warning and set minimum
+      if (new Date(newDeliveryDate) < new Date(minimumDeliveryDate)) {
+        toast.error(`Fertigstellung muss mindestens 5 Tage nach Auftragsdatum sein. Minimum: ${minimumDeliveryDate}`)
+        setFertigstellungBis(minimumDeliveryDate)
+        return
+      }
+    }
+    setFertigstellungBis(newDeliveryDate)
+  }
 
   const handleSave = async () => {
     if (!scanData?.id) {
@@ -182,11 +255,76 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Mitarbeiter</Label>
-                <Input
-                  placeholder="Johannes"
-                  value={mitarbeiter}
-                  onChange={(e) => setMitarbeiter(e.target.value)}
-                />
+                <Popover open={isEmployeeDropdownOpen} onOpenChange={handleDropdownChange}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={isEmployeeDropdownOpen}
+                      className="w-full justify-between font-normal"
+                    >
+                      <span className="truncate">
+                        {mitarbeiter || "Mitarbeiter auswählen..."}
+                      </span>
+                      <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <div className="p-2">
+                      <Input
+                        placeholder="Mitarbeiter suchen..."
+                        value={searchText}
+                        onChange={(e) => handleEmployeeSearchChange(e.target.value)}
+                        className="w-full"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="max-h-60 overflow-y-auto">
+                      {employeeLoading ? (
+                        <div className="p-4 text-center text-sm text-gray-500">
+                          Lade Mitarbeiter...
+                        </div>
+                      ) : employeeSuggestions.length > 0 ? (
+                        <div className="py-1">
+                          {employeeSuggestions.map((employee) => (
+                            <div
+                              key={employee.id}
+                              className={`flex items-center justify-between px-3 py-2 cursor-pointer transition-colors duration-150 ${mitarbeiter === employee.employeeName
+                                  ? 'bg-blue-50 hover:bg-blue-100 border-l-2 border-blue-500'
+                                  : 'hover:bg-gray-100'
+                                }`}
+                              onClick={() => handleEmployeeSelect(employee.employeeName)}
+                            >
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <span className={`text-sm font-medium truncate ${mitarbeiter === employee.employeeName
+                                    ? 'text-blue-900'
+                                    : 'text-gray-900'
+                                  }`}>
+                                  {employee.employeeName}
+                                </span>
+                                {employee.email && (
+                                  <span className={`text-xs truncate ${mitarbeiter === employee.employeeName
+                                      ? 'text-blue-600'
+                                      : 'text-gray-500'
+                                    }`}>
+                                    {employee.email}
+                                  </span>
+                                )}
+                              </div>
+                              {mitarbeiter === employee.employeeName && (
+                                <Check className="h-4 w-4 text-blue-600 ml-2 flex-shrink-0" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center text-sm text-gray-500">
+                          Keine Mitarbeiter gefunden
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
@@ -207,7 +345,7 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
                   type="date"
                   placeholder="01.02.2025"
                   value={datumAuftrag}
-                  onChange={(e) => setDatumAuftrag(e.target.value)}
+                  onChange={(e) => handleOrderDateChange(e.target.value)}
                 />
               </div>
 
@@ -235,8 +373,14 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
                   type="date"
                   placeholder="10.02.2025"
                   value={fertigstellungBis}
-                  onChange={(e) => setFertigstellungBis(e.target.value)}
+                  onChange={(e) => handleDeliveryDateChange(e.target.value)}
+                  min={datumAuftrag ? getMinimumDeliveryDate(datumAuftrag) : undefined}
                 />
+                {/* {datumAuftrag && (
+                  <p className="text-xs text-gray-500">
+                    Minimum: {getMinimumDeliveryDate(datumAuftrag)} (5 Tage nach Auftragsdatum)
+                  </p>
+                )} */}
               </div>
 
               <div className="space-y-2">

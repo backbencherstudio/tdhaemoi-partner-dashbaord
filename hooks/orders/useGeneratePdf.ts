@@ -17,6 +17,25 @@ export interface OrderPdfData {
     invoice: any;
     createdAt: string;
     updatedAt: string;
+    werkstattzettelId?: string;
+    werkstattzettel?: {
+        id: string;
+        kundenName: string;
+        auftragsDatum: string;
+        wohnort: string;
+        telefon: string;
+        email: string;
+        geschaeftsstandort: string;
+        mitarbeiter: string;
+        fertigstellungBis: string;
+        versorgung: string;
+        bezahlt: boolean;
+        fussanalysePreis: number;
+        einlagenversorgungPreis: number;
+        customerId: string;
+        createdAt: string;
+        updatedAt: string;
+    };
     customer: {
         id: string;
         customerNumber: number;
@@ -25,6 +44,10 @@ export interface OrderPdfData {
         email: string;
         telefonnummer: string;
         wohnort: string;
+        screenerFile?: Array<{
+            id: string;
+            createdAt: string;
+        }>;
     };
     partner: {
         id: string;
@@ -37,6 +60,19 @@ export interface OrderPdfData {
         bankName: string;
         bankNumber: string;
         busnessName: string;
+        hauptstandort?: string;
+        weitereStandorte?: string;
+        workshopNote?: {
+            id: string;
+            employeeId: string;
+            employeeName: string;
+            completionDays: string;
+            pickupLocation: string;
+            sameAsBusiness: boolean;
+            showCompanyLogo: boolean;
+            autoShowAfterPrint: boolean;
+            autoApplySupply: boolean;
+        };
     };
     product: {
         id: string;
@@ -69,7 +105,7 @@ export const useGeneratePdf = () => {
                 return null;
             }
         } catch (error) {
-            console.error('Failed to fetch order data:', error);
+            // console.error('Failed to fetch order data:', error);
             toast.error('Failed to fetch order data');
             return null;
         } finally {

@@ -191,7 +191,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                                 <div style={{ textAlign: 'left' }}>
                                     <div style={{ marginBottom: '15px' }}>
                                         <p style={{ margin: 0 }}>
-                                            Fertigstellung bis: {formatDate(((data as any)?.partner?.workshopNote?.completionDays) || ((data as any)?.werkstattzettel?.fertigstellungBis) || data.statusUpdate)}
+                                            Fertigstellung bis: {formatDate(((data as any)?.werkstattzettel?.fertigstellungBis) || ((data as any)?.partner?.workshopNote?.completionDays) || data.statusUpdate)}
                                         </p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
@@ -245,7 +245,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                                         <p style={{ margin: 0 }}>Rohling: {data.product.rohlingHersteller}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Pelotte: -</p>
+                                        <p style={{ margin: 0 }}>Pelotte: {data.product.material || '-'}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
                                         <p style={{ margin: 0 }}>Zusatz: -</p>

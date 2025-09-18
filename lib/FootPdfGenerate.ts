@@ -21,13 +21,14 @@ async function fetchImageAsDataUrl(url: string): Promise<string> {
     });
 }
 
-// Generate a single PDF with 2 pages - one for each foot
 async function generateCombinedFeetPdf(params: {
     leftImageUrl: string;
     rightImageUrl: string;
     header: FeetImagesPdfHeader;
+    leftFootLength?: number;
+    rightFootLength?: number;
 }): Promise<Blob> {
-    const { leftImageUrl, rightImageUrl, header } = params;
+    const { leftImageUrl, rightImageUrl, header, leftFootLength = 0, rightFootLength = 0 } = params;
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = 210;
     const pageHeight = 297;
@@ -92,45 +93,62 @@ async function generateCombinedFeetPdf(params: {
         return currentY + headerHeight + 12;
     };
 
-    // Helper function to add foot image to current page
-    const addFootImage = async (imageUrl: string, currentY: number): Promise<void> => {
-        // Increased image size - 85% width and more height
+
+    const addFootImage = async (imageUrl: string, currentY: number, footSide: 'L' | 'R'): Promise<void> => {
         const imageWidth = (pageWidth - margin * 2) * 0.85;
         const imageX = (pageWidth - imageWidth) / 2;
-        const availableHeight = pageHeight - currentY - margin;
-        const maxImageHeight = Math.min(availableHeight, 210); // Increased from 160 to 200
-
+        const availableHeight = pageHeight - currentY - margin - 40;
+        const maxImageHeight = Math.min(availableHeight, 210);
         const imageDataUrl = await fetchImageAsDataUrl(imageUrl);
         pdf.addImage(imageDataUrl, 'PNG', imageX, currentY, imageWidth, maxImageHeight, undefined, 'SLOW');
+        const calculationY = currentY + maxImageHeight + 10;
+        const footLength = footSide === 'L' ? leftFootLength : rightFootLength;
+
+        if (footLength && footLength > 0) {
+            const pelottenposition = (footLength + 5) * 0.66;
+
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(`Pelottenposition ${footSide} = ${pelottenposition.toFixed(1)}mm`,
+                pageWidth / 2, calculationY, { align: 'center' });
+        } else {
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'normal');
+            pdf.text(`Pelottenposition ${footSide} = Fusslänge data not available`,
+                pageWidth / 2, calculationY, { align: 'center' });
+        }
     };
 
     // Page 1: Right Foot
     const rightFootY = await addHeaderToPage('Right Foot');
-    await addFootImage(rightImageUrl, rightFootY);
+    await addFootImage(rightImageUrl, rightFootY, 'R');
 
     // Page 2: Left Foot
     pdf.addPage();
     const leftFootY = await addHeaderToPage('Left Foot');
-    await addFootImage(leftImageUrl, leftFootY);
+    await addFootImage(leftImageUrl, leftFootY, 'L');
 
     return pdf.output('blob');
 }
 
-// Main API: generate combined PDF with both feet
 export async function generateFeetPdf(params: {
     leftImageUrl?: string | null;
     rightImageUrl?: string | null;
     header: FeetImagesPdfHeader;
     generateCombined?: boolean;
+    leftFootLength?: number;
+    rightFootLength?: number;
 }): Promise<{ combined?: Blob; }> {
-    const { leftImageUrl, rightImageUrl, header, generateCombined = false } = params;
+    const { leftImageUrl, rightImageUrl, header, generateCombined = false, leftFootLength, rightFootLength } = params;
     const results: { combined?: Blob; } = {};
 
     if (generateCombined && leftImageUrl && rightImageUrl) {
         results.combined = await generateCombinedFeetPdf({
             leftImageUrl,
             rightImageUrl,
-            header
+            header,
+            leftFootLength,
+            rightFootLength
         });
     }
 

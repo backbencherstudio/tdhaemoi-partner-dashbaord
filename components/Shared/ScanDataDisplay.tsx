@@ -170,11 +170,17 @@ export default function ScanDataDisplay({
                 dateOfBirthText: '23.07.1997'
             } as const;
 
+            // Get dynamic foot length values from scan data (Fusslänge = foot length)
+            const leftFootLength = parseFloat(scanData.fusslange2 as string) || 0; // Left foot Fusslänge
+            const rightFootLength = parseFloat(scanData.fusslange1 as string) || 0; // Right foot Fusslänge
+
             const { combined } = await generateFeetPdf({
                 rightImageUrl: rightUrl,
                 leftImageUrl: leftUrl,
                 header: headerBase,
-                generateCombined: true
+                generateCombined: true,
+                leftFootLength,
+                rightFootLength
             });
 
             if (combined) {
@@ -343,18 +349,18 @@ export default function ScanDataDisplay({
                             {children}
                         </div>
                         <div className="grid grid-cols-2 gap-2 mx-2">
-                            {renderField('fusslange1', 'Fusslänge')}
                             {renderField('fusslange2', 'Fusslänge')}
-                            {renderField('fussbreite1', 'Fussbreite')}
+                            {renderField('fusslange1', 'Fusslänge')}
                             {renderField('fussbreite2', 'Fussbreite')}
-                            {renderField('kugelumfang1', 'Kugelumfang')}
+                            {renderField('fussbreite1', 'Fussbreite')}
                             {renderField('kugelumfang2', 'Kugelumfang')}
-                            {renderField('rist1', 'Rist')}
+                            {renderField('kugelumfang1', 'Kugelumfang')}
                             {renderField('rist2', 'Rist')}
-                            {renderField('zehentyp1', 'Zehentyp')}
+                            {renderField('rist1', 'Rist')}
                             {renderField('zehentyp2', 'Zehentyp')}
-                            {renderField('archIndex1', 'Arch Index')}
+                            {renderField('zehentyp1', 'Zehentyp')}
                             {renderField('archIndex2', 'Arch Index')}
+                            {renderField('archIndex1', 'Arch Index')}
                         </div>
                     </div>
 

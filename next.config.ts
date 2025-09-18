@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'mistake-hundreds-draw-mental.trycloudflare.com',
+        hostname: 'counties-became-responded-dame.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

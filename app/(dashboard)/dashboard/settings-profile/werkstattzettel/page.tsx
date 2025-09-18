@@ -6,7 +6,6 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useWerkstattzettel } from "@/hooks/settings/useWerkstattzettel";
 
@@ -26,8 +25,23 @@ export default function WerkstattzettelPage() {
     saveWerkstattzettel,
   } = useWerkstattzettel();
 
+  // Calculate minimum selectable date (5 days from today)
+  const getMinimumDate = () => {
+    const today = new Date();
+    const minDate = new Date(today);
+    minDate.setDate(today.getDate() + 5);
+    return minDate;
+  };
+
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Set default date to 5 days from today when component loads
+  useEffect(() => {
+    if (!settings.werktage) {
+      updateSetting('werktage', getMinimumDate());
+    }
+  }, []);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -147,7 +161,7 @@ export default function WerkstattzettelPage() {
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {settings.werktage ? (
-                format(settings.werktage, "PPP", { locale: de })
+                format(settings.werktage, "PPP")
               ) : (
                 <span>Datum auswählen</span>
               )}
@@ -158,8 +172,8 @@ export default function WerkstattzettelPage() {
               mode="single"
               selected={settings.werktage}
               onSelect={(date) => updateSetting('werktage', date)}
+              disabled={(date) => date < getMinimumDate()}
               initialFocus
-              locale={de}
             />
           </PopoverContent>
         </Popover>

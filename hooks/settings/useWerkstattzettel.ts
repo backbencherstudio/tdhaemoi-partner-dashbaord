@@ -119,9 +119,17 @@ export const useWerkstattzettel = () => {
     setIsSaving(true);
 
     try {
+      // Format date properly to avoid timezone issues
+      const formatDateForAPI = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       const werkstattzettelData = {
         employeeId: settings.mitarbeiterId,
-        completionDays: settings.werktage.toISOString().split('T')[0], // Format as YYYY-MM-DD
+        completionDays: formatDateForAPI(settings.werktage), // Format as YYYY-MM-DD without timezone conversion
         pickupLocation: settings.abholstandort === "geschaeft" ? "Geschäftsstandort" : "Eigene Definition",
         sameAsBusiness: settings.abholstandort === "geschaeft",
         showCompanyLogo: settings.firmenlogo === "ja",

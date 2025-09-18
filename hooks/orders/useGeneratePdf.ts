@@ -44,6 +44,13 @@ export interface OrderPdfData {
         email: string;
         telefonnummer: string;
         wohnort: string;
+        fusslange1?: string;
+        fusslange2?: string;
+        largerFusslange?: number;
+        recommendedSize?: {
+            size: string;
+            value: number;
+        };
         screenerFile?: Array<{
             id: string;
             createdAt: string;

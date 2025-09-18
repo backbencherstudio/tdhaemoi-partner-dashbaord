@@ -153,14 +153,15 @@ export default function ScanDataDisplay({
         try {
             if (isDownloading) return;
             setIsDownloading(true);
-            const leftUrl = getLatestData('picture_23');
-            const rightUrl = getLatestData('picture_24');
+            // Fix the mapping: picture_23 is right foot, picture_24 is left foot
+            const rightUrl = getLatestData('picture_23');
+            const leftUrl = getLatestData('picture_24');
             if (!leftUrl || !rightUrl) {
                 alert('Left or right foot image not available.');
                 return;
             }
 
-            // Unified call: get both blobs, then download right first, left second
+            // Generate combined PDF with both feet
             const baseName = (scanData as any)?.customerNumber || scanData.id;
             const headerBase = {
                 logoUrl: user?.image || null,
@@ -169,31 +170,22 @@ export default function ScanDataDisplay({
                 dateOfBirthText: '23.07.1997'
             } as const;
 
-            const { right, left } = await generateFeetPdf({
+            const { combined } = await generateFeetPdf({
                 rightImageUrl: rightUrl,
                 leftImageUrl: leftUrl,
-                header: headerBase
+                header: headerBase,
+                generateCombined: true
             });
 
-            if (right) {
-                const rightUrlBlob = URL.createObjectURL(right);
-                const a1 = document.createElement('a');
-                a1.href = rightUrlBlob;
-                a1.download = `right_foot_${baseName}.pdf`;
-                document.body.appendChild(a1);
-                a1.click();
-                document.body.removeChild(a1);
-                URL.revokeObjectURL(rightUrlBlob);
-            }
-            if (left) {
-                const leftUrlBlob = URL.createObjectURL(left);
-                const a2 = document.createElement('a');
-                a2.href = leftUrlBlob;
-                a2.download = `left_foot_${baseName}.pdf`;
-                document.body.appendChild(a2);
-                a2.click();
-                document.body.removeChild(a2);
-                URL.revokeObjectURL(leftUrlBlob);
+            if (combined) {
+                const combinedUrlBlob = URL.createObjectURL(combined);
+                const a = document.createElement('a');
+                a.href = combinedUrlBlob;
+                a.download = `feet_scan_${baseName}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(combinedUrlBlob);
             }
         } catch (err) {
             console.error('Failed to generate PDF:', err);
@@ -211,7 +203,7 @@ export default function ScanDataDisplay({
                 <div className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-sm flex items-center justify-center">
                     <div className="bg-white rounded-lg shadow-lg px-6 py-5 flex items-center gap-3">
                         <div className="h-6 w-6 border-2 border-gray-300 border-t-gray-900 rounded-full animate-spin" />
-                        <span className="text-gray-900 font-medium">Generating PDFs...</span>
+                        <span className="text-gray-900 font-medium">Generating PDF...</span>
                     </div>
                 </div>
             )}
@@ -272,19 +264,19 @@ export default function ScanDataDisplay({
                     <div className="flex flex-col lg:flex-row justify-center items-center gap-4 lg:gap-8">
                         {/* Left foot image - Responsive sizing */}
                         <div className="text-center w-full lg:w-auto">
-                            <h3 className="text-base md:text-lg font-semibold mb-2 md:mb-4 text-gray-700">Left Foot</h3>
+                            <h3 className="text-base md:text-lg font-semibold mb-2 md:mb-4 text-gray-700">Right Foot</h3>
                             <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto">
                                 {getLatestData('picture_23') ? (
                                     <Image
                                         src={getLatestData('picture_23')!}
-                                        alt="Left foot scan - Plantaransicht"
+                                        alt="Right foot scan - Plantaransicht"
                                         width={400}
                                         height={600}
                                         className="w-full h-auto rounded-lg "
                                     />
                                 ) : (
                                     <div className="w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px] bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 text-sm md:text-base">
-                                        No left foot scan image available
+                                        No right foot scan image available
                                     </div>
                                 )}
                             </div>
@@ -292,19 +284,19 @@ export default function ScanDataDisplay({
 
                         {/* Right foot image - Responsive sizing */}
                         <div className="text-center w-full lg:w-auto">
-                            <h3 className="text-base md:text-lg font-semibold mb-2 md:mb-4 text-gray-700">Right Foot</h3>
+                            <h3 className="text-base md:text-lg font-semibold mb-2 md:mb-4 text-gray-700">Left Foot</h3>
                             <div className="w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl mx-auto">
                                 {getLatestData('picture_24') ? (
                                     <Image
                                         src={getLatestData('picture_24')!}
-                                        alt="Right foot scan - Plantaransicht"
+                                        alt="Left foot scan - Plantaransicht"
                                         width={400}
                                         height={600}
                                         className="w-full h-auto rounded-lg"
                                     />
                                 ) : (
                                     <div className="w-full h-64 sm:h-80 md:h-96 lg:h-[500px] xl:h-[600px] bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 text-sm md:text-base">
-                                        No right foot scan image available
+                                        No left foot scan image available
                                     </div>
                                 )}
                             </div>
@@ -343,7 +335,7 @@ export default function ScanDataDisplay({
                             >
                                 <MdZoomOutMap className={`text-4xl ${isZoomed ? 'text-blue-600' : 'text-gray-600'}`} />
                             </div>
-                            <div className={`border border-gray-500 rounded p-1 ${isDownloading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'} transition`} onClick={handleDownloadFeetPdf} title='Download PDFs (right then left)'>
+                            <div className={`border border-gray-500 rounded p-1 ${isDownloading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'} transition`} onClick={handleDownloadFeetPdf} title='Download Combined PDF (both feet)'>
                                 <TfiReload className={`text-4xl ${isDownloading ? 'text-gray-400' : 'text-gray-600'}`} />
                             </div>
 

@@ -16,7 +16,7 @@ export default function ComposeEmailModal() {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/10">
       <div className="relative z-50">
         <EmailManagement setShowCompose={handleClose} />
       </div>

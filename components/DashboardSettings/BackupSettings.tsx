@@ -4,20 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
-import { Clock } from "lucide-react"
+import { useAuth } from '@/contexts/AuthContext';
+
 
 export type BackupSettingsForm = {
     automaticBackups: boolean;
-    backupFrequency: "ja" | "nein"; // Backup-Frequenz wählen
-    backupTime: string; // Uhrzeit für Backup, e.g., "03:00"
-    storageTarget: string; // Speicherziel wählen (e.g., "Cloud", "Lokaler Server")
-    storagePath: string; // Pfad oder Verbindungslink eingeben
-    retentionPeriod: number; // Aufbewahrungszeitraum (in Tagen)
-    notifyOnFailure: boolean; // Benachrichtigungen bei Problemen
-    notificationEmail: string; // Benenfangeradresse für Benachrichtigungen
+    backupFrequency: "ja" | "nein"; 
+    backupTime: string; 
+    storageTarget: string; 
+    storagePath: string; 
+    retentionPeriod: number; 
+    notifyOnFailure: boolean;
+    notificationEmail: string; 
 };
 
 export default function BackupSettings() {
+
+    const { user } = useAuth();
     const [form, setForm] = useState<BackupSettingsForm>({
         automaticBackups: true,
         backupFrequency: "ja",
@@ -26,7 +29,7 @@ export default function BackupSettings() {
         storagePath: "https://drive.google.com/x",
         retentionPeriod: 30,
         notifyOnFailure: false,
-        notificationEmail: "audre1@feetf1rst.com",
+        notificationEmail: user?.email || "",
     });
 
     return (

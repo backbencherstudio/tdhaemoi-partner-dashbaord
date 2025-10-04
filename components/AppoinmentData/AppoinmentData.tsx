@@ -38,13 +38,13 @@ export default function AppoinmentData({ onRefresh }: AppoinmentDataProps) {
             setIsLoading(true);
             const response = await getMyAppointments({
                 page: 1,
-                limit: 2
+                limit: 10
             });
 
             if (response?.data) {
                 const now = new Date();
                 const today = now.toISOString().split('T')[0];
-                const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+                const currentTime = now.toTimeString().slice(0, 5); 
 
                 const formattedEvents = response.data.map((apt: Appointment) => ({
                     id: apt.id,
@@ -59,14 +59,14 @@ export default function AppoinmentData({ onRefresh }: AppoinmentDataProps) {
                 const upcomingEvents = formattedEvents.filter((event: Appointment) => {
                     const eventDate = event.date;
                     if (eventDate > today) {
-                        return true; // Future dates
+                        return true; 
                     } else if (eventDate === today && event.time) {
-                        return event.time > currentTime; // Today but later time
+                        return event.time > currentTime; 
                     }
-                    return false; // Past events
+                    return false; 
                 });
 
-                // Sort by date and time, then take only the next 2
+                // Sort by date and time
                 const sortedUpcoming = upcomingEvents.sort((a: Appointment, b: Appointment) => {
                     if (a.date !== b.date) {
                         return a.date.localeCompare(b.date);
@@ -74,7 +74,38 @@ export default function AppoinmentData({ onRefresh }: AppoinmentDataProps) {
                     return (a.time || '').localeCompare(b.time || '');
                 });
 
-                setEvents(sortedUpcoming.slice(0, 2));
+                // Group appointments by date
+                const appointmentsByDate: { [key: string]: Appointment[] } = {};
+                sortedUpcoming.forEach((appointment: Appointment) => {
+                    if (!appointmentsByDate[appointment.date]) {
+                        appointmentsByDate[appointment.date] = [];
+                    }
+                    appointmentsByDate[appointment.date].push(appointment);
+                });
+
+                // Find the date with most appointments, or earliest date if tied
+                let selectedDate = '';
+                let maxAppointments = 0;
+                
+                for (const [date, appointments] of Object.entries(appointmentsByDate)) {
+                    if (appointments.length > maxAppointments) {
+                        maxAppointments = appointments.length;
+                        selectedDate = date;
+                    } else if (appointments.length === maxAppointments && appointments.length > 0) {
+                        // If same number of appointments, choose the earliest date
+                        if (!selectedDate || date < selectedDate) {
+                            selectedDate = date;
+                        }
+                    }
+                }
+
+                // If we found a date with multiple appointments, show up to 2 from that date
+                if (selectedDate && appointmentsByDate[selectedDate].length >= 2) {
+                    setEvents(appointmentsByDate[selectedDate].slice(0, 2));
+                } else {
+                    // Otherwise, show the first 2 upcoming appointments
+                    setEvents(sortedUpcoming.slice(0, 2));
+                }
             }
         } catch (error) {
             console.error('Failed to load appointments:', error);

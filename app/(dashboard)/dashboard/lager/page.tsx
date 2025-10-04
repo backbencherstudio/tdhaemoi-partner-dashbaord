@@ -232,10 +232,10 @@ export default function Lager() {
                 <h1 className='text-2xl font-semibold'>Produktverwaltung</h1>
 
                 <div className="flex items-center gap-4">
-                    <DeliveryNote
+                    {/* <DeliveryNote
                         productsData={productsData}
                         onDeliveryNoteAdd={setProductsData}
-                    />
+                    /> */}
 
                     <div className="relative w-64">
                         <IoSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-lg" />

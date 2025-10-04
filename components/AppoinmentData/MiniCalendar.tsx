@@ -19,6 +19,7 @@ interface MiniCalendarProps {
     handleMiniCalendarDateClick: (date: Date) => void;
     getEventsForDate: (date: Date) => any[];
     currentDate: Date;
+    selectedRowStartDate?: Date | null;
 }
 
 export default function MiniCalendar({
@@ -37,7 +38,8 @@ export default function MiniCalendar({
     isPastDate,
     handleMiniCalendarDateClick,
     getEventsForDate,
-    currentDate
+    currentDate,
+    selectedRowStartDate
 }: MiniCalendarProps) {
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 21 }, (_, i) => currentYear - 10 + i);
@@ -119,20 +121,24 @@ export default function MiniCalendar({
                                 const isSelected = visibleDates.some(visibleDate => isSameDay(visibleDate, date));
                                 const isCurrentMonthView = date.getMonth() === currentDate.getMonth();
                                 const isPast = isPastDate(date);
-                                const hasAppointments = getEventsForDate(date).length > 0; // Check if date has appointments
+                                const hasAppointments = getEventsForDate(date).length > 0; 
+                                const isInSelectedRange = selectedRowStartDate && 
+                                    date >= selectedRowStartDate && 
+                                    date < new Date(selectedRowStartDate.getTime() + 5 * 24 * 60 * 60 * 1000);
 
                                 return (
                                     <div
                                         key={index}
                                         className={`p-2 cursor-pointer hover:bg-gray-200 rounded transition-colors relative ${!isCurrentMonth ? 'text-gray-300' : 'text-gray-900'
-                                            } ${isToday ? 'bg-[#62A07C] text-white font-bold' : ''
-                                            } ${isSelected && !isToday ? 'bg-blue-100 border-2 border-blue-300' : ''
-                                            } ${isCurrentMonthView && !isSelected && !isToday ? 'bg-blue-50 border border-blue-200' : ''
-                                            } ${isPast && !isToday && !isSelected ? 'opacity-50 text-gray-500' : ''
-                                            } ${hasAppointments && !isToday ? 'text-green-500 font-semibold' : ''
+                                            } ${isToday && !isInSelectedRange ? 'bg-[#62A07C] text-white font-bold' : ''
+                                            } ${isInSelectedRange ? 'bg-purple-100 text-black font-bold border border-purple-700/40 shadow-lg' : ''
+                                            } ${isSelected && !isToday && !isInSelectedRange ? 'bg-blue-100 border-2 border-blue-300' : ''
+                                            } ${isCurrentMonthView && !isSelected && !isToday && !isInSelectedRange ? 'bg-blue-50 border border-blue-200' : ''
+                                            } ${isPast && !isToday && !isSelected && !isInSelectedRange ? 'opacity-50 text-gray-500' : ''
+                                            } ${hasAppointments && !isToday && !isInSelectedRange ? 'text-green-500 font-semibold' : ''
                                             }`}
                                         onClick={() => handleMiniCalendarDateClick(date)}
-                                        title={`${date.toDateString()} - Click to navigate to this month${hasAppointments ? ` (${getEventsForDate(date).length} appointment${getEventsForDate(date).length > 1 ? 's' : ''})` : ''}`}
+                                        title={`${date.toDateString()} - Click to view next 4 days${hasAppointments ? ` (${getEventsForDate(date).length} appointment${getEventsForDate(date).length > 1 ? 's' : ''})` : ''}`}
                                     >
                                         {date.getDate()}
                                         {hasAppointments && (

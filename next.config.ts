@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'counties-became-responded-dame.trycloudflare.com',
+        hostname: 'signals-hopefully-diverse-ranges.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

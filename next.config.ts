@@ -20,6 +20,12 @@ const nextConfig: NextConfig = {
         hostname: 'signals-hopefully-diverse-ranges.trycloudflare.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'colorado-src-sheer-module.trycloudflare.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },

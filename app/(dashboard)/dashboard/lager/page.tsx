@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
     Select,
     SelectContent,
@@ -9,7 +9,6 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import products from '@/public/data/products.json'
 import {
     Pagination,
     PaginationContent,
@@ -23,17 +22,21 @@ import { Input } from '@/components/ui/input'
 import LagerChart from '@/components/LagerChart/LagerChart'
 import ProductManagementTable from '../_components/Product/ProductManagementTable'
 import AddProduct from '../_components/Product/AddProduct'
-import DeliveryNote from '../_components/Product/DeliveryNote'
+import DeleteConfirmModal from '../_components/Product/DeleteConfirmModal'
+import { useStockManagementSlice } from '@/hooks/stockManagement/useStockManagementSlice'
 import InventoryHistory, { InventoryHistoryRef } from '../_components/Product/InventoryHistory'
+import { deleteStorage } from '@/apis/productsManagementApis'
+import toast from 'react-hot-toast'
 
 interface Product {
-    id: number
+    id: string
     Produktname: string
     Produktkürzel: string
     Hersteller: string
     Lagerort: string
     minStockLevel: number
     sizeQuantities: { [key: string]: number }
+    Status: string
     inventoryHistory: Array<{
         id: string
         date: string
@@ -58,24 +61,59 @@ interface NewProduct {
 
 // Define the size columns
 const sizeColumns = [
-    "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48", "49"
+    "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45", "46", "47", "48"
 ];
 
 export default function Lager() {
+    // Stock management hook
+    const { products, pagination, getAllProducts, refreshProducts, isLoadingProducts, error } = useStockManagementSlice();
+    
     // Pagination state
     const [itemsPerPage, setItemsPerPage] = useState(2)
     const [currentPage, setCurrentPage] = useState(1)
     const [showPagination, setShowPagination] = useState(false)
 
-    // Product data state
-    const [productsData, setProductsData] = useState<Product[]>(products as Product[])
+    // Product data state - convert API products to local format
+    const [productsData, setProductsData] = useState<Product[]>([])
 
-    // Table editing state
-    const [editingCell, setEditingCell] = useState<{ productId: number; field: string; size?: string } | null>(null)
-    const [editValue, setEditValue] = useState('')
 
     // Component refs
     const inventoryHistoryRef = useRef<InventoryHistoryRef>(null)
+    
+    // Delete modal state
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+    const [productToDelete, setProductToDelete] = useState<Product | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
+
+    // Convert API product to local format
+    const convertApiProductToLocal = (apiProduct: any): Product => {
+        return {
+            id: apiProduct.id,
+            Produktname: apiProduct.produktname,
+            Produktkürzel: apiProduct.artikelnummer,
+            Hersteller: apiProduct.hersteller,
+            Lagerort: apiProduct.lagerort,
+            minStockLevel: apiProduct.mindestbestand,
+            sizeQuantities: apiProduct.groessenMengen,
+            Status: apiProduct.Status,
+            inventoryHistory: [] // API doesn't provide history yet
+        };
+    };
+
+    // Fetch products on component mount
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const apiProducts = await getAllProducts();
+                const convertedProducts = apiProducts.map(convertApiProductToLocal);
+                setProductsData(convertedProducts);
+            } catch (err) {
+                console.error('Failed to fetch products:', err);
+            }
+        };
+
+        fetchProducts();
+    }, []);
 
     // Chart data
     const chartData = [
@@ -112,81 +150,6 @@ export default function Lager() {
             .map(([size, quantity]) => ({ size, quantity }));
     }
 
-    // Table editing handlers
-    const handleCellEdit = (productId: number, field: string, size?: string) => {
-        const product = productsData.find(p => p.id === productId);
-        if (!product) return;
-
-        let currentValue = '';
-        if (field === 'sizeQuantity' && size) {
-            currentValue = product.sizeQuantities[size]?.toString() || '0';
-        } else {
-            currentValue = product[field as keyof Product]?.toString() || '';
-        }
-
-        setEditingCell({ productId, field, size });
-        setEditValue(currentValue);
-    };
-
-    const handleSaveEdit = () => {
-        if (!editingCell) return;
-
-        const { productId, field, size } = editingCell;
-        const newValue = field === 'sizeQuantity' ? parseInt(editValue) || 0 : editValue;
-
-        setProductsData(prev => prev.map(product => {
-            if (product.id === productId) {
-                if (field === 'sizeQuantity' && size) {
-                    const previousStock = product.sizeQuantities[size] || 0;
-                    const newStock = newValue as number;
-
-                    // Add to inventory history
-                    const historyEntry: Product['inventoryHistory'][0] = {
-                        id: `hist_${Date.now()}`,
-                        date: new Date().toISOString(),
-                        type: newStock > previousStock ? 'delivery' : 'correction',
-                        quantity: newStock - previousStock,
-                        size,
-                        previousStock,
-                        newStock,
-                        user: 'admin',
-                        notes: 'Manual stock update'
-                    };
-
-                    return {
-                        ...product,
-                        sizeQuantities: {
-                            ...product.sizeQuantities,
-                            [size]: newStock
-                        },
-                        inventoryHistory: [...product.inventoryHistory, historyEntry]
-                    };
-                } else {
-                    return {
-                        ...product,
-                        [field]: newValue
-                    };
-                }
-            }
-            return product;
-        }));
-
-        setEditingCell(null);
-        setEditValue('');
-    };
-
-    const handleCancelEdit = () => {
-        setEditingCell(null);
-        setEditValue('');
-    };
-
-    const handleKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-            handleSaveEdit();
-        } else if (e.key === 'Escape') {
-            handleCancelEdit();
-        }
-    };
 
     // History handler
     const showHistory = (product: Product) => {
@@ -196,33 +159,63 @@ export default function Lager() {
     };
 
     // Lagerort change handler
-    const handleLagerortChange = (productId: number, newLagerort: string) => {
+    const handleLagerortChange = (productId: string, newLagerort: string) => {
         setProductsData(prev => prev.map(product =>
             product.id === productId ? { ...product, Lagerort: newLagerort } : product
         ));
     };
 
-    // Add product handler
-    const handleAddProduct = (newProduct: NewProduct) => {
-        const id = Math.max(0, ...productsData.map(p => p.id)) + 1;
-        setProductsData(prev => [
-            ...prev,
-            {
-                id,
-                ...newProduct,
-                inventoryHistory: [{
-                    id: `hist_${Date.now()}`,
-                    date: new Date().toISOString(),
-                    type: 'delivery',
-                    quantity: Object.values(newProduct.sizeQuantities).reduce((sum: number, qty) => sum + Number(qty), 0),
-                    size: 'multiple',
-                    previousStock: 0,
-                    newStock: Object.values(newProduct.sizeQuantities).reduce((sum: number, qty) => sum + Number(qty), 0),
-                    user: 'admin',
-                    notes: 'Manuell hinzugefügt'
-                }]
-            }
-        ]);
+    // Add product handler - refresh data from API
+    const handleAddProduct = async (newProduct: NewProduct) => {
+        try {
+            // Refresh products from API to get the latest data including the newly created product
+            const apiProducts = await refreshProducts();
+            const convertedProducts = apiProducts.map(convertApiProductToLocal);
+            setProductsData(convertedProducts);
+        } catch (err) {
+            console.error('Failed to refresh products after adding:', err);
+        }
+    };
+
+    // Update product handler
+    const handleUpdateProduct = (product: Product) => {
+        // TODO: Implement update functionality
+        console.log('Update product:', product);
+        toast('Update functionality will be implemented soon', {
+            icon: 'ℹ️',
+            duration: 3000,
+        });
+    };
+
+    // Delete product handler
+    const handleDeleteProduct = (product: Product) => {
+        setProductToDelete(product);
+        setDeleteModalOpen(true);
+    };
+
+    // Confirm delete handler
+    const handleConfirmDelete = async () => {
+        if (!productToDelete) return;
+
+        setIsDeleting(true);
+        try {
+            await deleteStorage(productToDelete.id);
+            toast.success(`"${productToDelete.Produktname}" wurde erfolgreich gelöscht!`);
+            
+            // Refresh products from API
+            const apiProducts = await refreshProducts();
+            const convertedProducts = apiProducts.map(convertApiProductToLocal);
+            setProductsData(convertedProducts);
+            
+            // Close modal
+            setDeleteModalOpen(false);
+            setProductToDelete(null);
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to delete product';
+            toast.error(`Fehler beim Löschen: ${errorMessage}`);
+        } finally {
+            setIsDeleting(false);
+        }
     };
 
     return (
@@ -249,7 +242,14 @@ export default function Lager() {
 
             {/* Section Title */}
             <div className='flex items-center justify-between mb-4'>
-                <h2 className="text-2xl font-semibold">Einlagenrohlinge</h2>
+                <div>
+                    <h2 className="text-2xl font-semibold">Einlagenrohlinge</h2>
+                    {pagination && (
+                        <p className="text-sm text-gray-600 mt-1">
+                            {pagination.totalItems} Produkte gefunden
+                        </p>
+                    )}
+                </div>
                 {/* Add Product Component */}
                 <AddProduct
                     onAddProduct={handleAddProduct}
@@ -260,21 +260,27 @@ export default function Lager() {
 
 
             {/* Product Management Table */}
-            <ProductManagementTable
-                visibleProducts={visibleProducts}
-                sizeColumns={sizeColumns}
-                editingCell={editingCell}
-                editValue={editValue}
-                onCellEdit={handleCellEdit}
-                onSaveEdit={handleSaveEdit}
-                onCancelEdit={handleCancelEdit}
-                onKeyPress={handleKeyPress}
-                onEditValueChange={setEditValue}
-                onShowHistory={showHistory}
-                hasLowStock={hasLowStock}
-                getLowStockSizes={getLowStockSizes}
-                onLagerortChange={handleLagerortChange}
-            />
+            {isLoadingProducts ? (
+                <div className="flex justify-center items-center py-8">
+                    <div className="text-lg">Lade Produkte...</div>
+                </div>
+            ) : error ? (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+                    <p className="font-medium">Fehler beim Laden der Produkte</p>
+                    <p className="text-sm">{error}</p>
+                </div>
+            ) : (
+                <ProductManagementTable
+                    visibleProducts={visibleProducts}
+                    sizeColumns={sizeColumns}
+                    onShowHistory={showHistory}
+                    hasLowStock={hasLowStock}
+                    getLowStockSizes={getLowStockSizes}
+                    onLagerortChange={handleLagerortChange}
+                    onUpdateProduct={handleUpdateProduct}
+                    onDeleteProduct={handleDeleteProduct}
+                />
+            )}
 
             {/* Pagination */}
             <div className="mt-6">
@@ -312,7 +318,7 @@ export default function Lager() {
                                     <SelectItem value="50">50</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <span className="text-sm text-gray-600">von {productsData.length} Produkten</span>
+                            <span className="text-sm text-gray-600">von {pagination?.totalItems || productsData.length} Produkten</span>
                         </div>
 
                         <div className="flex items-center gap-2">
@@ -358,6 +364,18 @@ export default function Lager() {
             <InventoryHistory
                 ref={inventoryHistoryRef}
                 productsData={productsData}
+            />
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmModal
+                isOpen={deleteModalOpen}
+                onClose={() => {
+                    setDeleteModalOpen(false);
+                    setProductToDelete(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                product={productToDelete}
+                isLoading={isDeleting}
             />
 
             {/* Chart */}

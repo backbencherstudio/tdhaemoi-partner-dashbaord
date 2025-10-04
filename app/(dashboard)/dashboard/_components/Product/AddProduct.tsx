@@ -3,6 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
+import { useAuth } from '@/contexts/AuthContext'
+import { useStockManagementSlice } from '@/hooks/stockManagement/useStockManagementSlice'
+import toast from 'react-hot-toast'
 
 interface NewProduct {
     Produktname: string;
@@ -10,6 +13,8 @@ interface NewProduct {
     Produktkürzel: string;
     Lagerort: string;
     minStockLevel: number;
+    purchase_price: number;
+    selling_price: number;
     sizeQuantities: { [key: string]: number };
 }
 
@@ -19,6 +24,8 @@ interface AddProductProps {
 }
 
 export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProps) {
+    const { user } = useAuth();
+    const { createNewProduct, isLoading, error, clearError } = useStockManagementSlice();
     const [showAddProductModal, setShowAddProductModal] = useState(false);
     const [newProduct, setNewProduct] = useState<NewProduct>({
         Produktname: '',
@@ -26,6 +33,8 @@ export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProp
         Produktkürzel: '',
         Lagerort: 'Alle Lagerorte',
         minStockLevel: 5,
+        purchase_price: 0,
+        selling_price: 0,
         sizeQuantities: Object.fromEntries(sizeColumns.map(size => [size, 0]))
     });
 
@@ -41,17 +50,50 @@ export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProp
             }
         }));
     };
-    const handleAddProduct = () => {
-        onAddProduct(newProduct);
-        setShowAddProductModal(false);
-        setNewProduct({
-            Produktname: '',
-            Hersteller: '',
-            Produktkürzel: '',
-            Lagerort: 'Alle Lagerorte',
-            minStockLevel: 5,
-            sizeQuantities: Object.fromEntries(sizeColumns.map(size => [size, 0]))
-        });
+    const handleAddProduct = async () => {
+        try {
+            clearError();
+            // Call API to create product
+            const response = await createNewProduct(newProduct);
+
+            // Show success toast with product details
+            if (response.success && response.data) {
+                const productInfo = response.data;
+                // Use the message from API response and show product details
+                toast.success(`${response.message} `);
+
+                // Call the onAddProduct callback with the API response - don't add id to avoid TypeScript error
+                onAddProduct(newProduct);
+            } else {
+                toast.success(response.message || 'Storage created successfully',
+                    {
+                        duration: 4000,
+                        position: 'top-right',
+                    });
+
+                onAddProduct(newProduct);
+            }
+
+            // Reset form and close modal
+            setShowAddProductModal(false);
+            setNewProduct({
+                Produktname: '',
+                Hersteller: '',
+                Produktkürzel: '',
+                Lagerort: 'Alle Lagerorte',
+                minStockLevel: 5,
+                purchase_price: 0,
+                selling_price: 0,
+                sizeQuantities: Object.fromEntries(sizeColumns.map(size => [size, 0]))
+            });
+        } catch (err) {
+            console.error('Failed to create product:', err);
+            // Show error toast
+            toast.error('Fehler beim Erstellen des Produkts. Bitte versuchen Sie es erneut.', {
+                duration: 5000,
+                position: 'top-right',
+            });
+        }
     };
 
     return (
@@ -67,8 +109,15 @@ export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProp
                     <DialogHeader>
                         <DialogTitle>Produkt manuell hinzufügen</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={e => { e.preventDefault(); handleAddProduct(); }} className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                            <p className="font-medium">Fehler beim Erstellen des Produkts</p>
+                            <p className="text-sm">{error}</p>
+                        </div>
+                    )}
+                    <form onSubmit={e => { e.preventDefault(); handleAddProduct(); }} className="space-y-6">
+                        {/* Row 1: Produktname and Hersteller */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1">Produktname</label>
                                 <Input value={newProduct.Produktname} onChange={e => handleNewProductChange('Produktname', e.target.value)} required />
@@ -77,6 +126,10 @@ export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProp
                                 <label className="block text-sm font-medium mb-1">Hersteller</label>
                                 <Input value={newProduct.Hersteller} onChange={e => handleNewProductChange('Hersteller', e.target.value)} required />
                             </div>
+                        </div>
+
+                        {/* Row 2: Artikelnummer and Lagerort */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium mb-1">Artikelnummer</label>
                                 <Input value={newProduct.Produktkürzel} onChange={e => handleNewProductChange('Produktkürzel', e.target.value)} required />
@@ -89,13 +142,39 @@ export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProp
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="Alle Lagerorte">Alle Lagerorte</SelectItem>
-                                        <SelectItem value="Lager 1">Lager 1</SelectItem>
-                                        <SelectItem value="Lager 2">Lager 2</SelectItem>
-                                        <SelectItem value="Lager 3">Lager 3</SelectItem>
+                                        {user?.hauptstandort && user.hauptstandort.length > 0 ? (
+                                            user.hauptstandort.map((location, index) => (
+                                                <SelectItem key={index} value={location}>
+                                                    {location}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <SelectItem value="Lager 1">Lager 1</SelectItem>
+                                                <SelectItem value="Lager 2">Lager 2</SelectItem>
+                                                <SelectItem value="Lager 3">Lager 3</SelectItem>
+                                            </>
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </div>
+                        </div>
+
+                        {/* Row 3: Einkaufspreis and Verkaufspreis */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
+                                <label className="block text-sm font-medium mb-1">Einkaufspreis (€)</label>
+                                <Input type="number" step="0.01" min={0} value={newProduct.purchase_price} onChange={e => handleNewProductChange('purchase_price', parseFloat(e.target.value) || 0)} required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Verkaufspreis (€)</label>
+                                <Input type="number" step="0.01" min={0} value={newProduct.selling_price} onChange={e => handleNewProductChange('selling_price', parseFloat(e.target.value) || 0)} required />
+                            </div>
+                        </div>
+
+                        {/* Row 4: Mindestbestand */}
+                        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                            <div className="md:w-1/2">
                                 <label className="block text-sm font-medium mb-1">Mindestbestand</label>
                                 <Input type="number" min={0} value={newProduct.minStockLevel} onChange={e => handleNewProductChange('minStockLevel', parseInt(e.target.value) || 0)} required />
                             </div>
@@ -118,8 +197,25 @@ export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProp
                             </div>
                         </div>
                         <div className="flex justify-end gap-2">
-                            <Button type="button" variant="outline" onClick={() => setShowAddProductModal(false)}>Abbrechen</Button>
-                            <Button type="submit" className="bg-[#61A178] hover:bg-[#61A178]/80 text-white">Hinzufügen</Button>
+                            <Button
+                                className="cursor-pointer"
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setShowAddProductModal(false);
+                                    clearError();
+                                }}
+                                disabled={isLoading}
+                            >
+                                Abbrechen
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-[#61A178] cursor-pointer hover:bg-[#61A178]/80 text-white"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Erstellen...' : 'Hinzufügen'}
+                            </Button>
                         </div>
                     </form>
                 </DialogContent>

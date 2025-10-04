@@ -16,19 +16,20 @@ import {
 } from "@/components/ui/tooltip"
 import { IoWarning } from 'react-icons/io5'
 import { IoTime } from 'react-icons/io5'
-import { Input } from '@/components/ui/input'
-import { IoCheckmark } from 'react-icons/io5'
-import { IoClose } from 'react-icons/io5'
+import { IoCreate } from 'react-icons/io5'
+import { IoTrash } from 'react-icons/io5'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { useAuth } from '@/contexts/AuthContext'
 
 interface Product {
-    id: number
+    id: string
     Produktname: string
     Produktkürzel: string
     Hersteller: string
     Lagerort: string
     minStockLevel: number
     sizeQuantities: { [key: string]: number }
+    Status: string
     inventoryHistory: Array<{
         id: string
         date: string
@@ -45,91 +46,30 @@ interface Product {
 interface ProductManagementTableProps {
     visibleProducts: Product[]
     sizeColumns: string[]
-    editingCell: { productId: number; field: string; size?: string } | null
-    editValue: string
-    onCellEdit: (productId: number, field: string, size?: string) => void
-    onSaveEdit: () => void
-    onCancelEdit: () => void
-    onKeyPress: (e: React.KeyboardEvent) => void
-    onEditValueChange: (value: string) => void
     onShowHistory: (product: Product) => void
     hasLowStock: (product: Product) => boolean
     getLowStockSizes: (product: Product) => Array<{ size: string; quantity: number }>
-    onLagerortChange: (productId: number, newLagerort: string) => void
+    onLagerortChange: (productId: string, newLagerort: string) => void
+    onUpdateProduct: (product: Product) => void
+    onDeleteProduct: (product: Product) => void
 }
 
 export default function ProductManagementTable({
     visibleProducts,
     sizeColumns,
-    editingCell,
-    editValue,
-    onCellEdit,
-    onSaveEdit,
-    onCancelEdit,
-    onKeyPress,
-    onEditValueChange,
     onShowHistory,
     hasLowStock,
     getLowStockSizes,
-    onLagerortChange
+    onLagerortChange,
+    onUpdateProduct,
+    onDeleteProduct
 }: ProductManagementTableProps) {
+    const { user } = useAuth();
 
     // Helper to get stock for a size
     function getStockForSize(product: Product, size: string) {
         return product.sizeQuantities[size] || 0;
     }
-
-    // Render editable cell
-    const renderEditableCell = (product: Product, field: string, size?: string) => {
-        const isEditing = editingCell?.productId === product.id && 
-                         editingCell?.field === field && 
-                         editingCell?.size === size;
-
-        if (isEditing) {
-            return (
-                <div className="flex items-center gap-1">
-                    <Input
-                        value={editValue}
-                        onChange={(e) => onEditValueChange(e.target.value)}
-                        onKeyDown={onKeyPress}
-                        className="w-16 h-8 text-sm"
-                        autoFocus
-                    />
-                    <Button
-                        size="sm"
-                        onClick={onSaveEdit}
-                        className="h-6 w-6 p-0"
-                    >
-                        <IoCheckmark className="w-3 h-3" />
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={onCancelEdit}
-                        className="h-6 w-6 p-0"
-                    >
-                        <IoClose className="w-3 h-3" />
-                    </Button>
-                </div>
-            );
-        }
-
-        let displayValue = '';
-        if (field === 'sizeQuantity' && size) {
-            displayValue = getStockForSize(product, size).toString();
-        } else {
-            displayValue = product[field as keyof Product]?.toString() || '';
-        }
-
-        return (
-            <div 
-                className="cursor-pointer hover:bg-gray-100 p-1 rounded"
-                onClick={() => onCellEdit(product.id, field, size)}
-            >
-                {displayValue}
-            </div>
-        );
-    };
 
     return (
         <Table className='border-2 border-gray-500 rounded-lg mt-5'>
@@ -141,14 +81,33 @@ export default function ProductManagementTable({
                     <TableHead className="border-2 border-gray-500 p-2">Artikelnummer</TableHead>
                     <TableHead className="border-2 border-gray-500 p-2">Status</TableHead>
                     <TableHead className="border-2 border-gray-500 p-2">Historie</TableHead>
+                    <TableHead className="border-2 border-gray-500 p-2">Aktionen</TableHead>
                     {sizeColumns.map(size => (
                         <TableHead key={size} className="border-2 border-gray-500 p-2 text-center">{size}</TableHead>
                     ))}
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {visibleProducts.map((product) => (
-                    <TableRow key={product.id}>
+                {visibleProducts.length === 0 ? (
+                    <TableRow>
+                        <TableCell 
+                            colSpan={sizeColumns.length + 7} 
+                            className="border-2 border-gray-500 p-8 text-center"
+                        >
+                            <div className="flex flex-col items-center justify-center py-8">
+                                <div className="text-gray-400 mb-2">
+                                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                    </svg>
+                                </div>
+                                <h3 className="text-lg font-medium text-gray-900 mb-1">Keine Produkte gefunden</h3>
+                                <p className="text-gray-500 text-sm">Es wurden keine Produkte in der Datenbank gefunden.</p>
+                            </div>
+                        </TableCell>
+                    </TableRow>
+                ) : (
+                    visibleProducts.map((product) => (
+                        <TableRow key={product.id}>
                         <TableCell className="border-2 border-gray-500 p-2">
                             {/* Lagerort as editable dropdown */}
                             <Select value={product.Lagerort} onValueChange={(value) => onLagerortChange(product.id, value)}>
@@ -157,31 +116,46 @@ export default function ProductManagementTable({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Alle Lagerorte">Alle Lagerorte</SelectItem>
-                                    <SelectItem value="Lager 1">Lager 1</SelectItem>
-                                    <SelectItem value="Lager 2">Lager 2</SelectItem>
-                                    <SelectItem value="Lager 3">Lager 3</SelectItem>
+                                    {user?.hauptstandort && user.hauptstandort.length > 0 ? (
+                                        user.hauptstandort.map((location, index) => (
+                                            <SelectItem key={index} value={location}>
+                                                {location}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <>
+                                            <SelectItem value="Lager 1">Lager 1</SelectItem>
+                                            <SelectItem value="Lager 2">Lager 2</SelectItem>
+                                            <SelectItem value="Lager 3">Lager 3</SelectItem>
+                                        </>
+                                    )}
                                 </SelectContent>
                             </Select>
                         </TableCell>
                         <TableCell className="border-2 border-gray-500 p-2">
-                            {renderEditableCell(product, 'Hersteller')}
+                            {product.Hersteller}
                         </TableCell>
                         <TableCell className="border-2 border-gray-500 p-2">
-                            {renderEditableCell(product, 'Produktname')}
+                            {product.Produktname}
                         </TableCell>
                         <TableCell className="border-2 border-gray-500 p-2">
-                            {renderEditableCell(product, 'Produktkürzel')}
+                            {product.Produktkürzel}
                         </TableCell>
                         <TableCell className="border-2 border-gray-500 p-2">
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger>
                                         <div className="flex items-center gap-2">
-                                            {hasLowStock(product) && (
+                                            {(product.Status === 'Critical Low Stock' || product.Status === 'Low Stock Warning' || product.Status === 'Out of Stock') && (
                                                 <IoWarning className="text-red-500 text-lg" />
                                             )}
-                                            <span className="text-sm">
-                                                {hasLowStock(product) ? 'Niedriger Bestand' : 'OK'}
+                                            <span className={`text-sm ${
+                                                product.Status === 'Critical Low Stock' ? 'text-red-600 font-semibold' :
+                                                product.Status === 'Low Stock Warning' ? 'text-orange-600 font-medium' :
+                                                product.Status === 'Out of Stock' ? 'text-red-800 font-bold' :
+                                                'text-green-600'
+                                            }`}>
+                                                {product.Status}
                                             </span>
                                         </div>
                                     </TooltipTrigger>
@@ -210,13 +184,34 @@ export default function ProductManagementTable({
                                 <IoTime className="w-4 h-4" />
                             </Button>
                         </TableCell>
+                        <TableCell className="border-2 border-gray-500 p-2">
+                            <div className="flex items-center gap-2">
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => onUpdateProduct(product)}
+                                    className="h-8 w-8 p-0 cursor-pointer"
+                                >
+                                    <IoCreate className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => onDeleteProduct(product)}
+                                    className="h-8 w-8 p-0 cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                    <IoTrash className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        </TableCell>
                         {sizeColumns.map(size => (
                             <TableCell key={size} className="border-2 border-gray-500 p-2 text-center">
-                                {renderEditableCell(product, 'sizeQuantity', size)}
+                                {getStockForSize(product, size)}
                             </TableCell>
                         ))}
                     </TableRow>
-                ))}
+                    ))
+                )}
             </TableBody>
         </Table>
     )

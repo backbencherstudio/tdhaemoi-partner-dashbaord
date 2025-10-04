@@ -2,7 +2,7 @@ import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface Product {
-  id: number;
+  id: string;
   Produktname: string;
   Produktkürzel: string;
   Hersteller: string;

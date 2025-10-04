@@ -4,6 +4,7 @@ import useEmblaCarousel from 'embla-carousel-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { BsFillQuestionCircleFill } from 'react-icons/bs'
 import { createVersorgung, updateVersorgung } from '@/apis/versorgungApis'
+import { getAllStorages } from '@/apis/productsManagementApis'
 import toast from 'react-hot-toast'
 
 // Types and Interfaces
@@ -16,6 +17,22 @@ export interface VersorgungCard {
     versorgung: string
     materialien: string
     laenge: string
+}
+
+interface StorageProduct {
+    id: string
+    produktname: string
+    hersteller: string
+    artikelnummer: string
+    lagerort: string
+    mindestbestand: number
+    groessenMengen: { [key: string]: number }
+    purchase_price: number
+    selling_price: number
+    Status: string
+    userId: string
+    createdAt: string
+    updatedAt: string
 }
 
 export interface VersorgungModalProps {
@@ -82,6 +99,11 @@ export default function VersorgungModal({
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
 
+    // Storage products state
+    const [storageProducts, setStorageProducts] = useState<StorageProduct[]>([])
+    const [isLoadingProducts, setIsLoadingProducts] = useState(false)
+    const [selectedProduct, setSelectedProduct] = useState<StorageProduct | null>(null)
+
     // Carousel Setup
     const [lengthEmblaRef, lengthEmblaApi] = useEmblaCarousel({
         slidesToScroll: 3,
@@ -98,10 +120,51 @@ export default function VersorgungModal({
 
     const getCategoryStatus = () => CATEGORY_TITLES[category] || 'Alltagseinlagen'
 
+    // Fetch storage products
+    const fetchStorageProducts = async () => {
+        try {
+            setIsLoadingProducts(true)
+            const response = await getAllStorages()
+            if (response.success && response.data) {
+                setStorageProducts(response.data)
+            }
+        } catch (err: any) {
+            console.error('Failed to fetch storage products:', err)
+            toast.error('Failed to load products')
+        } finally {
+            setIsLoadingProducts(false)
+        }
+    }
+
+    // Handle product selection
+    const handleProductSelect = (product: StorageProduct) => {
+        setSelectedProduct(product)
+
+        // Auto-fill form fields
+        setForm(prev => ({
+            ...prev,
+            name: product.produktname,
+            artikelHersteller: product.artikelnummer,
+            rohlingHersteller: product.hersteller,
+        }))
+
+        // Update lengths based on groessenMengen
+        const newLengths = DEFAULT_LENGTHS.map((length, index) => {
+            const size = length.label
+            const quantity = product.groessenMengen[size] || 0
+            return {
+                ...length,
+                value: quantity.toString()
+            }
+        })
+        setLengths(newLengths)
+    }
+
     const resetForm = useCallback(() => {
         setError(null)
         setSuccess(null)
         setIsLoading(false)
+        setSelectedProduct(null)
 
         if (editingCard) {
             setForm({
@@ -161,6 +224,7 @@ export default function VersorgungModal({
                 material: form.materialien,
                 langenempfehlung,
                 status: getCategoryStatus(),
+                storeId: selectedProduct?.id || null,
                 ...(isAuswahl && { diagnosis_status: selectedDiagnosis })
             }
 
@@ -229,15 +293,46 @@ export default function VersorgungModal({
     useEffect(() => {
         if (open) {
             resetForm()
+            fetchStorageProducts()
         } else {
             // Clean up states when modal closes
             setError(null)
             setSuccess(null)
             setIsLoading(false)
+            setSelectedProduct(null)
         }
     }, [editingCard, open, resetForm])
 
     // Render Functions
+    const renderProductDropdown = () => (
+        <div>
+            <label className="font-bold mb-1 block">Produkt aus Lager auswählen</label>
+            <div className="relative">
+                <select
+                    value={selectedProduct?.id || ''}
+                    onChange={(e) => {
+                        const productId = e.target.value
+                        const product = storageProducts.find(p => p.id === productId)
+                        if (product) {
+                            handleProductSelect(product)
+                        }
+                    }}
+                    className="border p-2 rounded w-full"
+                    disabled={isLoadingProducts}
+                >
+                    <option value="">
+                        {isLoadingProducts ? 'Lade Produkte...' : 'Produkt auswählen'}
+                    </option>
+                    {storageProducts.map((product) => (
+                        <option key={product.id} value={product.id}>
+                            {product.produktname} - {product.artikelnummer}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        </div>
+    )
+
     const renderLengthCarousel = () => (
         <div>
             <div className='flex items-center gap-2'>
@@ -323,6 +418,9 @@ export default function VersorgungModal({
                 </DialogHeader>
 
                 <form onSubmit={handleFormSubmit} className="flex flex-col gap-4 overflow-hidden">
+                    {/* Product Selection Dropdown */}
+                    {renderProductDropdown()}
+
                     {/* Basic Information */}
                     <input
                         name="name"
@@ -334,14 +432,7 @@ export default function VersorgungModal({
                     />
 
                     <div className="flex gap-2">
-                        <input
-                            name="rohlingHersteller"
-                            value={form.rohlingHersteller}
-                            onChange={handleFormChange}
-                            placeholder="Rohling Hersteller"
-                            className="border p-2 rounded w-1/2"
-                            required
-                        />
+
                         <input
                             name="artikelHersteller"
                             value={form.artikelHersteller}
@@ -350,6 +441,15 @@ export default function VersorgungModal({
                             className="border p-2 rounded w-1/2"
                             required
                         />
+                        <input
+                            name="rohlingHersteller"
+                            value={form.rohlingHersteller}
+                            onChange={handleFormChange}
+                            placeholder="Rohling Hersteller"
+                            className="border p-2 rounded w-1/2"
+                            required
+                        />
+
                     </div>
 
 

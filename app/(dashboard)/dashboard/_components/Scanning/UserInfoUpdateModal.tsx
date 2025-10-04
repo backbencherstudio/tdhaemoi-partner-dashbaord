@@ -37,6 +37,9 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
   const [fertigstellungBis, setFertigstellungBis] = useState('')
   const [bezahlt, setBezahlt] = useState('')
 
+  // Business location dropdown state
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false)
+
   // Price State
   const [footAnalysisPrice, setFootAnalysisPrice] = useState<string>('')
   const [insoleSupplyPrice, setInsoleSupplyPrice] = useState<string>('')
@@ -75,7 +78,11 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
       // Geschäftsstandort from partner when sameAsBusiness is true; else blank
       const sameAsBusiness = (scanData as any)?.workshopNote?.sameAsBusiness
       const partnerHauptstandort = (scanData as any)?.partner?.hauptstandort
-      setGeschaeftsstandort(sameAsBusiness ? (partnerHauptstandort || '') : '')
+      // Handle both string and array formats
+      const locationValue = Array.isArray(partnerHauptstandort) 
+        ? (sameAsBusiness && partnerHauptstandort.length > 0 ? partnerHauptstandort[0] : '')
+        : (sameAsBusiness ? partnerHauptstandort || '' : '')
+      setGeschaeftsstandort(locationValue)
       // Fertigstellung bis from workshopNote.completionDays if present
       const completionDays = (scanData as any)?.workshopNote?.completionDays as string | undefined
       const formattedCompletion = completionDays ? completionDays.slice(0, 10) : ''
@@ -117,6 +124,17 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
   const handleDropdownChange = (open: boolean) => {
     setIsEmployeeDropdownOpen(open)
     setShowSuggestions(open)
+  }
+
+  // Handle business location selection
+  const handleLocationSelect = (location: string) => {
+    setGeschaeftsstandort(location)
+    setIsLocationDropdownOpen(false)
+  }
+
+  // Handle business location dropdown open/close
+  const handleLocationDropdownChange = (open: boolean) => {
+    setIsLocationDropdownOpen(open)
   }
 
   // Helper function to calculate minimum delivery date (5 days from order date)
@@ -360,11 +378,55 @@ export default function UserInfoUpdateModal({ isOpen, onOpenChange, scanData, on
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-700">Geschäftstandort</Label>
-                <Input
-                  placeholder="Bremen"
-                  value={geschaeftsstandort}
-                  onChange={(e) => setGeschaeftsstandort(e.target.value)}
-                />
+                <Popover open={isLocationDropdownOpen} onOpenChange={handleLocationDropdownChange}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={isLocationDropdownOpen}
+                      className="w-full justify-start font-normal h-10"
+                    >
+                      <Input
+                        placeholder="Bremen"
+                        value={geschaeftsstandort}
+                        onChange={(e) => setGeschaeftsstandort(e.target.value)}
+                        className="border-none outline-none focus:ring-0 p-0 h-auto font-normal bg-transparent"
+                        onClick={() => setIsLocationDropdownOpen(true)}
+                      />
+                      <ChevronDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <div className="py-1">
+                      {(scanData as any)?.partner?.hauptstandort && Array.isArray((scanData as any).partner.hauptstandort) && (scanData as any).partner.hauptstandort.length > 0 ? (
+                        (scanData as any).partner.hauptstandort.map((location: string, index: number) => (
+                          <div
+                            key={index}
+                            className={`flex items-center justify-between px-3 py-2 cursor-pointer transition-colors duration-150 ${
+                              geschaeftsstandort === location
+                                ? 'bg-blue-50 hover:bg-blue-100 border-l-2 border-blue-500'
+                                : 'hover:bg-gray-100'
+                            }`}
+                            onClick={() => handleLocationSelect(location)}
+                          >
+                            <span className={`text-sm font-medium ${
+                              geschaeftsstandort === location ? 'text-blue-900' : 'text-gray-900'
+                            }`}>
+                              {location}
+                            </span>
+                            {geschaeftsstandort === location && (
+                              <Check className="h-4 w-4 text-blue-600" />
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-3 text-center text-sm text-gray-500">
+                          Keine verfügbaren Standorte gefunden
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">

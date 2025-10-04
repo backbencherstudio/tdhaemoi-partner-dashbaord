@@ -1,11 +1,10 @@
 "use client"
 import React, { useEffect, useState } from "react";
-
 import { Input } from "@/components/ui/input";
 import Benutzerverwaltung from "@/components/DashboardSettings/Benutzerverwaltung";
 import ProfileImage from "@/components/DashboardSettings/ProfileImage";
 import { useAuth } from "@/contexts/AuthContext";
-import { RiEdit2Line } from "react-icons/ri";
+import { RiEdit2Line, RiAddLine, RiDeleteBin6Line } from "react-icons/ri";
 import { useUpdatePartnerInfo } from "@/hooks/updatePartnerInfo/useUpdatePartnerInfo";
 import toast from 'react-hot-toast'
 
@@ -18,12 +17,15 @@ export default function UserManagementAccessRights() {
   const [accountName, setAccountName] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [absenderEmail, setAbsenderEmail] = useState("")
-  const [hauptstandort, sethauptstandort] = useState("")
+  const [hauptstandort, setHauptstandort] = useState<string[]>([])
+
+  const [newLocation, setNewLocation] = useState("")
   const [busnessName, setBusnessName] = useState("")
   const [bankName, setBankName] = useState("")
   const [bankNumber, setBankNumber] = useState("")
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
+
 
   const { update, isLoading } = useUpdatePartnerInfo()
 
@@ -32,7 +34,7 @@ export default function UserManagementAccessRights() {
     setPhoneNumber(user?.phone ?? "")
     setAbsenderEmail(user?.absenderEmail ?? "")
     setBusnessName(user?.busnessName ?? "")
-    sethauptstandort(user?.hauptstandort ?? "")
+    setHauptstandort(user?.hauptstandort ?? [])
     setBankName(user?.bankName ?? "")
     setBankNumber(user?.bankNumber ?? "")
     setPreviewImageUrl(user?.image ?? null)
@@ -41,6 +43,19 @@ export default function UserManagementAccessRights() {
   const handleImageChange = (file: File, dataUrl: string) => {
     setSelectedImageFile(file)
     setPreviewImageUrl(dataUrl)
+  }
+
+
+
+  const addNewLocation = () => {
+    if (newLocation.trim() && !hauptstandort.includes(newLocation.trim())) {
+      setHauptstandort([...hauptstandort, newLocation.trim()])
+      setNewLocation("")
+    }
+  }
+
+  const removeLocation = (locationToRemove: string) => {
+    setHauptstandort(hauptstandort.filter(location => location !== locationToRemove))
   }
 
   const handleToggle = async () => {
@@ -82,7 +97,8 @@ export default function UserManagementAccessRights() {
   const handleCancel = () => {
     // revert local changes and exit edit
     setAccountName(user?.name ?? "")
-    sethauptstandort(user?.hauptstandort ?? "")
+    setHauptstandort(user?.hauptstandort ?? [])
+    setNewLocation("")
     setPhoneNumber(user?.phone ?? "")
     setAbsenderEmail(user?.absenderEmail ?? "")
     setBusnessName(user?.busnessName ?? "")
@@ -188,13 +204,62 @@ export default function UserManagementAccessRights() {
 
           <div className="w-full md:w-1/2">
             <label className="block text-sm font-medium mb-1">Hauptstandort</label>
-            <Input
-              type="text"
-              value={hauptstandort}
-              onChange={(e) => sethauptstandort(e.target.value)}
-              readOnly={!isEditing}
-              className={`${!isEditing ? 'bg-gray-100 cursor-not-allowed' : ''} w-full`}
-            />
+
+            {/* Main field with locations and add input */}
+            <div className={`min-h-[40px] border rounded-md p-2 ${!isEditing ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'} flex flex-wrap gap-1`}>
+              {/* Display selected locations */}
+              {hauptstandort.map((location, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-md"
+                >
+                  {location}
+                  {isEditing && (
+                    <button
+                      type="button"
+                      onClick={() => removeLocation(location)}
+                      className="text-blue-600 hover:text-blue-800 ml-1"
+                    >
+                      <RiDeleteBin6Line className="w-3 h-3" />
+                    </button>
+                  )}
+                </span>
+              ))}
+
+              {/* Add new location input - only show when editing */}
+              {isEditing && (
+                <div className="flex items-center gap-1">
+                  <Input
+                    type="text"
+                    value={newLocation}
+                    onChange={(e) => setNewLocation(e.target.value)}
+                    placeholder="Add location..."
+                    className="border border-gray-300 shadow-sm p-1 h-auto text-sm min-w-[120px] focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        addNewLocation()
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={addNewLocation}
+                    disabled={!newLocation.trim() || hauptstandort.includes(newLocation.trim())}
+                    className="text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Add location"
+                  >
+                    <RiAddLine className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Show placeholder when no locations */}
+              {hauptstandort.length === 0 && !isEditing && (
+                <span className="text-gray-500 text-sm">No locations added</span>
+              )}
+            </div>
+
           </div>
           <div className="w-full md:w-1/2">
             <label className="block text sm font-medium mb-1">Account-Name / Mitarbeiternamen</label>

@@ -10,7 +10,8 @@ export type PartnerProfileUpdatePayload = {
   bankName?: string
   bankNumber?: string
   image?: File | null
-  hauptstandort?: string
+  hauptstandort?: string[]
+  defaultHauptstandort?: string
 }
 
 export function useUpdatePartnerInfo() {
@@ -29,7 +30,12 @@ export function useUpdatePartnerInfo() {
       if (payload.busnessName !== undefined) form.append('busnessName', payload.busnessName)
       if (payload.bankName !== undefined) form.append('bankName', payload.bankName)
       if (payload.bankNumber !== undefined) form.append('bankNumber', payload.bankNumber)
-      if (payload.hauptstandort !== undefined) form.append('hauptstandort', payload.hauptstandort)
+      if (payload.hauptstandort !== undefined) {
+        payload.hauptstandort.forEach((location, index) => {
+          form.append(`hauptstandort[${index}]`, location)
+        })
+      }
+      if (payload.defaultHauptstandort !== undefined) form.append('defaultHauptstandort', payload.defaultHauptstandort)
       if (payload.image) form.append('image', payload.image)
 
       const res = await updateUserProfile(form)

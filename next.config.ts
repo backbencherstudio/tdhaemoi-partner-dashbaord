@@ -17,12 +17,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'signals-hopefully-diverse-ranges.trycloudflare.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'scholars-should-walls-photographers.trycloudflare.com',
         port: '',
         pathname: '/**',

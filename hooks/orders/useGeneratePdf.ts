@@ -44,6 +44,7 @@ export interface OrderPdfData {
         email: string;
         telefonnummer: string;
         wohnort: string;
+        geburtsdatum?: string;
         fusslange1?: string;
         fusslange2?: string;
         largerFusslange?: number;

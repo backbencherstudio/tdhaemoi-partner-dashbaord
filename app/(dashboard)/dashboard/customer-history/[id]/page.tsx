@@ -117,7 +117,7 @@ export default function CustomerHistory() {
                         <Button
                             onClick={handleEditClick}
                             variant="outline"
-                            className="flex items-center gap-2"
+                            className="flex items-center gap-2 cursor-pointer"
                         >
                             <Edit className="w-4 h-4" />
                             Edit
@@ -128,13 +128,14 @@ export default function CustomerHistory() {
                                 onClick={handleCancelClick}
                                 variant="outline"
                                 disabled={isUpdating}
+                                className="cursor-pointer"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 onClick={handleSaveClick}
                                 disabled={isUpdating}
-                                className="bg-[#61A07B] hover:bg-[#528c68] text-white"
+                                className="bg-[#61A07B] hover:bg-[#528c68] text-white cursor-pointer"
                             >
                                 {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {isUpdating ? 'Saving...' : 'Save'}

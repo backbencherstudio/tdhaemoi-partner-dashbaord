@@ -31,7 +31,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
             const url = URL.createObjectURL(pdfBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `order_${data.customer.vorname}_${data.customer.nachname}_${new Date().toISOString().split('T')[0]}.pdf`;
+            link.download = `order_${data.customer?.vorname}_${data.customer?.nachname}_${new Date().toISOString().split('T')[0]}.pdf`;
 
             // Trigger download
             document.body.appendChild(link);
@@ -96,24 +96,23 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                         <div style={{ display: 'flex', alignItems: 'flex-start' }}>
                             <div style={{ width: '70px', height: '120px', marginRight: '30px', flexShrink: 0 }}>
                                 <img
-                                    src={data.partner.image || "/images/pdfLogo.png"}
+                                    src={data.partner?.image || "/images/pdfLogo.png"}
                                     alt={`${data.partner.busnessName || data.partner.name} Logo`}
                                     style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                                 />
                             </div>
                             <div style={{ flex: 1 }}>
                                 <div style={{ fontWeight: 'bold', fontSize: '20px', marginBottom: '12px', textAlign: 'left' }}>
-                                    {data.customer.vorname} {data.customer.nachname}
+                                    {data.customer?.vorname} {data.customer?.nachname || '-'}
                                 </div>
                                 <div style={{ fontSize: '14px', marginBottom: '6px', textAlign: 'left' }}>
-                                    Kdnr: {data.customer.customerNumber}
+                                    Kdnr: {data.customer?.customerNumber}
                                 </div>
                                 <div style={{ fontSize: '14px', marginBottom: '6px', textAlign: 'left' }}>
-                                    Geb:
-                                    {/* {formatDate(data.createdAt)} */}
+                                    Geb: {data.customer?.geburtsdatum || '-'}
                                 </div>
                                 <div style={{ fontSize: '14px', textAlign: 'left' }}>
-                                    Scan: {formatDate(data.customer.screenerFile?.[0]?.createdAt || data.createdAt)}
+                                    Scan: {formatDate(data.customer?.screenerFile?.[0]?.createdAt || data.createdAt)}
                                 </div>
                             </div>
                         </div>
@@ -143,18 +142,18 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
                                 <div style={{ textAlign: 'left' }}>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Email: {data.customer.email || '-'}</p>
+                                        <p style={{ margin: 0 }}>Email: {data.customer?.email || '-'}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Telefon: {((data as any)?.werkstattzettel?.telefon) || data.customer.telefonnummer || '-'}</p>
+                                        <p style={{ margin: 0 }}>Telefon: {((data as any)?.werkstattzettel?.telefon) || data.customer?.telefonnummer || '-'}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Wohnort: {data.customer.wohnort || '-'}</p>
+                                        <p style={{ margin: 0 }}>Wohnort: {data.customer?.wohnort || '-'}</p>
                                     </div>
                                 </div>
                                 <div style={{ textAlign: 'left' }}>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Diagnose: {data.product.diagnosis_status || '-'}</p>
+                                        <p style={{ margin: 0 }}>Diagnose: {data.product?.diagnosis_status || '-'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -178,7 +177,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                                             Mitarbeiter: {(
                                                 (data as any)?.partner?.workshopNote?.employeeName ||
                                                 (data as any)?.werkstattzettel?.mitarbeiter ||
-                                                data.partner.name
+                                                data.partner?.name
                                             )}
                                         </p>
                                     </div>
@@ -226,8 +225,8 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                                         Versorgung
                                     </h3>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Versorgung:{data.product.status}</p>
-                                        <p style={{ margin: 0 }}>{data.product.versorgung || data.product.status}</p>
+                                        <p style={{ margin: 0 }}>Versorgung:{data.product?.status}</p>
+                                        <p style={{ margin: 0 }}>{data.product?.versorgung || data.product?.status}</p>
                                     </div>
 
                                 </div>
@@ -242,10 +241,10 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                                         Materialien
                                     </h3>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Rohling: {data.product.rohlingHersteller} <span style={{ color: '#FF0000', fontWeight: 'bold' }}>Größe {data.customer.recommendedSize?.size || '-'}</span></p>
+                                        <p style={{ margin: 0 }}>Rohling: {data.product?.rohlingHersteller} <span style={{ color: '#FF0000', fontWeight: 'bold' }}>Größe {data.customer?.recommendedSize?.size || '-'}</span></p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Pelotte: {data.product.material || '-'}</p>
+                                        <p style={{ margin: 0 }}>Pelotte: {data.product?.material || '-'}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
                                         <p style={{ margin: 0 }}>Zusatz: -</p>
@@ -268,10 +267,10 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
                                 <div style={{ textAlign: 'left' }}>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Einlagenversorgung: Standard {formatPrice(data.einlagenversorgung)}</p>
+                                        <p style={{ margin: 0 }}>Einlagenversorgung: Standard {formatPrice(data?.einlagenversorgung)}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
-                                        <p style={{ margin: 0 }}>Fußanalyse: {formatPrice(data.fußanalyse)}</p>
+                                        <p style={{ margin: 0 }}>Fußanalyse: {formatPrice(data?.fußanalyse)}</p>
                                     </div>
                                     <div style={{ marginBottom: '15px' }}>
                                         <p style={{
@@ -279,7 +278,7 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                                             fontWeight: 'bold',
                                             fontSize: '16px'
                                         }}>
-                                            Gesamtpreis: {formatPrice(data.totalPrice)}
+                                            Gesamtpreis: {formatPrice(data?.totalPrice)}
                                         </p>
                                     </div>
                                 </div>
@@ -313,9 +312,9 @@ export default function InvoicePage({ data, isGenerating = false, onGenerateStar
                             padding: '0 40px',
                             height: '100%'
                         }}>
-                            <p>{data.partner.phone || '+43 595024330'}</p>
-                            <p>{data.partner.busnessName || 'FeetF1rst GmbH'}</p>
-                            <p>{data.partner.email || 'info@feetf1rst.com'}</p>
+                            <p>{data.partner?.phone || '+43 595024330'}</p>
+                            <p>{data.partner?.busnessName || 'FeetF1rst GmbH'}</p>
+                            <p>{data.partner?.email || 'info@feetf1rst.com'}</p>
                         </div>
                     </div>
                 </div>

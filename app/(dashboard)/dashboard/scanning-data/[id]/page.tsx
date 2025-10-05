@@ -12,7 +12,7 @@ import SacnningForm from '@/app/(dashboard)/dashboard/_components/Scanning/Sacnn
 import ScannningDataPage from '@/app/(dashboard)/dashboard/_components/ScannningData/ScannningDataPage';
 
 import { useSingleCustomer } from '@/hooks/customer/useSingleCustomer'
-import { FaMoneyBillWave } from 'react-icons/fa'
+
 
 
 export default function ScanningData() {

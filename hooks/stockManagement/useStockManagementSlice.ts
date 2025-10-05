@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { createProduct, getAllStorages } from '@/apis/productsManagementApis';
+import { createProduct, getAllStorages, getSingleStorage, updateStorage } from '@/apis/productsManagementApis';
 
 interface ProductFormData {
     Produktname: string;
@@ -143,6 +143,39 @@ export const useStockManagementSlice = () => {
         }
     };
 
+    const getProductById = async (productId: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await getSingleStorage(productId);
+            if (response.success && response.data) {
+                return response.data as ApiProduct;
+            }
+            throw new Error(response.message || 'Failed to fetch product');
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to fetch product';
+            setError(errorMessage);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const updateExistingProduct = async (productId: string, updates: Partial<CreateProductPayload>) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await updateStorage(productId, updates);
+            return response;
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || err.message || 'Failed to update product';
+            setError(errorMessage);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const refreshProducts = async () => {
         return await getAllProducts();
     };
@@ -150,6 +183,8 @@ export const useStockManagementSlice = () => {
     return {
         createNewProduct,
         getAllProducts,
+        getProductById,
+        updateExistingProduct,
         refreshProducts,
         products,
         pagination,

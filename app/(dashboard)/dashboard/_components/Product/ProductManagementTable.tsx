@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
     Table,
     TableBody,
@@ -20,6 +20,8 @@ import { IoCreate } from 'react-icons/io5'
 import { IoTrash } from 'react-icons/io5'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { useAuth } from '@/contexts/AuthContext'
+import AddProduct from './AddProduct'
+import { useStockManagementSlice } from '@/hooks/stockManagement/useStockManagementSlice'
 
 interface Product {
     id: string
@@ -52,6 +54,7 @@ interface ProductManagementTableProps {
     onLagerortChange: (productId: string, newLagerort: string) => void
     onUpdateProduct: (product: Product) => void
     onDeleteProduct: (product: Product) => void
+    onRefreshAfterEdit?: () => void
 }
 
 export default function ProductManagementTable({
@@ -62,9 +65,13 @@ export default function ProductManagementTable({
     getLowStockSizes,
     onLagerortChange,
     onUpdateProduct,
-    onDeleteProduct
+    onDeleteProduct,
+    onRefreshAfterEdit
 }: ProductManagementTableProps) {
     const { user } = useAuth();
+    const { getProductById } = useStockManagementSlice();
+    const [editId, setEditId] = useState<string | undefined>(undefined)
+    const [openEdit, setOpenEdit] = useState(false)
 
     // Helper to get stock for a size
     function getStockForSize(product: Product, size: string) {
@@ -72,6 +79,7 @@ export default function ProductManagementTable({
     }
 
     return (
+        <>
         <Table className='border-2 border-gray-500 rounded-lg mt-5'>
             <TableHeader>
                 <TableRow>
@@ -189,7 +197,10 @@ export default function ProductManagementTable({
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => onUpdateProduct(product)}
+                                    onClick={async () => {
+                                        setEditId(product.id);
+                                        setOpenEdit(true);
+                                    }}
                                     className="h-8 w-8 p-0 cursor-pointer"
                                 >
                                     <IoCreate className="w-4 h-4" />
@@ -214,5 +225,23 @@ export default function ProductManagementTable({
                 )}
             </TableBody>
         </Table>
+        {/* Hidden Edit Modal controlled here */}
+        {editId && (
+            <AddProduct
+                onAddProduct={() => {}}
+                sizeColumns={sizeColumns}
+                editProductId={editId}
+                open={openEdit}
+                onOpenChange={(o) => {
+                    setOpenEdit(o)
+                    if (!o) setEditId(undefined)
+                }}
+                showTrigger={false}
+                onUpdated={() => {
+                    onRefreshAfterEdit && onRefreshAfterEdit()
+                }}
+            />
+        )}
+        </>
     )
 }

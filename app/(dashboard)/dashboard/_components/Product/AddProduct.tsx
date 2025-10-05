@@ -21,12 +21,20 @@ interface NewProduct {
 interface AddProductProps {
     onAddProduct: (product: NewProduct) => void;
     sizeColumns: string[];
+    editProductId?: string; // if provided, modal works in edit mode
+    open?: boolean; // controlled open (for edit from table)
+    onOpenChange?: (open: boolean) => void;
+    showTrigger?: boolean; // show default trigger button
+    onUpdated?: () => void; // callback after successful update
 }
 
-export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProps) {
+export default function AddProduct({ onAddProduct, sizeColumns, editProductId, open, onOpenChange, showTrigger = true, onUpdated }: AddProductProps) {
     const { user } = useAuth();
-    const { createNewProduct, isLoading, error, clearError } = useStockManagementSlice();
+    const { createNewProduct, updateExistingProduct, getProductById, isLoading, error, clearError } = useStockManagementSlice();
     const [showAddProductModal, setShowAddProductModal] = useState(false);
+    const isOpen = open !== undefined ? open : showAddProductModal;
+    const setOpen = onOpenChange || setShowAddProductModal;
+    const [isPrefilling, setIsPrefilling] = useState(false)
     const [newProduct, setNewProduct] = useState<NewProduct>({
         Produktname: '',
         Hersteller: '',
@@ -53,7 +61,26 @@ export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProp
     const handleAddProduct = async () => {
         try {
             clearError();
-            // Call API to create product
+            // If edit mode -> update, else create
+            if (editProductId) {
+                const payload = {
+                    produktname: newProduct.Produktname,
+                    hersteller: newProduct.Hersteller,
+                    artikelnummer: newProduct.Produktkürzel,
+                    lagerort: newProduct.Lagerort,
+                    mindestbestand: newProduct.minStockLevel,
+                    // do not send 'historie' on update; backend model doesn't accept it
+                    groessenMengen: newProduct.sizeQuantities,
+                    purchase_price: newProduct.purchase_price,
+                    selling_price: newProduct.selling_price,
+                    Status: 'In Stock'
+                } as const;
+                const res = await updateExistingProduct(editProductId, payload);
+                toast.success(res?.message || 'Produkt erfolgreich aktualisiert');
+                setOpen(false);
+                onUpdated && onUpdated();
+                return;
+            }
             const response = await createNewProduct(newProduct);
 
             // Show success toast with product details
@@ -75,7 +102,7 @@ export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProp
             }
 
             // Reset form and close modal
-            setShowAddProductModal(false);
+            setOpen(false);
             setNewProduct({
                 Produktname: '',
                 Hersteller: '',
@@ -96,18 +123,62 @@ export default function AddProduct({ onAddProduct, sizeColumns }: AddProductProp
         }
     };
 
+    // Preload data when editing
+    React.useEffect(() => {
+        const load = async () => {
+            if (!editProductId || !isOpen) return;
+            try {
+                setIsPrefilling(true)
+                const product = await getProductById(editProductId);
+                setNewProduct({
+                    Produktname: product.produktname,
+                    Hersteller: product.hersteller,
+                    Produktkürzel: product.artikelnummer,
+                    Lagerort: product.lagerort,
+                    minStockLevel: product.mindestbestand,
+                    purchase_price: product.purchase_price,
+                    selling_price: product.selling_price,
+                    sizeQuantities: product.groessenMengen || Object.fromEntries(sizeColumns.map(size => [size, 0]))
+                });
+            } finally {
+                setIsPrefilling(false)
+            }
+        };
+        load();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editProductId, isOpen]);
+
+    // Reset form when modal closes (uncontrolled case handled too)
+    React.useEffect(() => {
+        if (!isOpen && !editProductId) {
+            setNewProduct({
+                Produktname: '',
+                Hersteller: '',
+                Produktkürzel: '',
+                Lagerort: 'Alle Lagerorte',
+                minStockLevel: 5,
+                purchase_price: 0,
+                selling_price: 0,
+                sizeQuantities: Object.fromEntries(sizeColumns.map(size => [size, 0]))
+            })
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen])
+
     return (
         <>
-            <button
-                className='bg-[#61A178] px-4 py-2 rounded-md hover:bg-[#61A178]/80 text-white cursor-pointer transition-all duration-300'
-                onClick={() => setShowAddProductModal(true)}
-            >
-                Add Product
-            </button>
-            <Dialog open={showAddProductModal} onOpenChange={setShowAddProductModal}>
+            {showTrigger && (
+                <button
+                    className='bg-[#61A178] px-4 py-2 rounded-md hover:bg-[#61A178]/80 text-white cursor-pointer transition-all duration-300'
+                    onClick={() => setOpen(true)}
+                >
+                    {editProductId ? 'Produkt bearbeiten' : 'Add Product'}
+                </button>
+            )}
+            <Dialog open={isOpen} onOpenChange={setOpen}>
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
-                        <DialogTitle>Produkt manuell hinzufügen</DialogTitle>
+                        <DialogTitle>{editProductId ? 'Produkt bearbeiten' : 'Produkt manuell hinzufügen'}</DialogTitle>
                     </DialogHeader>
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">

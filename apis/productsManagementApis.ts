@@ -23,14 +23,23 @@ export const getAllStorages = async () => {
 // get single storage
 export const getSingleStorage = async (storageId: string) => {
     try {
-        const response = await axiosClient.get(`/store/single/${storageId}`);
+        const response = await axiosClient.get(`/store/get/${storageId}`);
         return response.data;
     } catch (error) {
         throw error;
     }
 };
 
-// update storage
+// update storage /store/update/9082a642-7a88-4b5c-a34c-9ad08c062c82
+
+export const updateStorage = async (storageId: string, storageData: any) => {
+    try {
+        const response = await axiosClient.patch(`/store/update/${storageId}`, storageData);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
 
 // delete storage
 export const deleteStorage = async (storageId: string) => {

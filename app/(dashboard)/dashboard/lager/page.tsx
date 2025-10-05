@@ -27,6 +27,7 @@ import { useStockManagementSlice } from '@/hooks/stockManagement/useStockManagem
 import InventoryHistory, { InventoryHistoryRef } from '../_components/Product/InventoryHistory'
 import { deleteStorage } from '@/apis/productsManagementApis'
 import toast from 'react-hot-toast'
+import PerformerData from '@/components/LagerChart/PerformerData'
 
 interface Product {
     id: string
@@ -66,8 +67,8 @@ const sizeColumns = [
 
 export default function Lager() {
     // Stock management hook
-    const { products, pagination, getAllProducts, refreshProducts, isLoadingProducts, error } = useStockManagementSlice();
-    
+    const { products, pagination, getAllProducts, refreshProducts, isLoadingProducts, error, updateExistingProduct } = useStockManagementSlice();
+
     // Pagination state
     const [itemsPerPage, setItemsPerPage] = useState(2)
     const [currentPage, setCurrentPage] = useState(1)
@@ -79,7 +80,7 @@ export default function Lager() {
 
     // Component refs
     const inventoryHistoryRef = useRef<InventoryHistoryRef>(null)
-    
+
     // Delete modal state
     const [deleteModalOpen, setDeleteModalOpen] = useState(false)
     const [productToDelete, setProductToDelete] = useState<Product | null>(null)
@@ -115,14 +116,7 @@ export default function Lager() {
         fetchProducts();
     }, []);
 
-    // Chart data
-    const chartData = [
-        { year: '2020', Einkaufspreis: 50000, Verkaufspreis: 75000, Gewinn: 25000 },
-        { year: '2021', Einkaufspreis: 60000, Verkaufspreis: 90000, Gewinn: 30000 },
-        { year: '2022', Einkaufspreis: 70000, Verkaufspreis: 105000, Gewinn: 35000 },
-        { year: '2023', Einkaufspreis: 80000, Verkaufspreis: 120000, Gewinn: 40000 },
-        { year: '2024', Einkaufspreis: 90000, Verkaufspreis: 135000, Gewinn: 45000 }
-    ];
+
 
     // Pagination calculations
     const totalPages = Math.ceil(productsData.length / 10)
@@ -159,10 +153,25 @@ export default function Lager() {
     };
 
     // Lagerort change handler
-    const handleLagerortChange = (productId: string, newLagerort: string) => {
+    const handleLagerortChange = async (productId: string, newLagerort: string) => {
+        // optimistic update
         setProductsData(prev => prev.map(product =>
             product.id === productId ? { ...product, Lagerort: newLagerort } : product
         ));
+        try {
+            await updateExistingProduct(productId, { lagerort: newLagerort });
+            // refresh to keep in sync with server
+            const apiProducts = await refreshProducts();
+            const convertedProducts = apiProducts.map(convertApiProductToLocal);
+            setProductsData(convertedProducts);
+            toast.success('Lagerort aktualisiert');
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Update fehlgeschlagen');
+            // revert on failure
+            const apiProducts = await refreshProducts();
+            const convertedProducts = apiProducts.map(convertApiProductToLocal);
+            setProductsData(convertedProducts);
+        }
     };
 
     // Add product handler - refresh data from API
@@ -177,14 +186,15 @@ export default function Lager() {
         }
     };
 
-    // Update product handler
-    const handleUpdateProduct = (product: Product) => {
-        // TODO: Implement update functionality
-        console.log('Update product:', product);
-        toast('Update functionality will be implemented soon', {
-            icon: 'ℹ️',
-            duration: 3000,
-        });
+    // Update product handler: refresh table after edit
+    const handleUpdateProduct = async (_product: Product) => {
+        try {
+            const apiProducts = await refreshProducts();
+            const convertedProducts = apiProducts.map(convertApiProductToLocal);
+            setProductsData(convertedProducts);
+        } catch (err) {
+            console.error('Failed to refresh products after update:', err);
+        }
     };
 
     // Delete product handler
@@ -201,12 +211,12 @@ export default function Lager() {
         try {
             await deleteStorage(productToDelete.id);
             toast.success(`"${productToDelete.Produktname}" wurde erfolgreich gelöscht!`);
-            
+
             // Refresh products from API
             const apiProducts = await refreshProducts();
             const convertedProducts = apiProducts.map(convertApiProductToLocal);
             setProductsData(convertedProducts);
-            
+
             // Close modal
             setDeleteModalOpen(false);
             setProductToDelete(null);
@@ -279,6 +289,15 @@ export default function Lager() {
                     onLagerortChange={handleLagerortChange}
                     onUpdateProduct={handleUpdateProduct}
                     onDeleteProduct={handleDeleteProduct}
+                    onRefreshAfterEdit={async () => {
+                        try {
+                            const apiProducts = await refreshProducts();
+                            const convertedProducts = apiProducts.map(convertApiProductToLocal);
+                            setProductsData(convertedProducts);
+                        } catch (err) {
+                            console.error('Failed to refresh products after edit:', err);
+                        }
+                    }}
                 />
             )}
 
@@ -379,7 +398,9 @@ export default function Lager() {
             />
 
             {/* Chart */}
-            <LagerChart data={chartData} />
+            <LagerChart />
+
+            <PerformerData />
         </div>
     )
 }

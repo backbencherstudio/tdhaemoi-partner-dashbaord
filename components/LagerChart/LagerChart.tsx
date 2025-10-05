@@ -1,51 +1,57 @@
 'use client'
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, } from 'recharts';
+import { getChartData } from '@/apis/productsManagementApis';
 
-// Chart data
-const chartData = [
-    { year: '2020', Einkaufspreis: 50000, Verkaufspreis: 75000, Gewinn: 25000 },
-    { year: '2021', Einkaufspreis: 60000, Verkaufspreis: 90000, Gewinn: 30000 },
-    { year: '2022', Einkaufspreis: 70000, Verkaufspreis: 105000, Gewinn: 35000 },
-    { year: '2023', Einkaufspreis: 80000, Verkaufspreis: 120000, Gewinn: 40000 },
+// Fallback chart data (used only if API fails)
+const fallbackChartData = [
     { year: '2024', Einkaufspreis: 90000, Verkaufspreis: 135000, Gewinn: 45000 }
 ];
 
 
 
 export default function LagerChart() {
-
+    const [chartData, setChartData] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [hasError, setHasError] = useState<boolean>(false);
 
     useEffect(() => {
-        console.log(chartData);
-
-
+        let isMounted = true;
+        const fetchChartData = async () => {
+            try {
+                const response = await getChartData();
+                if (!isMounted) return;
+                const apiData = Array.isArray(response?.data) ? response.data : [];
+                setChartData(apiData.length > 0 ? apiData : fallbackChartData);
+                setHasError(false);
+            } catch (error) {
+                // If API fails, use fallback to keep chart rendering
+                if (!isMounted) return;
+                setHasError(true);
+                setChartData(fallbackChartData);
+                // eslint-disable-next-line no-console
+                console.error('Failed to fetch storage chart data', error);
+            } finally {
+                if (!isMounted) return;
+                setIsLoading(false);
+            }
+        };
+        fetchChartData();
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
 
 
 
-
-    interface TooltipPayload {
-        name: string;
-        value: number;
-        color?: string;
-        payload?: {
-            name: string;
-            value: number;
-            color: string;
-        };
-    }
-
-
-
     // Custom tooltip component
-    const CustomTooltips = ({ active, payload, label }: { active: boolean, payload?: TooltipPayload[], label: string }) => {
+    const CustomTooltips = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-white p-2 border border-gray-200 shadow-md rounded">
                     <p className="font-semibold">{`Jahr: ${label}`}</p>
-                    {payload.map((entry, index: number) => (
+                    {payload.map((entry: any, index: number) => (
                         <p key={`item-${index}`} style={{ color: entry.color }} className="text-sm">
                             {`${entry.name}: ${entry.value.toLocaleString()} €`}
                         </p>
@@ -72,7 +78,7 @@ export default function LagerChart() {
                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                                 <XAxis dataKey="year" axisLine={false} tickLine={false} />
                                 <YAxis axisLine={false} tickLine={false} />
-                                <Tooltip content={<CustomTooltips active={true} payload={[]} label={''} />} />
+                                <Tooltip content={<CustomTooltips />} />
                                 <Legend iconType="circle" verticalAlign="top" align="center" wrapperStyle={{ paddingBottom: '15px' }} />
                                 <Bar dataKey="Einkaufspreis" fill="#81E6D9" name="Einkaufspreis" radius={[4, 4, 0, 0]} barSize={50} />
                                 <Bar dataKey="Verkaufspreis" fill="#38B2AC" name="Verkaufspreis" radius={[4, 4, 0, 0]} barSize={50} />
@@ -81,7 +87,12 @@ export default function LagerChart() {
                         </ResponsiveContainer>
                     </div>
                 </div>
-
+                {isLoading && (
+                    <p className="text-sm text-gray-500 mt-2">Lade Daten...</p>
+                )}
+                {hasError && !isLoading && (
+                    <p className="text-sm text-red-500 mt-2">Echte Daten konnten nicht geladen werden. Es werden Beispieldaten angezeigt.</p>
+                )}
             </div>
         </div>
     )

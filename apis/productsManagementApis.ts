@@ -51,4 +51,15 @@ export const deleteStorage = async (storageId: string) => {
     }
 };
 
-    
+
+
+// chart data 
+export const getChartData = async () => {
+    try {
+        const response = await axiosClient.get('/store/chart-data');
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+};
+

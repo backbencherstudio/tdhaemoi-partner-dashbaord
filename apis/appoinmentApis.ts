@@ -14,7 +14,11 @@ export const createAppoinment = async (appointmentData: {
     try {
         const response = await axiosClient.post('/appointment', appointmentData);
         return response.data;
-    } catch (error) {
+    } catch (error: any) {
+        // If there's an error response with data, return it
+        if (error.response?.data) {
+            return error.response.data;
+        }
         throw error;
     }
 };
@@ -76,7 +80,11 @@ export const updateAppointment = async (appointmentId: string, appointmentData: 
     try {
         const response = await axiosClient.put(`/appointment/${appointmentId}`, appointmentData);
         return response.data;
-    } catch (error) {
+    } catch (error: any) {
+        // If there's an error response with data, return it
+        if (error.response?.data) {
+            return error.response.data;
+        }
         throw error;
     }
 };

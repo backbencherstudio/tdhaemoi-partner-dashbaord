@@ -22,7 +22,9 @@ interface AppointmentFormData {
     termin: string;
     mitarbeiter: string;
     bemerk: string;
+    duration: number;
     customerId?: string;
+    employeeId?: string;
 }
 
 interface SubmittedAppointmentData {
@@ -33,7 +35,9 @@ interface SubmittedAppointmentData {
     termin: string;
     mitarbeiter: string;
     bemerk: string;
+    duration: number;
     customerId?: string;
+    employeeId?: string;
 }
 
 interface AppointmentModalProps {
@@ -74,6 +78,17 @@ export default function AppointmentModal({
         { value: 'verwaltung-dokumentation', label: 'Verwaltung / Dokumentation' },
         { value: 'interne-sprechstunde-besprechung', label: 'Interne Sprechstunde / Besprechung' },
         { value: 'externe-termine-kooperation', label: 'Externe Termine / Kooperation' },
+    ];
+
+    const durationOptions = [
+        { value: 0.17, label: '10 Minuten' }, // 10/60 = 0.17 hours
+        { value: 0.5, label: '30 Minuten' },  // 30/60 = 0.5 hours
+        { value: 1, label: '60 Minuten' },    // 1 hour
+        { value: 2, label: '2 Stunden' },     // 2 hours
+        { value: 3, label: '3 Stunden' },     // 3 hours
+        { value: 3.5, label: '3.5 Stunden' }, // 3.5 hours
+        { value: 4, label: '4 Stunden' },      // 4 hours
+        { value: 5, label: '5 Stunden' },      // 5 hours
     ];
 
     React.useEffect(() => {
@@ -155,7 +170,7 @@ export default function AppointmentModal({
 
     return (
         <div className="fixed inset-0 bg-black/70 bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg w-full max-w-md max-h-screen overflow-y-auto">
+            <div className="bg-white rounded-lg w-full max-w-xl max-h-screen overflow-y-auto">
                 <div className="sticky top-0 bg-white border-b border-gray-200 p-4 sm:p-6">
                     <div className="flex justify-between items-center">
                         <h3 className="text-lg font-semibold">{title}</h3>
@@ -322,6 +337,33 @@ export default function AppointmentModal({
 
                         <FormField
                             control={form.control}
+                            name="duration"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Dauer</FormLabel>
+                                    <Select 
+                                        onValueChange={(value) => field.onChange(parseFloat(value))} 
+                                        value={field.value?.toString()}
+                                    >
+                                        <FormControl>
+                                            <SelectTrigger className="cursor-pointer">
+                                                <SelectValue placeholder="Dauer wählen" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {durationOptions.map((opt) => (
+                                                <SelectItem key={opt.value} value={opt.value.toString()} className="cursor-pointer">
+                                                    {opt.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            control={form.control}
                             name="termin"
                             render={({ field }) => (
                                 <FormItem>
@@ -343,6 +385,8 @@ export default function AppointmentModal({
                                 </FormItem>
                             )}
                         />
+
+
 
                         <FormField
                             control={form.control}
@@ -379,6 +423,7 @@ export default function AppointmentModal({
                                                         className="w-full text-left px-3 py-2 hover:bg-gray-50 cursor-pointer"
                                                         onClick={() => {
                                                             field.onChange(s.employeeName);
+                                                            form.setValue('employeeId', s.id);
                                                             setEmployeeSearchText(s.employeeName);
                                                             setShowEmployeeSuggestions(false);
                                                         }}

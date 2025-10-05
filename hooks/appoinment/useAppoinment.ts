@@ -11,6 +11,7 @@ interface Event {
     type: string;
     assignedTo: string;
     reason: string;
+    duration?: number;
 }
 
 interface AppointmentData {
@@ -22,6 +23,7 @@ interface AppointmentData {
     assignedTo: string;
     details: string;
     isClient: boolean;
+    duration?: number;
 }
 
 
@@ -34,7 +36,9 @@ interface SubmittedAppointmentData {
     bemerk: string;
     mitarbeiter: string;
     isClientEvent: boolean;
+    duration: number;
     customerId?: string;
+    employeeId?: string;
 }
 
 export const useAppoinment = () => {
@@ -64,7 +68,8 @@ export const useAppoinment = () => {
                     subtitle: apt.details?.toUpperCase(),
                     type: apt.isClient ? 'user' : 'others',
                     assignedTo: apt.assignedTo || '',
-                    reason: apt.reason || ''
+                    reason: apt.reason || '',
+                    duration: apt.duration
                 }));
                 setEvents(formattedEvents);
                 // console.log('Events state updated with', formattedEvents.length, 'events');
@@ -104,11 +109,16 @@ export const useAppoinment = () => {
                 reason: data.termin,
                 assignedTo: data.mitarbeiter || '',
                 details: data.bemerk || '',
-                isClient: Boolean(data.isClientEvent)
+                isClient: Boolean(data.isClientEvent),
+                duration: data.duration
             };
 
             if (data.customerId) {
                 appointmentData.customerId = data.customerId;
+            }
+
+            if (data.employeeId) {
+                appointmentData.employeId = data.employeeId;
             }
 
             const response = await createAppoinment(appointmentData);
@@ -123,7 +133,9 @@ export const useAppoinment = () => {
                 return true;
             } else {
                 toast.dismiss(loadingToastId);
-                toast.error(response.message || 'Failed to create appointment');
+                toast.error(response.message || 'Failed to create appointment', {
+                    duration: 5000,
+                });
                 return false;
             }
         } catch (error: unknown) {
@@ -184,11 +196,16 @@ export const useAppoinment = () => {
                 reason: data.termin,
                 assignedTo: data.mitarbeiter || '',
                 details: data.bemerk || '',
-                isClient: data.isClientEvent
+                isClient: data.isClientEvent,
+                duration: data.duration
             };
 
             if (data.customerId) {
                 appointmentData.customerId = data.customerId;
+            }
+
+            if (data.employeeId) {
+                appointmentData.employeId = data.employeeId;
             }
 
             const response = await updateAppointment(appointmentId, appointmentData);
@@ -198,8 +215,12 @@ export const useAppoinment = () => {
                 setRefreshKey(prev => prev + 1);
                 toast.success('Appointment updated successfully');
                 return true;
+            } else {
+                toast.error(response.message || 'Failed to update appointment', {
+                    duration: 5000,
+                });
+                return false;
             }
-            return false;
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Failed to update appointment';
             toast.error(errorMessage);

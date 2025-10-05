@@ -17,6 +17,7 @@ interface Event {
     type: string;
     assignedTo: string;
     reason: string;
+    duration?: number;
 }
 
 interface AppointmentData {
@@ -28,6 +29,9 @@ interface AppointmentData {
     assignedTo: string;
     details: string;
     isClient: boolean;
+    duration?: number;
+    customerId?: string;
+    employeId?: string;
 }
 
 interface AppointmentFormData {
@@ -38,6 +42,9 @@ interface AppointmentFormData {
     bemerk: string;
     mitarbeiter: string;
     isClientEvent: boolean;
+    duration: number;
+    customerId?: string;
+    employeeId?: string;
 }
 
 
@@ -101,7 +108,10 @@ const WeeklyCalendar = () => {
             termin: '',
             bemerk: '',
             mitarbeiter: '',
-            isClientEvent: false
+            isClientEvent: false,
+            duration: 1,
+            customerId: undefined,
+            employeeId: undefined
         }
     });
 
@@ -113,7 +123,10 @@ const WeeklyCalendar = () => {
             termin: '',
             bemerk: '',
             mitarbeiter: '',
-            isClientEvent: false
+            isClientEvent: false,
+            duration: 1,
+            customerId: undefined,
+            employeeId: undefined
         }
     });
 
@@ -206,7 +219,7 @@ const WeeklyCalendar = () => {
     };
 
 
-    const onSubmit = async (data: { selectedEventDate: string | undefined; isClientEvent: boolean; kunde: string; uhrzeit: string; termin: string; bemerk: string; mitarbeiter: string }) => {
+    const onSubmit = async (data: { selectedEventDate: string | undefined; isClientEvent: boolean; kunde: string; uhrzeit: string; termin: string; bemerk: string; mitarbeiter: string; duration: number; customerId?: string; employeeId?: string }) => {
         const success = await createNewAppointment(data);
         if (success) {
             form.reset();
@@ -239,14 +252,17 @@ const WeeklyCalendar = () => {
                 termin: apt.reason,
                 bemerk: apt.details,
                 mitarbeiter: apt.assignedTo,
-                isClientEvent: apt.isClient
+                isClientEvent: apt.isClient,
+                duration: apt.duration || 1,
+                customerId: apt.customerId,
+                employeeId: apt.employeId
             });
 
             setIsEditModalOpen(true);
         }
     };
 
-    const onUpdateSubmit = async (data: { selectedEventDate: string | undefined; isClientEvent: boolean; kunde: string; uhrzeit: string; termin: string; bemerk: string; mitarbeiter: string }) => {
+    const onUpdateSubmit = async (data: { selectedEventDate: string | undefined; isClientEvent: boolean; kunde: string; uhrzeit: string; termin: string; bemerk: string; mitarbeiter: string; duration: number; customerId?: string; employeeId?: string }) => {
         if (!selectedAppointment?.id) return;
 
         const success = await updateAppointmentById(selectedAppointment.id.toString(), data);
@@ -352,8 +368,16 @@ const WeeklyCalendar = () => {
                                                                     </div>
                                                                 )}
                                                                 {event.reason && (
-                                                                    <div className="text-xs text-gray-600">
+                                                                    <div className="text-xs text-gray-600 mb-1">
                                                                         Grund: {event.reason}
+                                                                    </div>
+                                                                )}
+                                                                {event.duration && (
+                                                                    <div className="text-xs text-gray-600">
+                                                                        Dauer: {event.duration === 0.17 ? '10 Min' : 
+                                                                               event.duration === 0.5 ? '30 Min' :
+                                                                               event.duration === 1 ? '60 Min' :
+                                                                               `${event.duration} Std`}
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -416,8 +440,16 @@ const WeeklyCalendar = () => {
                                                                     </div>
                                                                 )}
                                                                 {event.reason && (
-                                                                    <div className="text-xs text-gray-600">
+                                                                    <div className="text-xs text-gray-600 mb-1">
                                                                         Grund: {event.reason}
+                                                                    </div>
+                                                                )}
+                                                                {event.duration && (
+                                                                    <div className="text-xs text-gray-600">
+                                                                        Dauer: {event.duration === 0.17 ? '10 Min' : 
+                                                                               event.duration === 0.5 ? '30 Min' :
+                                                                               event.duration === 1 ? '60 Min' :
+                                                                               `${event.duration} Std`}
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -519,6 +551,14 @@ const WeeklyCalendar = () => {
                                                                         {
                                                                             event.reason && (
                                                                                 <div className="text-xs opacity-90 mb-1">Grund: {event.reason}</div>
+                                                                            )
+                                                                        }
+                                                                        {
+                                                                            event.duration && (
+                                                                                <div className="text-xs opacity-90 mb-1">Dauer: {event.duration === 0.17 ? '10 Min' : 
+                                                                                       event.duration === 0.5 ? '30 Min' :
+                                                                                       event.duration === 1 ? '60 Min' :
+                                                                                       `${event.duration} Std`}</div>
                                                                             )
                                                                         }
 

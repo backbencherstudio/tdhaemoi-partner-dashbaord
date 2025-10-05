@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'colorado-src-sheer-module.trycloudflare.com',
+        hostname: 'scholars-should-walls-photographers.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

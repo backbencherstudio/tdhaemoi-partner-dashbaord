@@ -21,11 +21,16 @@ export interface ScanData {
     email: string;
     telefonnummer: string;
     wohnort: string;
+    customerNumber?: string;
     // Additional personal information
     geschlecht?: string;
+    gender?: string;
     geburtsdatum?: string;
     strasse?: string;
+    straße?: string;
     land?: string;
+    ort?: string;
+    telefon?: string;
     // Workshop slip fields
     mitarbeiter?: string;
     versorgung?: string;

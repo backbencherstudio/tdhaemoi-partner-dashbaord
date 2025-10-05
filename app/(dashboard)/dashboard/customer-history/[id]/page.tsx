@@ -15,12 +15,26 @@ import Reviews from '@/components/CustomerHistory/Reviews/Reviews';
 import userload from '@/public/images/scanning/userload.png'
 import scanImg from '@/public/images/history/scan.png'
 import AdvancedFeaturesModal from '@/app/(dashboard)/dashboard/_components/Customers/AdvancedFeaturesModal'
+import { Edit, X, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import toast from 'react-hot-toast'
 
 export default function CustomerHistory() {
     const params = useParams();
     const router = useRouter();
-    const { customer: scanData, loading, error } = useSingleCustomer(String(params.id));
+    const { customer: scanData, loading, error, updateCustomer, isUpdating } = useSingleCustomer(String(params.id));
     const [activeTab, setActiveTab] = useState<'scans' | 'shoes' | 'versorgungen' | 'reviews'>('scans');
+    const [isEditing, setIsEditing] = useState(false);
+    const [editFormData, setEditFormData] = useState({
+        gender: '',
+        geburtsdatum: '',
+        straße: '',
+        land: '',
+        ort: '',
+        telefon: ''
+    });
 
 
     if (loading) return <div className="p-4">Loading...</div>;
@@ -31,11 +45,103 @@ export default function CustomerHistory() {
         router.push('/dashboard/versorgungs');
     }
 
+    // Helper function to format date for date input
+    const formatDateForInput = (dateString: string | undefined) => {
+        if (!dateString) return '';
+        try {
+            const date = new Date(dateString);
+            return date.toISOString().split('T')[0];
+        } catch {
+            return '';
+        }
+    }
+
+    const handleEditClick = () => {
+        setEditFormData({
+            gender: scanData.gender || '',
+            geburtsdatum: formatDateForInput(scanData.geburtsdatum),
+            straße: scanData.straße || '',
+            land: scanData.land || '',
+            ort: scanData.ort || '',
+            telefon: scanData.telefon || ''
+        });
+        setIsEditing(true);
+    }
+
+    const handleSaveClick = async () => {
+        try {
+            // Send gender directly as MALE/FEMALE to API
+            const updateData = {
+                ...editFormData
+            };
+            
+            console.log('Sending update data:', updateData);
+            const success = await updateCustomer(updateData);
+            if (success) {
+                toast.success('Customer information updated successfully');
+                setIsEditing(false);
+            } else {
+                toast.error('Failed to update customer information');
+            }
+        } catch (error) {
+            toast.error('An error occurred while updating customer information');
+        }
+    }
+
+    const handleCancelClick = () => {
+        setIsEditing(false);
+        setEditFormData({
+            gender: scanData.gender || '',
+            geburtsdatum: formatDateForInput(scanData.geburtsdatum),
+            straße: scanData.straße || '',
+            land: scanData.land || '',
+            ort: scanData.ort || '',
+            telefon: scanData.telefon || ''
+        });
+    }
+
+    const handleInputChange = (field: string, value: string) => {
+        setEditFormData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    }
+
     return (
         <div className="p-4 space-y-6">
 
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold">{scanData.vorname} {scanData.nachname}</h1>
+                <div className="flex gap-2">
+                    {!isEditing ? (
+                        <Button
+                            onClick={handleEditClick}
+                            variant="outline"
+                            className="flex items-center gap-2"
+                        >
+                            <Edit className="w-4 h-4" />
+                            Edit
+                        </Button>
+                    ) : (
+                        <>
+                            <Button
+                                onClick={handleCancelClick}
+                                variant="outline"
+                                disabled={isUpdating}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={handleSaveClick}
+                                disabled={isUpdating}
+                                className="bg-[#61A07B] hover:bg-[#528c68] text-white"
+                            >
+                                {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {isUpdating ? 'Saving...' : 'Save'}
+                            </Button>
+                        </>
+                    )}
+                </div>
             </div>
 
 
@@ -63,22 +169,24 @@ export default function CustomerHistory() {
                     <label className="flex items-center gap-2 border px-4 py-2 rounded-md bg-gray-50">
                         <input
                             type="radio"
-                            name="geschlecht"
-                            checked={scanData.geschlecht === 'Mann'}
-                            readOnly
+                            name="gender"
+                            checked={isEditing ? editFormData.gender === 'MALE' : scanData.gender === 'MALE'}
+                            onChange={isEditing ? () => handleInputChange('gender', 'MALE') : undefined}
+                            disabled={!isEditing}
                             className="cursor-pointer"
                         />
-                        <span className="text-sm font-medium">Mann</span>
+                        <span className="text-sm font-medium">MALE</span>
                     </label>
                     <label className="flex items-center gap-2 border px-4 py-2 rounded-md bg-gray-50">
                         <input
                             type="radio"
-                            name="geschlecht"
-                            checked={scanData.geschlecht === 'Frau'}
-                            readOnly
+                            name="gender"
+                            checked={isEditing ? editFormData.gender === 'FEMALE' : scanData.gender === 'FEMALE'}
+                            onChange={isEditing ? () => handleInputChange('gender', 'FEMALE') : undefined}
+                            disabled={!isEditing}
                             className="cursor-pointer"
                         />
-                        <span className="text-sm font-medium">Frau</span>
+                        <span className="text-sm font-medium">FEMALE</span>
                     </label>
                 </div>
 
@@ -105,10 +213,11 @@ export default function CustomerHistory() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Geburtsdatum</label>
                         <input
-                            type="text"
-                            className="w-full p-2 border rounded-md border-gray-300 bg-gray-50"
-                            value={scanData.geburtsdatum || '-'}
-                            readOnly
+                            type="date"
+                            className={`w-full p-2 border rounded-md ${isEditing ? 'border-gray-300 bg-white' : 'border-gray-300 bg-gray-50'}`}
+                            value={isEditing ? editFormData.geburtsdatum : formatDateForInput(scanData.geburtsdatum)}
+                            onChange={isEditing ? (e) => handleInputChange('geburtsdatum', e.target.value) : undefined}
+                            readOnly={!isEditing}
                         />
                     </div>
                 </div>
@@ -118,28 +227,30 @@ export default function CustomerHistory() {
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">E-Mail</label>
                         <input
-                            type="text"
+                            type="email"
                             className="w-full p-2 border rounded-md border-gray-300 bg-gray-50"
                             value={scanData.email || '-'}
                             readOnly
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Straße</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">straße</label>
                         <input
                             type="text"
-                            className="w-full p-2 border rounded-md border-gray-300 bg-gray-50"
-                            value={scanData.strasse || '-'}
-                            readOnly
+                            className={`w-full p-2 border rounded-md ${isEditing ? 'border-gray-300 bg-white' : 'border-gray-300 bg-gray-50'}`}
+                            value={isEditing ? editFormData.straße : (scanData.straße || '-')}
+                            onChange={isEditing ? (e) => handleInputChange('straße', e.target.value) : undefined}
+                            readOnly={!isEditing}
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Land</label>
                         <input
                             type="text"
-                            className="w-full p-2 border rounded-md border-gray-300 bg-gray-50"
-                            value={scanData.land || '-'}
-                            readOnly
+                            className={`w-full p-2 border rounded-md ${isEditing ? 'border-gray-300 bg-white' : 'border-gray-300 bg-gray-50'}`}
+                            value={isEditing ? editFormData.land : (scanData.land || '-')}
+                            onChange={isEditing ? (e) => handleInputChange('land', e.target.value) : undefined}
+                            readOnly={!isEditing}
                         />
                     </div>
                 </div>
@@ -147,21 +258,23 @@ export default function CustomerHistory() {
                 {/* Additional Location and Contact */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Ort</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">ort</label>
                         <input
                             type="text"
-                            className="w-full p-2 border rounded-md border-gray-300 bg-gray-50"
-                            value={scanData.wohnort || '-'}
-                            readOnly
+                            className={`w-full p-2 border rounded-md ${isEditing ? 'border-gray-300 bg-white' : 'border-gray-300 bg-gray-50'}`}
+                            value={isEditing ? editFormData.ort : (scanData.ort || '-')}
+                            onChange={isEditing ? (e) => handleInputChange('ort', e.target.value) : undefined}
+                            readOnly={!isEditing}
                         />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
                         <input
                             type="text"
-                            className="w-full p-2 border rounded-md border-gray-300 bg-gray-50"
-                            value={scanData.telefonnummer || '-'}
-                            readOnly
+                            className={`w-full p-2 border rounded-md ${isEditing ? 'border-gray-300 bg-white' : 'border-gray-300 bg-gray-50'}`}
+                            value={isEditing ? editFormData.telefon : (scanData.telefon || '-')}
+                            onChange={isEditing ? (e) => handleInputChange('telefon', e.target.value) : undefined}
+                            readOnly={!isEditing}
                         />
                     </div>
                     <div>
@@ -169,7 +282,7 @@ export default function CustomerHistory() {
                         <input
                             type="text"
                             className="w-full p-2 border rounded-md border-gray-300 bg-gray-50"
-                            value={scanData.id || '-'}
+                            value={(scanData as any).customerNumber || '-'}
                             readOnly
                         />
                     </div>
@@ -269,6 +382,7 @@ export default function CustomerHistory() {
                 {activeTab === 'versorgungen' && <TreatmentsCarriedOut />}
                 {activeTab === 'reviews' && <Reviews />}
             </div>
+
         </div>
     )
 }

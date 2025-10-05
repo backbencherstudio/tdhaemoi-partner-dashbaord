@@ -5,8 +5,12 @@ interface CustomerUpdateData {
     vorname?: string
     nachname?: string
     email?: string
-    telefonnummer?: string
-    wohnort?: string
+    telefon?: string
+    ort?: string
+    gender?: string
+    geburtsdatum?: string
+    straße?: string
+    land?: string
     fusslange1?: string
     fusslange2?: string
     fussbreite1?: string

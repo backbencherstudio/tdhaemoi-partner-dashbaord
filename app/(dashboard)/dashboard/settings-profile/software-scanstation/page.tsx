@@ -25,67 +25,65 @@ export default function SoftwareScanstationPage() {
     const [showModuleWarning, setShowModuleWarning] = useState(false);
     const [selectedQuestion, setSelectedQuestion] = useState(QUESTIONS[0]);
     const [selectedLanguage, setSelectedLanguage] = useState('Deutsch');
-    
+
     // Track original values to detect changes
     const [originalModules] = useState(['einlagenfinder']);
     const [originalQuestion] = useState(QUESTIONS[0]);
     const [originalLanguage] = useState('Deutsch');
-    
+
     // Check if there are any changes
-    const hasChanges = 
+    const hasChanges =
         JSON.stringify(selectedModules.sort()) !== JSON.stringify(originalModules.sort()) ||
         selectedQuestion !== originalQuestion ||
         selectedLanguage !== originalLanguage;
 
     const handleModuleToggle = (key: string) => {
-        let newSelected;
-        if (selectedModules.includes(key)) {
-            newSelected = selectedModules.filter((k) => k !== key);
-            if (newSelected.length === 0) {
-                setShowModuleWarning(true);
-                return;
-            }
-        } else {
-            newSelected = [...selectedModules, key];
-        }
-        setSelectedModules(newSelected);
-        setShowModuleWarning(false);
+        // Disabled in read-only mode - do nothing
+        return;
     };
 
     return (
-        <div >
-            <h1 className='text-2xl font-bold mb-2'>
+        <div className="opacity-75">
+            {/* Read-only indicator */}
+            {/* <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 mb-6 flex items-center">
+                <svg className="w-5 h-5 text-gray-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+                <span className="text-gray-600 font-medium">
+                    Diese Seite ist schreibgeschützt - Nur zur Ansicht verfügbar
+                </span>
+            </div> */}
+
+            <h1 className='text-2xl font-bold mb-2 text-gray-600'>
                 Scanstation – Softwaremodul
             </h1>
-            <div className='text-lg mb-8'>
+            <div className='text-lg mb-8 text-gray-500'>
                 Verwalten Sie hier die Einstellungen Ihrer Scanstation Software.
             </div>
 
             {/* Module Selection */}
             <div className='mb-8'>
-                <div className='font-semibold mb-3'>Sichtbare Module auswählen</div>
+                <div className='font-semibold mb-3 text-gray-600'>Sichtbare Module auswählen</div>
                 <div className='flex gap-6 mb-2'>
                     {MODULES.map((mod) => {
                         const selected = selectedModules.includes(mod.key);
-                        // For demo: all modules accessible
-                        const hasAccess = true;
                         return (
                             <div
                                 key={mod.key}
-                                className={`flex items-center cursor-pointer transition-all duration-200 rounded-lg px-6 py-3 min-w-[160px] border-2 ${selected
-                                    ? 'bg-green-50 border-[#62A07C] shadow-md'
-                                    : 'bg-white border-gray-300 hover:border-gray-400 hover:shadow-sm'
-                                    } ${!hasAccess ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                onClick={() => hasAccess && handleModuleToggle(mod.key)}
+                                className={`flex items-center cursor-not-allowed transition-all duration-200 rounded-lg px-6 py-3 min-w-[160px] border-2 ${selected
+                                    ? 'bg-gray-200 border-gray-400'
+                                    : 'bg-gray-100 border-gray-300'
+                                    }`}
+                                onClick={() => handleModuleToggle(mod.key)}
                             >
                                 {/* Custom Checkbox */}
                                 <div className={`relative w-5 h-5 mr-3 rounded border-2 transition-all duration-200 ${selected
-                                    ? 'bg-[#62A07C] border-[#62A07C]/50'
-                                    : 'bg-white border-gray-400'
+                                    ? 'bg-gray-400 border-gray-500'
+                                    : 'bg-gray-200 border-gray-400'
                                     }`}>
                                     {selected && (
                                         <svg
-                                            className="absolute inset-0 w-full h-full text-white"
+                                            className="absolute inset-0 w-full h-full text-gray-600"
                                             fill="currentColor"
                                             viewBox="0 0 20 20"
                                         >
@@ -97,7 +95,7 @@ export default function SoftwareScanstationPage() {
                                         </svg>
                                     )}
                                 </div>
-                                <span className={`font-medium ${selected ? 'text-[#62A07C]' : 'text-gray-700'}`}>
+                                <span className={`font-medium ${selected ? 'text-gray-600' : 'text-gray-500'}`}>
                                     {mod.label}
                                 </span>
                             </div>
@@ -116,13 +114,14 @@ export default function SoftwareScanstationPage() {
 
             {/* Insole Finder Question Selection as Dropdown */}
             <div className='mb-8'>
-                <div className='font-semibold mb-3'>
+                <div className='font-semibold mb-3 text-gray-600'>
                     Fragen für den Einlagenfinder auswählen
                 </div>
                 <select
                     value={selectedQuestion}
                     onChange={e => setSelectedQuestion(e.target.value)}
-                    className='w-full p-3 text-base border border-gray-300 rounded-lg mb-2 focus:outline-none transition-all duration-200'
+                    disabled
+                    className='w-full p-3 text-base border border-gray-300 rounded-lg mb-2 bg-gray-100 text-gray-600 cursor-not-allowed'
                 >
                     {QUESTIONS.map(q => (
                         <option key={q} value={q}>{q}</option>
@@ -132,39 +131,33 @@ export default function SoftwareScanstationPage() {
 
             {/* Language Selection as Dropdown */}
             <div className='mb-8'>
-                <div className='font-semibold mb-3'>
+                <div className='font-semibold mb-3 text-gray-600'>
                     Sprache wählen
                 </div>
                 <select
                     value={selectedLanguage}
                     onChange={e => setSelectedLanguage(e.target.value)}
-                    className='w-44 p-3 text-base border border-gray-300 rounded-lg focus:outline-none  transition-all duration-200'
+                    disabled
+                    className='w-44 p-3 text-base border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed'
                 >
                     <option value="Deutsch">Deutsch</option>
                     <option value="Englisch">Englisch</option>
                 </select>
             </div>
 
-            {/* Save Button - Only show when there are changes */}
-            {hasChanges && (
-                <div className='flex justify-end'>
-                    <button
-                        onClick={() => {
-                            // Save functionality here
-                            console.log('Saving settings:', {
-                                selectedModules,
-                                selectedQuestion,
-                                selectedLanguage
-                            });
-                            // You can add API call or other save logic here
-                            alert('Einstellungen gespeichert!');
-                        }}
-                        className='bg-[#62A07C] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#4A8A6A] transition-all duration-200 shadow-md hover:shadow-lg'
-                    >
-                        Speichern
-                    </button>
-                </div>
-            )}
+            {/* Save Button - Disabled in read-only mode */}
+            <div className='flex justify-end'>
+                <button
+                    onClick={() => {
+                        // Disabled in read-only mode - do nothing
+                        return;
+                    }}
+                    disabled
+                    className='bg-gray-400 text-gray-600 px-8 py-3 rounded-lg font-semibold cursor-not-allowed opacity-50'
+                >
+                    Speichern
+                </button>
+            </div>
         </div>
     );
 }

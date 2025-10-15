@@ -103,6 +103,12 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
         return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
+
+    // handle kundeninfo view function customer-history/41d77415-edab-47dc-8849-136fd707064e
+    const handleKundeninfoView = (id: string) => {
+        router.push(`/dashboard/customer-history/${id}`);
+    }
+
     return (
 
         <div className='flex flex-col gap-4 mt-10'>
@@ -157,7 +163,7 @@ const LastScans = forwardRef<LastScansRef>((props, ref) => {
                                                     'Scan ansehen'
                                                 )}
                                             </button>
-                                            <button className='bg-[#62A07C]  text-white px-4 py-1 rounded-md'>Kundeninfo</button>
+                                            <button onClick={() => handleKundeninfoView(scan.id.toString())} className='bg-[#62A07C] hover:bg-[#62a07c98] transform duration-300 text-white px-4 py-1 rounded-md cursor-pointer'>Kundeninfo</button>
                                         </div>
                                     </div>
                                 </div>

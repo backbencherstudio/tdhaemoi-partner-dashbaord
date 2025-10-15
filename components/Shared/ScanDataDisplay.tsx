@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { MdZoomOutMap } from 'react-icons/md'
-import { TfiReload } from 'react-icons/tfi'
+import { TfiDownload } from 'react-icons/tfi'
 import { RiArrowDownSLine } from 'react-icons/ri'
 import { ScanData } from '@/types/scan'
 import { useAuth } from '@/contexts/AuthContext'
@@ -167,7 +167,7 @@ export default function ScanDataDisplay({
                 logoUrl: user?.image || null,
                 customerFullName: `${scanData.vorname || ''} ${scanData.nachname || ''}`.trim(),
                 customerNumber: (scanData as any)?.customerNumber ?? null,
-                dateOfBirthText: '23.07.1997'
+                dateOfBirthText: scanData.geburtsdatum || null
             } as const;
 
             // Get dynamic foot length values from scan data (Fusslänge = foot length)
@@ -342,7 +342,7 @@ export default function ScanDataDisplay({
                                 <MdZoomOutMap className={`text-4xl ${isZoomed ? 'text-blue-600' : 'text-gray-600'}`} />
                             </div>
                             <div className={`border border-gray-500 rounded p-1 ${isDownloading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-100'} transition`} onClick={handleDownloadFeetPdf} title='Download Combined PDF (both feet)'>
-                                <TfiReload className={`text-4xl ${isDownloading ? 'text-gray-400' : 'text-gray-600'}`} />
+                                <TfiDownload className={`text-4xl ${isDownloading ? 'text-gray-400' : 'text-gray-600'}`} />
                             </div>
 
                             {/* Additional content (like save button, etc.) */}

@@ -11,10 +11,11 @@ import { BiLogOut } from 'react-icons/bi'
 import { RiArrowRightLine } from 'react-icons/ri'
 import { useAuth } from '@/contexts/AuthContext'
 import LanguageSwitcher from '@/components/Shared/LanguageSwitcher'
+import Image from 'next/image'
 
 export default function Settingss() {
     const [showLanguageDropdown, setShowLanguageDropdown] = React.useState(false);
-    const { logout } = useAuth();
+    const { logout, user, setUser } = useAuth();
 
     const handleLanguageClick = (e: React.MouseEvent) => {
         e.preventDefault();
@@ -84,12 +85,14 @@ export default function Settingss() {
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">Accountverwaltung</h1>
 
-            <Link href="/dashboard/settings-profile/users" className="block mb-8 w-full lg:w-[40%]">
+            <Link href="/dashboard/users" className="block mb-8 w-full lg:w-[40%]">
                 <div className="flex items-center border-2 border-gray-600 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors p-4">
-                    <div className="w-50 h-30 bg-gray-900 rounded-md mr-4"></div>
+                    <div className="border border-gray-300 rounded-md mr-4">
+                        <Image src={user?.image || ''} alt="user" width={100} height={100} className='w-full h-full object-cover rounded-md' />
+                    </div>
                     <div className='flex justify-between items-center w-full'>
                         <div>
-                            <h2 className="font-bold text-xl capitalize">FEETF1RST</h2>
+                            <h2 className="font-bold text-xl capitalize">{user?.busnessName}</h2>
                             <p className="text-sm text-gray-600">Infos, System und mehr</p>
                         </div>
                         <RiArrowRightLine className='text-gray-600 text-3xl' />

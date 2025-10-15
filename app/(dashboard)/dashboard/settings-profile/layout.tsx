@@ -14,6 +14,7 @@ import {
     ClipboardList,
     FootprintsIcon,
     Lock,
+    Store,
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -64,8 +65,8 @@ const sidebarData = [
     },
     {
         id: "notifications",
-        icon: Bell,
-        label: "Benachrichtigungen",
+        icon: Store,
+        label: "Lagereinstellungen",
         href: "/dashboard/settings-profile/notifications"
     },
     // {
@@ -98,12 +99,12 @@ const sidebarData = [
     //     label: "Sprache & Zeitzone",
     //     href: "/dashboard/settings-profile/language"
     // },
-    {
-        id: "users",
-        icon: Users,
-        label: "Benutzerverwaltung & Zugriffsrechte",
-        href: "/dashboard/settings-profile/users"
-    }
+    // {
+    //     id: "users",
+    //     icon: Users,
+    //     label: "Benutzerverwaltung & Zugriffsrechte",
+    //     href: "/dashboard/settings-profile/users"
+    // }
 ];
 
 export default function SettingsProfileLayout({

@@ -6,10 +6,10 @@ import { UploadCloud } from "lucide-react";
 
 function UploadDropdown() {
     return (
-        <Select>
-            <SelectTrigger className="border-2 border-gray-300 h-12 text-base font-normal">
+        <Select disabled>
+            <SelectTrigger className="border-2 border-gray-300 h-12 text-base font-normal bg-gray-100 cursor-not-allowed opacity-75">
                 <span className="flex items-center gap-2">
-                    <span className="text-xl">         <UploadCloud className="w-5 h-5" /></span>
+                    <span className="text-xl">         <UploadCloud className="w-5 h-5 text-gray-500" /></span>
                     <SelectValue placeholder="Jetzt hochladen" />
                 </span>
             </SelectTrigger>
@@ -23,9 +23,9 @@ function UploadDropdown() {
 export default function MusterzettelPage() {
     return (
         <>
-            <div className=" w-full px-4 ">
+            <div className=" w-full px-4 opacity-75">
                 {/* Musterzettel Section */}
-                <h2 className="text-2xl font-bold mb-4">Musterzettel</h2>
+                <h2 className="text-2xl font-bold mb-4 text-gray-600">Musterzettel</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-4">
                     {[0, 1].map((col) => (
                         <div key={col} className="flex flex-col gap-6">
@@ -36,24 +36,24 @@ export default function MusterzettelPage() {
                     ))}
                 </div>
                 <div className="flex justify-center mb-8">
-                    <Button variant="outline">MEHR ANZEIGEN</Button>
+                    <Button variant="outline" disabled className="bg-gray-100 text-gray-500 cursor-not-allowed">MEHR ANZEIGEN</Button>
                 </div>
 
                 {/* Schuheinlagen Muster Section */}
-                <h2 className="text-2xl font-bold mb-4">Schuheinlagen Muster</h2>
+                <h2 className="text-2xl font-bold mb-4 text-gray-600">Schuheinlagen Muster</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                     {[0, 1].map((row) => (
                         <div key={row} className="flex flex-col gap-4">
-                            <Select>
-                                <SelectTrigger>
+                            <Select disabled>
+                                <SelectTrigger className="bg-gray-100 cursor-not-allowed">
                                     <SelectValue placeholder="Coming soon" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="soon">Coming soon</SelectItem>
                                 </SelectContent>
                             </Select>
-                            <Select>
-                                <SelectTrigger>
+                            <Select disabled>
+                                <SelectTrigger className="bg-gray-100 cursor-not-allowed">
                                     <SelectValue placeholder="Coming soon" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -64,20 +64,20 @@ export default function MusterzettelPage() {
                     ))}
                 </div>
                 <div className="flex justify-center mb-8">
-                    <Button variant="outline">MEHR ANZEIGEN</Button>
+                    <Button variant="outline" disabled className="bg-gray-100 text-gray-500 cursor-not-allowed">MEHR ANZEIGEN</Button>
                 </div>
 
                 {/* Shoe Usage Form Section */}
-                <h2 className="text-xl font-bold mb-4 mt-10 uppercase tracking-tight">WELCHE SCHUHE NUTZEN IHRE KUNDEN AM HÄUFIGSTEN?</h2>
+                <h2 className="text-xl font-bold mb-4 mt-10 uppercase tracking-tight text-gray-600">WELCHE SCHUHE NUTZEN IHRE KUNDEN AM HÄUFIGSTEN?</h2>
                 <form className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <Input placeholder="FIRMA" />
-                        <Input placeholder="E-MAIL" />
+                        <Input placeholder="FIRMA" disabled className="bg-gray-100 text-gray-500 cursor-not-allowed" />
+                        <Input placeholder="E-MAIL" disabled className="bg-gray-100 text-gray-500 cursor-not-allowed" />
                     </div>
-                    <Input placeholder="SCHUHMARKE" />
-                    <Input placeholder="MODELL" />
+                    <Input placeholder="SCHUHMARKE" disabled className="bg-gray-100 text-gray-500 cursor-not-allowed" />
+                    <Input placeholder="MODELL" disabled className="bg-gray-100 text-gray-500 cursor-not-allowed" />
                     <div className="flex justify-center mt-6">
-                        <Button className="w-2/12 cursor-pointer bg-[#62A07C] hover:bg-[#62A07C]/80 text-white">SENDEN</Button>
+                        <Button className="w-2/12 bg-gray-400 text-gray-600 cursor-not-allowed" disabled>SENDEN</Button>
                     </div>
                 </form>
             </div>

@@ -110,8 +110,8 @@ export default function UserManagementAccessRights() {
   }
 
   return (
-    <div className="relative pt-10">
-      <div className="absolute right-0 top-0 flex items-center gap-2 z-20">
+    <div className="relative pt-10 max-w-5xl mx-auto bg-gray-100/50 border border-gray-200 rounded-lg p-6 py">
+      <div className="absolute right-0 top-0 flex items-center gap-2 z-20 p-5">
         {isEditing && (
           <button
             type="button"

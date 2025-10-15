@@ -70,7 +70,7 @@ export default function Lager() {
     const { products, pagination, getAllProducts, refreshProducts, isLoadingProducts, error, updateExistingProduct } = useStockManagementSlice();
 
     // Pagination state
-    const [itemsPerPage, setItemsPerPage] = useState(2)
+    const [itemsPerPage, setItemsPerPage] = useState(5)
     const [currentPage, setCurrentPage] = useState(1)
     const [showPagination, setShowPagination] = useState(false)
 
@@ -295,7 +295,7 @@ export default function Lager() {
                             const convertedProducts = apiProducts.map(convertApiProductToLocal);
                             setProductsData(convertedProducts);
                         } catch (err) {
-                            console.error('Failed to refresh products after edit:', err);
+                            // console.error('Failed to refresh products after edit:', err);
                         }
                     }}
                 />

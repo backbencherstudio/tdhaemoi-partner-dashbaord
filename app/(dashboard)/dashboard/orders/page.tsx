@@ -4,6 +4,10 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import HighPriorityCard from '@/components/OrdersPage/HighPriorityCard/HighPriorityCard';
 import ProcessTable from '@/components/OrdersPage/ProccessTable/ProcessTable';
 import { OrdersProvider } from '@/contexts/OrdersContext';
@@ -101,6 +105,16 @@ export default function Orders() {
     const formatEuro = (amount: number) =>
         amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 
+    // UI-only state for date and year pickers (no filtering logic)
+    const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
+    const [selectedYear, setSelectedYear] = React.useState<string>('');
+    const years = React.useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const list: number[] = [];
+        for (let y = currentYear; y >= currentYear - 10; y--) list.push(y);
+        return list;
+    }, []);
+
     return (
         <OrdersProvider>
             <div className='mb-20'>
@@ -121,15 +135,55 @@ export default function Orders() {
                             <div className='flex flex-col xl:flex-row items-stretch w-full gap-6'>
                                 {/* left side card  */}
                                 <div className="bg-white rounded-lg p-8 flex flex-col items-center justify-center min-w-[250px] border mb-4 md:mb-0 xl:w-4/12">
-                                    <div className="text-2xl font-bold text-center mb-2">Geschäftsumsatz<br />(letzten 40 Tage)</div>
+                                    <div className="text-2xl font-bold text-center mb-2">Geschäftsumsatz<br />(letzten 30 Tage)</div>
                                     <div className="text-4xl font-extrabold mt-4">
                                         {data?.statistics?.totalRevenue ? formatEuro(data.statistics.totalRevenue) : '-€'}
                                     </div>
                                 </div>
 
                                 {/* right side line chart */}
-                                <div className="w-full overflow-x-auto xl:w-8/12 flex items-stretch" style={{ minWidth: 0 }}>
-                                    <LineChartComponent chartData={processedChartData} />
+                                <div className="w-full xl:w-8/12" >
+
+                                    <div className='flex flex-col items-end justify-end'>
+                                        {/* filter need date and year wise  */}
+                                        <div className="flex flex-col items-center justify-end">
+                                            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant="outline" className="w-[200px] border-gray-500 cursor-pointer justify-start text-left font-normal">
+                                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                                            {selectedDate ? selectedDate.toLocaleDateString() : 'Pick a date'}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="p-0" align="start">
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={selectedDate}
+                                                            onSelect={setSelectedDate}
+                                                            initialFocus
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+
+                                                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                                                    <SelectTrigger className="w-[200px] cursor-pointer">
+                                                        <SelectValue placeholder="Select year" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {years.map((y) => (
+                                                            <SelectItem key={y} value={String(y)} className='cursor-pointer'>{y}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div style={{ minWidth: 0 }} className='overflow-x-auto'>
+                                        <LineChartComponent chartData={processedChartData} />
+                                    </div>
+
+
                                 </div>
                             </div>
 

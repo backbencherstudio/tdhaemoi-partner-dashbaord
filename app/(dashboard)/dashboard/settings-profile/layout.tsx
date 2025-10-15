@@ -4,17 +4,14 @@ import {
     Settings,
     MessageSquare,
     Save,
-    Bell,
     Scan,
     Palette,
-    Globe,
-    Users,
     Warehouse,
     Monitor,
-    ClipboardList,
     FootprintsIcon,
     Lock,
     Store,
+ 
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -45,12 +42,12 @@ const sidebarData = [
         label: "Backup Einstellungen",
         href: "/dashboard/settings-profile/backup"
     },
-    {
-        id: "versorgungs",
-        icon: FootprintsIcon,
-        label: "Versorgungs",
-        href: "/dashboard/versorgungs"
-    },
+    // {
+    //     id: "versorgungs",
+    //     icon: FootprintsIcon,
+    //     label: "Versorgungs",
+    //     href: "/dashboard/versorgungs"
+    // },
     // {
     //     id: "lager",
     //     icon: Warehouse,
@@ -104,6 +101,12 @@ const sidebarData = [
     //     icon: Users,
     //     label: "Benutzerverwaltung & Zugriffsrechte",
     //     href: "/dashboard/settings-profile/users"
+    // }
+    // {
+    //     id: "sprache",
+    //     icon: LanguagesIcon,
+    //     label: "Sprache",
+    //     href: "/dashboard/settings-profile/sprache"
     // }
 ];
 

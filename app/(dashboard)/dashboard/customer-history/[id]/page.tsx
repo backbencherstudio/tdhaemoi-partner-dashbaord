@@ -5,9 +5,9 @@ import { useSingleCustomer } from '@/hooks/customer/useSingleCustomer'
 import NoteAdd from '@/components/CustomerHistory/NoteAdd/NoteAdd';
 import Link from 'next/link';
 import Image from 'next/image';
-import emailImg from '@/public/CustomerHistory/email.png';
+// import emailImg from '@/public/CustomerHistory/email.png';
 import folderImg from '@/public/CustomerHistory/folder.png';
-import LegImg from '@/public/CustomerHistory/leg.png';
+// import LegImg from '@/public/CustomerHistory/leg.png';
 import ShoePurchasesMade from '@/components/CustomerHistory/ShoePurchasesMade/ShoePurchasesMade';
 import TreatmentsCarriedOut from '@/components/CustomerHistory/TreatmentsCarriedOut/TreatmentsCarriedOut';
 import ScansPromoted from '@/components/CustomerHistory/ScansPromoted/ScansPromoted';
@@ -17,8 +17,9 @@ import scanImg from '@/public/images/history/scan.png'
 import AdvancedFeaturesModal from '@/app/(dashboard)/dashboard/_components/Customers/AdvancedFeaturesModal'
 import { Edit, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+// import { Input } from '@/components/ui/input'
+// import { Label } from '@/components/ui/label'
 import toast from 'react-hot-toast'
 
 export default function CustomerHistory() {
@@ -35,7 +36,7 @@ export default function CustomerHistory() {
         ort: '',
         telefon: ''
     });
-
+    const [isPopUpOpen, setIsPopUpOpen] = useState(false);
 
     if (loading) return <div className="p-4">Loading...</div>;
     if (error) return <div className="p-4 text-red-600">Error: {error}</div>;
@@ -74,7 +75,7 @@ export default function CustomerHistory() {
             const updateData = {
                 ...editFormData
             };
-            
+
             console.log('Sending update data:', updateData);
             const success = await updateCustomer(updateData);
             if (success) {
@@ -105,6 +106,10 @@ export default function CustomerHistory() {
             ...prev,
             [field]: value
         }));
+    }
+
+    const handleShowPopUp = () => {
+        setIsPopUpOpen(true);
     }
 
     return (
@@ -176,7 +181,7 @@ export default function CustomerHistory() {
                             disabled={!isEditing}
                             className="cursor-pointer"
                         />
-                        <span className="text-sm font-medium">MALE</span>
+                        <span className="text-sm font-medium">Men</span>
                     </label>
                     <label className="flex items-center gap-2 border px-4 py-2 rounded-md bg-gray-50">
                         <input
@@ -187,7 +192,7 @@ export default function CustomerHistory() {
                             disabled={!isEditing}
                             className="cursor-pointer"
                         />
-                        <span className="text-sm font-medium">FEMALE</span>
+                        <span className="text-sm font-medium">Women</span>
                     </label>
                 </div>
 
@@ -290,12 +295,12 @@ export default function CustomerHistory() {
                 </div>
             </div>
 
-            <div className="flex gap-8 my-10">
+            <div className="flex  items-center gap-10 my-10 flex-wrap">
                 {/* Versorgung starten */}
                 <div className="flex flex-col items-center">
                     <button
                         onClick={handleVersorgung}
-                        className="p-5 flex items-center justify-center rounded-2xl border border-black bg-white hover:bg-gray-100 transition cursor-pointer"
+                        className="p-2 flex items-center justify-center rounded-2xl border border-black bg-white hover:bg-gray-100 transition cursor-pointer"
                     >
                         <Image src={userload} alt="Versorgung starten" width={70} height={70} />
                     </button>
@@ -307,41 +312,43 @@ export default function CustomerHistory() {
                     <button
                         className="p-2 flex items-center justify-center rounded-2xl border border-black bg-white hover:bg-gray-100 transition cursor-pointer"
                     >
-                        <Image src={scanImg} alt="Versorgung starten" width={70} height={70} />
+                        <Image src={scanImg} alt="Versorgung starten" width={60} height={60} />
                     </button>
                     <span className="mt-2 text-center text-sm font-normal">Scan durchführen</span>
                 </div>
-            </div>
 
-            {/* note Table */}
-            <NoteAdd />
-
-            {/* some link button */}
-            <div>
-                <div className="mt-8  gap-10 flex text-center justify-center flex-wrap">
-                    <div className="flex flex-col items-center">
+                {/* <div className="flex flex-col items-center">
                         <Link href="/dashboard/email" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full  relative transition-all duration-300">
                             <Image src={emailImg} alt="Kundenordner" width={50} height={50} className='w-11 h-auto' />
 
                         </Link>
                         <span className="text-sm">Schuh reservieren</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                        <Link href=" " className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full relative transition-all duration-300">
-                            <Image src={folderImg} alt="Schuhfinder" width={50} height={50} className='w-11 h-auto' />
+                    </div> */}
+                <div className="flex flex-col items-center">
 
-                        </Link>
-                        <span className="text-sm">Kundenordner</span>
-                    </div>
-
-                    <div className="flex flex-col items-center">
-                        <Link href="" className="p-3 bg-gray-100 hover:bg-gray-200 cursor-pointer rounded-full relative transition-all duration-300">
-                            <Image src={LegImg} alt="Email" width={40} height={40} className='w-9 h-auto' />
-                        </Link>
-                        <span className="text-sm">Einlagenherstellung</span>
-                    </div>
+                    <button
+                        className="p-2 flex items-center justify-center rounded-2xl border border-black bg-white hover:bg-gray-100 transition cursor-pointer"
+                    >
+                        <Image src={folderImg} alt="Kundenordner" width={60} height={60} />
+                    </button>
+                    <span className="mt-2 text-center text-sm font-normal">Kundenordner</span>
                 </div>
+
+                {/* <div className="flex flex-col items-center">
+
+                    <button
+                        className="p-2 flex items-center justify-center rounded-2xl border border-black bg-white hover:bg-gray-100 transition cursor-pointer"
+                    >
+                        <Image src={LegImg} alt="Einlagenherstellung" width={60} height={60} />
+                    </button>
+                    <span className="mt-2 text-center text-sm font-normal">Einlagenherstellung</span>
+                </div> */}
             </div>
+
+
+            {/* note Table */}
+            <NoteAdd />
+
 
             {/* Responsive Button Group */}
             <div className="-mx-4">
@@ -355,7 +362,8 @@ export default function CustomerHistory() {
                         </button>
                         <button
                             className={`min-w-[220px] cursor-pointer px-6 py-2 border border-black font-semibold text-center text-sm md:text-base rounded transition-all ${activeTab === 'shoes' ? 'bg-white' : 'bg-gray-200'}`}
-                            onClick={() => setActiveTab('shoes')}
+                            // onClick={() => setActiveTab('shoes')}
+                            onClick={handleShowPopUp}
                         >
                             DURCHGEFÜHRTE SCHUHKÄUFE
                         </button>
@@ -367,7 +375,8 @@ export default function CustomerHistory() {
                         </button>
                         <button
                             className={`min-w-[220px] cursor-pointer px-6 py-2 border border-black font-semibold text-center text-sm md:text-base rounded transition-all ${activeTab === 'reviews' ? 'bg-white' : 'bg-gray-200'}`}
-                            onClick={() => setActiveTab('reviews')}
+                            // onClick={() => setActiveTab('reviews')}
+                            onClick={handleShowPopUp}
                         >
                             BEWERTUNGEN
                         </button>
@@ -383,6 +392,17 @@ export default function CustomerHistory() {
                 {activeTab === 'versorgungen' && <TreatmentsCarriedOut />}
                 {activeTab === 'reviews' && <Reviews />}
             </div>
+
+            <Dialog open={isPopUpOpen} onOpenChange={setIsPopUpOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-center">COMING SOON</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex justify-center pt-2">
+                        <Button onClick={() => setIsPopUpOpen(false)} className="cursor-pointer">OK</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
 
         </div>
     )

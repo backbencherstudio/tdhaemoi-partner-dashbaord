@@ -12,35 +12,45 @@ import { RiArrowRightLine } from 'react-icons/ri'
 import { useAuth } from '@/contexts/AuthContext'
 import LanguageSwitcher from '@/components/Shared/LanguageSwitcher'
 import Image from 'next/image'
+import { MdProductionQuantityLimits } from 'react-icons/md'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 export default function Settingss() {
     const [showLanguageDropdown, setShowLanguageDropdown] = React.useState(false);
-    const { logout, user, setUser } = useAuth();
+    const { logout, user } = useAuth();
+    const [isLogoutOpen, setIsLogoutOpen] = React.useState(false);
 
     const handleLanguageClick = (e: React.MouseEvent) => {
         e.preventDefault();
         setShowLanguageDropdown(!showLanguageDropdown);
     };
 
-    const handleLogout = async () => {
+    const handleLogoutClick = () => {
+        setIsLogoutOpen(true);
+    };
+
+    const confirmLogout = async () => {
+        setIsLogoutOpen(false);
         await logout();
     };
 
     const settingsOptions = [
-        {
-            label: "Produktverwaltung",
-            href: "/dashboard/lager",
-            icon: BiCube,
-            className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors ",
-            alt: "Product Management",
-        },
-        {
-            label: "Nachrichten",
-            href: "/dashboard/email",
-            icon: BiMessageDetail,
-            className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors",
-            alt: "News",
-        },
+        // {
+        //     label: "Produktverwaltung",
+        //     href: "/dashboard/lager",
+        //     icon: BiCube,
+        //     className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors ",
+        //     alt: "Product Management",
+        // },
+        // {
+        //     label: "Nachrichten",
+        //     href: "/dashboard/email",
+        //     icon: BiMessageDetail,
+        //     className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors",
+        //     alt: "News",
+        // },
+
         {
             label: "Einstellungen",
             href: "/dashboard/settings-profile",
@@ -48,20 +58,12 @@ export default function Settingss() {
             className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors",
             alt: "Settings",
         },
-
         {
-            label: "Software",
-            href: "/dashboard/software",
-            icon: TbBrandFeedly,
+            label: "Versorgungs",
+            href: "/dashboard/versorgungs",
+            icon: MdProductionQuantityLimits,
             className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors",
-            alt: "Software",
-        },
-        {
-            label: "Support",
-            href: "/dashboard/support",
-            icon: BiSupport,
-            className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors",
-            alt: "Support",
+            alt: "Versorgungs",
         },
         {
             label: "Sprache",
@@ -72,12 +74,27 @@ export default function Settingss() {
             onClick: handleLanguageClick,
         },
         {
+            label: "Software",
+            href: "/dashboard/software",
+            icon: TbBrandFeedly,
+            className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors",
+            alt: "Software",
+        },
+        {
+            label: "Hilfe",
+            href: "/dashboard/support",
+            icon: BiSupport,
+            className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors",
+            alt: "Support",
+        },
+
+        {
             label: "Log Out",
             href: "#",
             icon: BiLogOut,
             className: "text-6xl text-gray-800 hover:text-primary-600 transition-colors",
             alt: "Logout",
-            onClick: handleLogout
+            onClick: handleLogoutClick
         },
     ];
 
@@ -100,7 +117,7 @@ export default function Settingss() {
                 </div>
             </Link>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10 w-full justify-between items-center">
                 {settingsOptions.map((option, index) => (
                     <div key={index} className="relative">
                         {option.onClick ? (
@@ -141,6 +158,19 @@ export default function Settingss() {
                     </div>
                 ))}
             </div>
+            <Dialog open={isLogoutOpen} onOpenChange={setIsLogoutOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-center">Logout bestätigen?</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex justify-center gap-3 pt-2">
+                        <Button variant="outline" onClick={() => setIsLogoutOpen(false)} className="cursor-pointer">Abbrechen</Button>
+                        <Button onClick={confirmLogout} className="bg-red-600 hover:bg-red-700 text-white cursor-pointer">Logout</Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
+
+
     )
 }

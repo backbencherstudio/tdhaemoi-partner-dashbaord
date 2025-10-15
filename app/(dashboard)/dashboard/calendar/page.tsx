@@ -1,7 +1,7 @@
 'use client'
 import React from 'react';
-import { Plus, X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import AppoinmentData from '@/components/AppoinmentData/AppoinmentData';
+import { Plus, X, Loader2 } from 'lucide-react';
+// import AppoinmentData from '@/components/AppoinmentData/AppoinmentData';
 import { useForm } from "react-hook-form"
 import { useAppoinment } from '@/hooks/appoinment/useAppoinment';
 import AppointmentModal from '@/components/AppointmentModal/AppointmentModal';
@@ -78,7 +78,7 @@ const WeeklyCalendar = () => {
         show: false,
         appointmentId: null
     });
-    const [showFullSubtitle, setShowFullSubtitle] = React.useState<number | null>(null);
+
     const [selectedAppointment, setSelectedAppointment] = React.useState<AppointmentData | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
     const [isDeleting, setIsDeleting] = React.useState(false);
@@ -142,17 +142,17 @@ const WeeklyCalendar = () => {
             const selectedYear = selectedRowStartDate.getFullYear();
             const selectedMonth = selectedRowStartDate.getMonth();
             const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0);
-            
+
             // Generate dates after the selected date until end of month
             for (let i = 1; i <= 30; i++) { // Start from 1, not 0 (skip the selected date)
                 const date = new Date(selectedRowStartDate);
                 date.setDate(selectedRowStartDate.getDate() + i);
-                
+
                 // Stop if we've reached the next month
                 if (date.getMonth() !== selectedMonth) {
                     break;
                 }
-                
+
                 dates.push(date);
             }
             return dates;
@@ -273,9 +273,9 @@ const WeeklyCalendar = () => {
 
     return (
         <div className=" bg-white">
-            <div className='p-4 sm:p-6'>
+            {/* <div className='p-4 sm:p-6'>
                 <AppoinmentData onRefresh={refreshKey} />
-            </div>
+            </div> */}
 
             {/* Header */}
             <div className=" bg-white border-b border-gray-200 z-40">
@@ -300,23 +300,23 @@ const WeeklyCalendar = () => {
                 <div className="flex flex-col lg:flex-row gap-6 mb-10">
                     {/* MiniCalendar */}
                     <div className="flex-1">
-                <MiniCalendar
-                    isMobile={isMobile}
-                    miniCalendarDate={miniCalendarDate}
-                    showYearMonthPicker={showYearMonthPicker}
-                    setShowYearMonthPicker={setShowYearMonthPicker}
-                    navigateMiniCalendarMonth={navigateMiniCalendarMonth}
-                    handleYearMonthChange={handleYearMonthChange}
-                    miniCalendarDays={miniCalendarDays}
-                    visibleDates={visibleDates}
-                    today={today}
-                    monthNames={monthNames}
-                    dayNames={dayNames}
-                    isSameDay={isSameDay}
-                    isPastDate={isPastDate}
+                        <MiniCalendar
+                            isMobile={isMobile}
+                            miniCalendarDate={miniCalendarDate}
+                            showYearMonthPicker={showYearMonthPicker}
+                            setShowYearMonthPicker={setShowYearMonthPicker}
+                            navigateMiniCalendarMonth={navigateMiniCalendarMonth}
+                            handleYearMonthChange={handleYearMonthChange}
+                            miniCalendarDays={miniCalendarDays}
+                            visibleDates={visibleDates}
+                            today={today}
+                            monthNames={monthNames}
+                            dayNames={dayNames}
+                            isSameDay={isSameDay}
+                            isPastDate={isPastDate}
                             handleMiniCalendarDateClick={handleMiniCalendarDateClickOverride}
-                    getEventsForDate={getEventsForDate}
-                    currentDate={currentDate}
+                            getEventsForDate={getEventsForDate}
+                            currentDate={currentDate}
                             selectedRowStartDate={selectedRowStartDate}
                         />
                     </div>
@@ -340,7 +340,7 @@ const WeeklyCalendar = () => {
                                         <div className="text-xs text-gray-500 mb-4">
                                             {monthNames[currentSelectedDate.getMonth()]} {currentSelectedDate.getFullYear()}
                                         </div>
-                                        
+
                                         {/* Show appointments for selected date */}
                                         {(() => {
                                             const selectedDateEvents = getEventsForDate(currentSelectedDate);
@@ -349,7 +349,7 @@ const WeeklyCalendar = () => {
                                                     <div className="text-sm text-gray-700 mb-3">
                                                         Selected date has {selectedDateEvents.length} appointment{selectedDateEvents.length !== 1 ? 's' : ''}
                                                     </div>
-                                                    
+
                                                     {/* Show appointment details */}
                                                     <div className="space-y-3">
                                                         {selectedDateEvents.map((event: Event, index: number) => (
@@ -359,7 +359,28 @@ const WeeklyCalendar = () => {
                                                                 </div>
                                                                 {event.time && (
                                                                     <div className="text-xs text-gray-600 mb-1">
-                                                                        Time: {event.time}
+                                                                        Time: {(() => {
+                                                                            const t = event.time.trim().toLowerCase();
+                                                                            const ampm = /^(\d{1,2}):(\d{2})\s*(am|pm)$/;
+                                                                            const m = t.match(ampm);
+                                                                            if (m) {
+                                                                                let h = parseInt(m[1], 10);
+                                                                                const min = m[2];
+                                                                                const mod = m[3];
+                                                                                if (mod === 'pm' && h !== 12) h += 12;
+                                                                                if (mod === 'am' && h === 12) h = 0;
+                                                                                return `${String(h).padStart(2, '0')}:${min}`;
+                                                                            }
+                                                                            // already 24h like 15:00
+                                                                            const is24 = /^\d{1,2}:\d{2}$/.test(t);
+                                                                            if (is24) return t.length === 4 ? `0${t}` : t;
+                                                                            // last resort
+                                                                            const d = new Date(`2000-01-01T${t}`);
+                                                                            if (!isNaN(d.getTime())) {
+                                                                                return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                                                                            }
+                                                                            return t;
+                                                                        })()}
                                                                     </div>
                                                                 )}
                                                                 {event.assignedTo && (
@@ -374,16 +395,16 @@ const WeeklyCalendar = () => {
                                                                 )}
                                                                 {event.duration && (
                                                                     <div className="text-xs text-gray-600">
-                                                                        Dauer: {event.duration === 0.17 ? '10 Min' : 
-                                                                               event.duration === 0.5 ? '30 Min' :
-                                                                               event.duration === 1 ? '60 Min' :
-                                                                               `${event.duration} Std`}
+                                                                        Dauer: {event.duration === 0.17 ? '10 Min' :
+                                                                            event.duration === 0.5 ? '30 Min' :
+                                                                                event.duration === 1 ? '60 Min' :
+                                                                                    `${event.duration} Std`}
                                                                     </div>
                                                                 )}
                                                             </div>
                                                         ))}
                                                     </div>
-                                                    
+
                                                     <div className="flex items-center justify-center mt-3">
                                                         <div className="w-3 h-3 bg-green-500 rounded-full border border-white mr-2"></div>
                                                         <span className="text-xs text-gray-600">Has appointments</span>
@@ -391,7 +412,7 @@ const WeeklyCalendar = () => {
                                                 </div>
                                             );
                                         })()}
-                                        
+
 
                                         {/* Status indicator */}
                                         {/* <div className="mt-4 pt-4 border-t">
@@ -412,7 +433,7 @@ const WeeklyCalendar = () => {
                                         <div className="text-xs text-gray-500 mb-4">
                                             {monthNames[today.getMonth()]} {today.getFullYear()}
                                         </div>
-                                        
+
                                         {/* Show appointments for today */}
                                         {(() => {
                                             const todayEvents = getEventsForDate(today);
@@ -421,7 +442,7 @@ const WeeklyCalendar = () => {
                                                     <div className="text-sm text-gray-700 mb-3">
                                                         Today has {todayEvents.length} appointment{todayEvents.length !== 1 ? 's' : ''}
                                                     </div>
-                                                    
+
                                                     {/* Show appointment details */}
                                                     <div className="space-y-3">
                                                         {todayEvents.map((event: Event, index: number) => (
@@ -431,7 +452,26 @@ const WeeklyCalendar = () => {
                                                                 </div>
                                                                 {event.time && (
                                                                     <div className="text-xs text-gray-600 mb-1">
-                                                                        Time: {event.time}
+                                                                        Time: {(() => {
+                                                                            const t = event.time.trim().toLowerCase();
+                                                                            const ampm = /^(\d{1,2}):(\d{2})\s*(am|pm)$/;
+                                                                            const m = t.match(ampm);
+                                                                            if (m) {
+                                                                                let h = parseInt(m[1], 10);
+                                                                                const min = m[2];
+                                                                                const mod = m[3];
+                                                                                if (mod === 'pm' && h !== 12) h += 12;
+                                                                                if (mod === 'am' && h === 12) h = 0;
+                                                                                return `${String(h).padStart(2, '0')}:${min}`;
+                                                                            }
+                                                                            const is24 = /^\d{1,2}:\d{2}$/.test(t);
+                                                                            if (is24) return t.length === 4 ? `0${t}` : t;
+                                                                            const d = new Date(`2000-01-01T${t}`);
+                                                                            if (!isNaN(d.getTime())) {
+                                                                                return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                                                                            }
+                                                                            return t;
+                                                                        })()}
                                                                     </div>
                                                                 )}
                                                                 {event.assignedTo && (
@@ -446,16 +486,16 @@ const WeeklyCalendar = () => {
                                                                 )}
                                                                 {event.duration && (
                                                                     <div className="text-xs text-gray-600">
-                                                                        Dauer: {event.duration === 0.17 ? '10 Min' : 
-                                                                               event.duration === 0.5 ? '30 Min' :
-                                                                               event.duration === 1 ? '60 Min' :
-                                                                               `${event.duration} Std`}
+                                                                        Dauer: {event.duration === 0.17 ? '10 Min' :
+                                                                            event.duration === 0.5 ? '30 Min' :
+                                                                                event.duration === 1 ? '60 Min' :
+                                                                                    `${event.duration} Std`}
                                                                     </div>
                                                                 )}
                                                             </div>
                                                         ))}
                                                     </div>
-                                                    
+
                                                     <div className="flex items-center justify-center mt-3">
                                                         <div className="w-3 h-3 bg-green-500 rounded-full border border-white mr-2"></div>
                                                         <span className="text-xs text-gray-600">Has appointments</span>
@@ -463,7 +503,7 @@ const WeeklyCalendar = () => {
                                                 </div>
                                             );
                                         })()}
-                                        
+
 
                                         {/* Status indicator */}
                                         <div className="mt-4 pt-4 border-t">
@@ -540,7 +580,26 @@ const WeeklyCalendar = () => {
                                                                 <div className="flex justify-between items-start">
                                                                     <div className="flex-1">
                                                                         {event.time && (
-                                                                            <div className="text-xs opacity-90 mb-1">{event.time}</div>
+                                                                            <div className="text-xs opacity-90 mb-1">{(() => {
+                                                                                const t = event.time.trim().toLowerCase();
+                                                                                const ampm = /^(\d{1,2}):(\d{2})\s*(am|pm)$/;
+                                                                                const m = t.match(ampm);
+                                                                                if (m) {
+                                                                                    let h = parseInt(m[1], 10);
+                                                                                    const min = m[2];
+                                                                                    const mod = m[3];
+                                                                                    if (mod === 'pm' && h !== 12) h += 12;
+                                                                                    if (mod === 'am' && h === 12) h = 0;
+                                                                                    return `${String(h).padStart(2, '0')}:${min}`;
+                                                                                }
+                                                                                const is24 = /^\d{1,2}:\d{2}$/.test(t);
+                                                                                if (is24) return t.length === 4 ? `0${t}` : t;
+                                                                                const d = new Date(`2000-01-01T${t}`);
+                                                                                if (!isNaN(d.getTime())) {
+                                                                                    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+                                                                                }
+                                                                                return t;
+                                                                            })()}</div>
                                                                         )}
                                                                         <h1 className="font-semibold">{event.title}</h1>
                                                                         {
@@ -555,10 +614,10 @@ const WeeklyCalendar = () => {
                                                                         }
                                                                         {
                                                                             event.duration && (
-                                                                                <div className="text-xs opacity-90 mb-1">Dauer: {event.duration === 0.17 ? '10 Min' : 
-                                                                                       event.duration === 0.5 ? '30 Min' :
-                                                                                       event.duration === 1 ? '60 Min' :
-                                                                                       `${event.duration} Std`}</div>
+                                                                                <div className="text-xs opacity-90 mb-1">Dauer: {event.duration === 0.17 ? '10 Min' :
+                                                                                    event.duration === 0.5 ? '30 Min' :
+                                                                                        event.duration === 1 ? '60 Min' :
+                                                                                            `${event.duration} Std`}</div>
                                                                             )
                                                                         }
 
@@ -617,7 +676,7 @@ const WeeklyCalendar = () => {
                                         onClick={handleSeeMore}
                                         className="px-6 py-3 bg-[#62A07C] text-white rounded-lg hover:bg-[#4f8a65] transition-colors cursor-pointer"
                                     >
-                                        See More ({selectedMonthDates.length - visibleDaysCount} more days)
+                                        Mehr Anzeigen ({selectedMonthDates.length - visibleDaysCount} more days)
                                     </button>
                                 </div>
                             )}

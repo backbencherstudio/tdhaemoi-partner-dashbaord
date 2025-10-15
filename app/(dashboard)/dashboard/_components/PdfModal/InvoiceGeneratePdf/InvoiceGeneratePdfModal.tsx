@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useGeneratePdf, OrderPdfData } from '@/hooks/orders/useGeneratePdf';
+import { useGeneratePdf } from '@/hooks/orders/useGeneratePdf';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { pdfSendToCustomer } from '@/apis/productsOrder';
 import InvoicePage from './InvoicePage';
@@ -83,7 +83,7 @@ export default function InvoiceGeneratePdfModal({ isOpen, onClose, orderId }: In
                     <DialogTitle className="flex items-center justify-center space-x-3">
                         <div className="w-8 h-8">
                             <img
-                                src={orderData?.partner?.image || "/images/pdfLogo.png"}
+                                src={orderData?.partner?.image }
                                 alt={`${orderData?.partner?.busnessName || orderData?.partner?.name || 'FeetFirst'} Logo`}
                                 className="w-full h-full object-contain"
                             />

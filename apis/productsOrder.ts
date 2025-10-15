@@ -74,10 +74,10 @@ export const deleteOrder = async (orderId: string) => {
 }
 
 
-// dashabord data for order /customer-orders/stats/ratio
-export const RevenueOverview = async () => {
+// dashabord data for order /customer-orders/stats/retio?year=&month=
+export const RevenueOverview = async (year: string, month: string) => {
     try {
-        const response = await axiosClient.get('/customer-orders/stats/retio');
+        const response = await axiosClient.get(`/customer-orders/stats/retio?year=${year}&month=${month}`);
         return response.data;
     } catch (error) {
         throw error;
@@ -97,3 +97,13 @@ export const customOrderCreate = async (customerId: string, payload: Record<stri
     }
 }
 
+
+// get einlagen-in-produktion  /customer-orders/einlagen-in-produktion
+export const getEinlagenInProduktion = async () => {
+    try {
+        const response = await axiosClient.get('/customer-orders/einlagen-in-produktion');
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

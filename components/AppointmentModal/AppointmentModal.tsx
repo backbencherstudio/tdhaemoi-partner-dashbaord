@@ -197,11 +197,12 @@ export default function AppointmentModal({
                                             onCheckedChange={(v) => {
                                                 field.onChange(v);
                                                 if (!v) {
-
+                                                    // Switching to Andere: clear customer-related fields
                                                     clearSearch();
+                                                    form.setValue('kunde', '');
                                                     form.setValue('customerId', undefined);
                                                 } else {
-
+                                                    // Switching to Kunde: prefill if we have a searched name
                                                     if (searchName) form.setValue('kunde', searchName);
                                                 }
                                             }}
@@ -215,13 +216,13 @@ export default function AppointmentModal({
                             )}
                         />
 
-                        <FormField
-                            control={form.control}
-                            name="kunde"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Kunde<span className="text-red-500">*</span></FormLabel>
-                                    {form.getValues('isClientEvent') ? (
+                        {form.getValues('isClientEvent') && (
+                            <FormField
+                                control={form.control}
+                                name="kunde"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Kunde<span className="text-red-500">*</span></FormLabel>
                                         <div className="relative" ref={kundeContainerRef}>
                                             <Input
                                                 ref={nameInputRef}
@@ -231,7 +232,6 @@ export default function AppointmentModal({
                                                     handleNameChange(e.target.value);
                                                     setSearchName(e.target.value);
                                                     form.setValue('kunde', e.target.value);
-
                                                     form.setValue('customerId', undefined);
                                                 }}
                                             />
@@ -254,14 +254,10 @@ export default function AppointmentModal({
                                                 </div>
                                             )}
                                         </div>
-                                    ) : (
-                                        <FormControl>
-                                            <Input placeholder="Kunde" {...field} />
-                                        </FormControl>
-                                    )}
-                                </FormItem>
-                            )}
-                        />
+                                    </FormItem>
+                                )}
+                            />
+                        )}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <FormField
@@ -444,10 +440,10 @@ export default function AppointmentModal({
                             name="bemerk"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Betreff</FormLabel>
+                                    <FormLabel>Notitz</FormLabel>
                                     <FormControl>
                                         <Textarea
-                                            placeholder="Betreff"
+                                            placeholder="Notitz"
                                             className="resize-none h-24"
                                             {...field}
                                         />

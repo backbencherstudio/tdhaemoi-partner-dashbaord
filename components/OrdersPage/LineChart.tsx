@@ -28,7 +28,7 @@ export default function LineChartComponent({ chartData }: { chartData: ChartData
                 <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
                     <p className="font-semibold text-gray-800">{`Period: ${label}`}</p>
                     <p className="text-blue-600 font-bold">{`Total Revenue: ${payload[0].value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`}</p>
-                    <p className="text-gray-600 text-sm">{`4-Day Total`}</p>
+                    <p className="text-gray-600 text-sm">{`3-Day Total`}</p>
                 </div>
             );
         }
@@ -38,53 +38,53 @@ export default function LineChartComponent({ chartData }: { chartData: ChartData
     return (
         <div className="w-full min-w-[800px] md:min-w-0 py-4" style={{ minWidth: 800 }}>
             <ResponsiveContainer width="100%" height={400}>
-                <LineChart 
-                    data={chartData} 
+                <LineChart
+                    data={chartData}
                     margin={{ top: 30, right: 30, left: 30, bottom: 80 }}
                 >
                     <CartesianGrid strokeDasharray="1 3" />
-                    <XAxis 
-                        dataKey="date" 
-                        tick={{ fontSize: 11 }} 
+                    <XAxis
+                        dataKey="date"
+                        tick={{ fontSize: 11 }}
                         angle={-45}
                         textAnchor="end"
                         height={80}
                         interval={0}
                     />
-                    <YAxis 
-                        domain={[0, 'dataMax + 1000']} 
-                        tickFormatter={v => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'} 
-                        tick={{ fontSize: 12 }} 
+                    <YAxis
+                        domain={[0, 'dataMax + 1000']}
+                        tickFormatter={v => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'}
+                        tick={{ fontSize: 12 }}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Line 
-                        type="monotone" 
-                        dataKey="value" 
-                        stroke="#2563eb" 
-                        strokeWidth={3} 
-                        dot={{ r: 5, fill: '#2563eb' }} 
-                        activeDot={{ r: 7, fill: '#f59e42' }} 
+                    <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#2563eb"
+                        strokeWidth={3}
+                        dot={{ r: 5, fill: '#2563eb' }}
+                        activeDot={{ r: 7, fill: '#f59e42' }}
                     />
                     {/* Highlight peak */}
                     {maxPoint && maxPoint.value > 0 && (
-                        <ReferenceDot 
-                            x={maxPoint.date} 
-                            y={maxPoint.value} 
-                            r={8} 
-                            fill="#22c55e" 
-                            stroke="#fff" 
-                            strokeWidth={2} 
+                        <ReferenceDot
+                            x={maxPoint.date}
+                            y={maxPoint.value}
+                            r={8}
+                            fill="#22c55e"
+                            stroke="#fff"
+                            strokeWidth={2}
                         />
                     )}
                     {/* Highlight dip */}
                     {minPoint && minPoint.value > 0 && (
-                        <ReferenceDot 
-                            x={minPoint.date} 
-                            y={minPoint.value} 
-                            r={8} 
-                            fill="#ef4444" 
-                            stroke="#fff" 
-                            strokeWidth={2} 
+                        <ReferenceDot
+                            x={minPoint.date}
+                            y={minPoint.value}
+                            r={8}
+                            fill="#ef4444"
+                            stroke="#fff"
+                            strokeWidth={2}
                         />
                     )}
                 </LineChart>

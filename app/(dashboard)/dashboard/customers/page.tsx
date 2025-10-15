@@ -109,6 +109,10 @@ export default function Customers() {
         setShowEmailSuggestions(false)
     }
 
+    const handleCustomerInfo = (customerId: string) => {
+        router.push(`/dashboard/customer-info/${customerId}`)
+    }
+
     // ===== RENDER HELPERS =====
 
     const renderSearchInput = (
@@ -234,6 +238,7 @@ export default function Customers() {
                             <span>Scan ansehen</span>
                         </Button>
                         <Button
+                            onClick={() => handleCustomerInfo(selectedCustomer.id)}
                             variant="outline"
                             className="flex items-center gap-2 cursor-pointer"
                         >

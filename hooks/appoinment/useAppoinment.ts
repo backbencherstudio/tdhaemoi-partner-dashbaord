@@ -85,7 +85,8 @@ export const useAppoinment = () => {
     const createNewAppointment = useCallback(async (data: SubmittedAppointmentData) => {
         const loadingToastId = toast.loading('Creating appointment...');
         try {
-            if (!data.kunde || !data.uhrzeit || !data.selectedEventDate || !data.termin) {
+            const isCustomerAppointment = Boolean(data.isClientEvent);
+            if ((isCustomerAppointment && !data.kunde) || !data.uhrzeit || !data.selectedEventDate || !data.termin) {
                 toast.dismiss(loadingToastId);
                 toast.error('Please fill in all required fields');
                 return false;
@@ -103,17 +104,17 @@ export const useAppoinment = () => {
             const dateTime = createDateTimeWithOffset(formatDate(new Date(data.selectedEventDate || new Date())), data.uhrzeit);
 
             const appointmentData: any = {
-                customer_name: data.kunde,
+                customer_name: isCustomerAppointment ? data.kunde : (data.kunde || ''),
                 time: formattedTime,
                 date: dateTime.toISOString(),
                 reason: data.termin,
                 assignedTo: data.mitarbeiter || '',
                 details: data.bemerk || '',
-                isClient: Boolean(data.isClientEvent),
+                isClient: isCustomerAppointment,
                 duration: data.duration
             };
 
-            if (data.customerId) {
+            if (isCustomerAppointment && data.customerId) {
                 appointmentData.customerId = data.customerId;
             }
 
@@ -189,18 +190,19 @@ export const useAppoinment = () => {
             // Create correct datetime - data.selectedEventDate is already ISO string
             const dateTime = createDateTimeWithOffset(formatDate(new Date(data.selectedEventDate || new Date())), data.uhrzeit);
 
+            const isCustomerAppointment = Boolean(data.isClientEvent);
             const appointmentData: any = {
-                customer_name: data.kunde,
+                customer_name: isCustomerAppointment ? data.kunde : (data.kunde || ''),
                 time: formattedTime,
                 date: dateTime.toISOString(),
                 reason: data.termin,
                 assignedTo: data.mitarbeiter || '',
                 details: data.bemerk || '',
-                isClient: data.isClientEvent,
+                isClient: isCustomerAppointment,
                 duration: data.duration
             };
 
-            if (data.customerId) {
+            if (isCustomerAppointment && data.customerId) {
                 appointmentData.customerId = data.customerId;
             }
 
@@ -255,11 +257,42 @@ export const useAppoinment = () => {
     // Get events for a specific date
     const getEventsForDate = useCallback((date: Date) => {
         const dateStr = formatDate(date);
-        return events.filter((event: Event) => {
+        const eventsForDay = events.filter((event: Event) => {
             const eventDate = new Date(event.date);
             const eventDateStr = formatDate(eventDate);
             return eventDateStr === dateStr;
         });
+
+        // Sort by time chronologically. Handle both "HH:MM" and am/pm strings.
+        const parseToMinutes = (timeStr: string | undefined): number => {
+            if (!timeStr) return Number.MAX_SAFE_INTEGER;
+            const trimmed = timeStr.trim().toLowerCase();
+            // If already like 13:45
+            const twentyFour = /^\d{1,2}:\d{2}$/;
+            if (twentyFour.test(trimmed)) {
+                const [h, m] = trimmed.split(':').map(Number);
+                return h * 60 + m;
+            }
+            // Try parsing am/pm like "3:00 pm"
+            const ampm = /^(\d{1,2}):(\d{2})\s*(am|pm)$/;
+            const match = trimmed.match(ampm);
+            if (match) {
+                let hour = parseInt(match[1], 10);
+                const minute = parseInt(match[2], 10);
+                const modifier = match[3];
+                if (modifier === 'pm' && hour !== 12) hour += 12;
+                if (modifier === 'am' && hour === 12) hour = 0;
+                return hour * 60 + minute;
+            }
+            // Fallback: try Date parsing
+            const d = new Date(`2000-01-01T${trimmed}`);
+            if (!isNaN(d.getTime())) {
+                return d.getHours() * 60 + d.getMinutes();
+            }
+            return Number.MAX_SAFE_INTEGER;
+        };
+
+        return eventsForDay.sort((a, b) => parseToMinutes(a.time) - parseToMinutes(b.time));
     }, [events]);
 
     return {

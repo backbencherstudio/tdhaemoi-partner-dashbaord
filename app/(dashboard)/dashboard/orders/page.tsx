@@ -4,14 +4,12 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar as CalendarIcon } from 'lucide-react';
 import HighPriorityCard from '@/components/OrdersPage/HighPriorityCard/HighPriorityCard';
 import ProcessTable from '@/components/OrdersPage/ProccessTable/ProcessTable';
 import { OrdersProvider } from '@/contexts/OrdersContext';
 import { useRevenueOverview } from '@/hooks/orders/useRevenueOverview';
+import { getEinlagenInProduktion } from '@/apis/productsOrder';
 
 // Mock orders data
 const mockOrders = [
@@ -99,15 +97,63 @@ function AuftragssucheCard() {
 }
 
 export default function Orders() {
-    const { data, processedChartData, loading, error } = useRevenueOverview();
+    const now = React.useMemo(() => new Date(), []);
+    const [selectedMonth, setSelectedMonth] = React.useState<string>(String(now.getMonth() + 1).padStart(2, '0'));
+    const [selectedYear, setSelectedYear] = React.useState<string>(String(now.getFullYear()));
+    const shouldFilter = selectedYear !== '' && selectedMonth !== '';
+    const { data, processedChartData, loading, error, isRefetching } = useRevenueOverview(
+        shouldFilter ? selectedYear : undefined,
+        shouldFilter ? selectedMonth : undefined
+    );
+    const [einlagenInProduktion, setEinlagenInProduktion] = React.useState<number | null>(null);
+    const [einlagenLoading, setEinlagenLoading] = React.useState<boolean>(false);
+    const [einlagenError, setEinlagenError] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                setEinlagenLoading(true);
+                setEinlagenError(null);
+                const res = await getEinlagenInProduktion();
+                if (!mounted) return;
+                if (res?.success) {
+                    setEinlagenInProduktion(typeof res.data === 'number' ? res.data : null);
+                } else {
+                    setEinlagenError('Failed to load');
+                }
+            } catch (e) {
+                if (!mounted) return;
+                setEinlagenError('Failed to load');
+            } finally {
+                if (mounted) setEinlagenLoading(false);
+            }
+        })();
+        return () => { mounted = false; };
+    }, []);
 
     // Helper for currency formatting with comma and decimals
     const formatEuro = (amount: number) =>
         amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 
-    // UI-only state for date and year pickers (no filtering logic)
-    const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
-    const [selectedYear, setSelectedYear] = React.useState<string>('');
+    // UI-only state for month and year dropdowns (no server filtering logic beyond fetch params)
+    const months = React.useMemo(
+        () => [
+            { label: 'January', value: '01' },
+            { label: 'February', value: '02' },
+            { label: 'March', value: '03' },
+            { label: 'April', value: '04' },
+            { label: 'May', value: '05' },
+            { label: 'June', value: '06' },
+            { label: 'July', value: '07' },
+            { label: 'August', value: '08' },
+            { label: 'September', value: '09' },
+            { label: 'October', value: '10' },
+            { label: 'November', value: '11' },
+            { label: 'December', value: '12' },
+        ],
+        []
+    );
     const years = React.useMemo(() => {
         const currentYear = new Date().getFullYear();
         const list: number[] = [];
@@ -147,23 +193,19 @@ export default function Orders() {
                                     <div className='flex flex-col items-end justify-end'>
                                         {/* filter need date and year wise  */}
                                         <div className="flex flex-col items-center justify-end">
-                                            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                                                <Popover>
-                                                    <PopoverTrigger asChild>
-                                                        <Button variant="outline" className="w-[200px] border-gray-500 cursor-pointer justify-start text-left font-normal">
-                                                            <CalendarIcon className="mr-2 h-4 w-4" />
-                                                            {selectedDate ? selectedDate.toLocaleDateString() : 'Pick a date'}
-                                                        </Button>
-                                                    </PopoverTrigger>
-                                                    <PopoverContent className="p-0" align="start">
-                                                        <Calendar
-                                                            mode="single"
-                                                            selected={selectedDate}
-                                                            onSelect={setSelectedDate}
-                                                            initialFocus
-                                                        />
-                                                    </PopoverContent>
-                                                </Popover>
+                                            <div className="flex flex-col sm:flex-row gap-3 mb-2">
+                                                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                                                    <SelectTrigger className="w-[200px] cursor-pointer">
+                                                        <SelectValue placeholder="Select month" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {months.map((m) => (
+                                                            <SelectItem key={m.value} value={m.value} className='cursor-pointer'>
+                                                                {m.label}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
 
                                                 <Select value={selectedYear} onValueChange={setSelectedYear}>
                                                     <SelectTrigger className="w-[200px] cursor-pointer">
@@ -175,6 +217,9 @@ export default function Orders() {
                                                         ))}
                                                     </SelectContent>
                                                 </Select>
+                                            </div>
+                                            <div className="h-5 mb-2 text-xs text-gray-500">
+                                                {isRefetching && <span>Updating…</span>}
                                             </div>
                                         </div>
                                     </div>
@@ -196,7 +241,9 @@ export default function Orders() {
                         {/* Einlagen in Produktion */}
                         <div className="flex-1 flex flex-col items-center justify-center  border-gray-300 py-6">
                             <div className="text-lg font-bold text-[#1E1F6D] mb-2 text-center">Einlagen in Produktion</div>
-                            <div className="text-4xl font-extrabold">35</div>
+                            <div className="text-4xl font-extrabold">
+                                {einlagenLoading ? '…' : (einlagenError ? '-' : (einlagenInProduktion ?? '-'))}
+                            </div>
                         </div>
                         <div className='border-r border-gray-300 hidden md:block'></div>
                         {/* Ausgeführte Einlagen (letzten 30 Tage) */}
@@ -207,7 +254,6 @@ export default function Orders() {
                         <div className='border-r border-gray-300 mr-5 hidden md:block'></div>
                         {/* Auftragssuche */}
                         <AuftragssucheCard />
-
                     </div>
 
 

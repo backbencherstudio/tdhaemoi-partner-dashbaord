@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import gassImg from "@/public/images/gass.png";
 import { Button } from "@/components/ui/button";
+import { createSammelbestellung, getSammelbestellung } from "@/apis/sammelbestellungenApis";
 
 export default function GroupOrders() {
     const product = {
@@ -17,18 +18,53 @@ export default function GroupOrders() {
         link: "#",
         price: "179,99€",
         minQty: 10,
-        vorgemerkt: 6,
     };
 
     // Reservation state
     const [showReservation, setShowReservation] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const [confirmed, setConfirmed] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [currentNumber, setCurrentNumber] = useState(0);
+    const minQty = product.minQty;
+
+    // Fetch current overview on mount
+    useEffect(() => {
+        const fetchOverview = async () => {
+            try {
+                const res = await getSammelbestellung();
+                // Expecting { success: true, data: { number: number, ... } }
+                const num = res?.data?.number ?? 0;
+                setCurrentNumber(num);
+                if (typeof num === 'number' && num > 0) {
+                    setQuantity(Math.max(1, Math.min(10, num)));
+                }
+            } catch (e) {
+                // noop: keep 0 if failed
+            }
+        };
+        fetchOverview();
+    }, []);
 
     // Handler for reservation confirmation
-    const handleConfirm = () => {
-        setConfirmed(true);
-        // Here you would also send data to backend: userId, productId, quantity, timestamp, etc.
+    const handleConfirm = async () => {
+        // Validate 1..10
+        const clamped = Math.max(1, Math.min(10, quantity));
+        if (clamped !== quantity) setQuantity(clamped);
+        setLoading(true);
+        try {
+            await createSammelbestellung(clamped);
+            setConfirmed(true);
+            // Refresh overview
+            const res = await getSammelbestellung();
+            const num = res?.data?.number ?? 0;
+            setCurrentNumber(num);
+        } catch (e) {
+            // If creation fails, keep as not confirmed
+            setConfirmed(false);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -61,12 +97,12 @@ export default function GroupOrders() {
                             <div
                                 className="absolute top-0 left-0 h-7 md:h-8 bg-green-600 rounded flex items-center justify-center transition-all duration-300"
                                 style={{
-                                    width: `${(product.vorgemerkt / product.minQty) * 100}%`,
+                                    width: `${Math.min(100, (currentNumber / minQty) * 100)}%`,
                                     minWidth: "80px",
                                 }}
                             >
                                 <span className="text-white text-xs md:text-sm font-medium w-full text-center px-2 truncate">
-                                    {product.vorgemerkt} von {product.minQty} Bestellungen erreicht
+                                    {currentNumber} von {minQty} Bestellungen erreicht
                                 </span>
                             </div>
                         </div>
@@ -102,7 +138,7 @@ export default function GroupOrders() {
                         {showReservation && !confirmed && (
                             <div className="w-full mt-4 flex flex-col gap-2">
                                 <div className="flex items-center gap-4">
-                                    <label className="font-medium">Menge:</label>
+                                    <label className="font-medium">Menge <span className="text-sm text-gray-500">(aktuell: {currentNumber})</span>:</label>
                                     <div className="flex items-center gap-2">
                                         <button
                                             className="w-8 h-8 cursor-pointer border rounded flex items-center justify-center text-lg font-bold disabled:opacity-50"
@@ -115,15 +151,15 @@ export default function GroupOrders() {
                                         <input
                                             type="number"
                                             min={1}
-                                            max={99}
+                                            max={10}
                                             value={quantity}
-                                            onChange={e => setQuantity(Math.max(1, Number(e.target.value)))}
+                                            onChange={e => setQuantity(Math.max(1, Math.min(10, Number(e.target.value))))}
                                             className="w-16 text-center border rounded"
                                             disabled={confirmed}
                                         />
                                         <button
                                             className="w-8 h-8 cursor-pointer border rounded flex items-center justify-center text-lg font-bold"
-                                            onClick={() => setQuantity(q => q + 1)}
+                                            onClick={() => setQuantity(q => Math.min(10, q + 1))}
                                             type="button"
                                         >
                                             +
@@ -133,9 +169,9 @@ export default function GroupOrders() {
                                 <Button
                                     className="w-full cursor-pointer font-bold text-lg border-2 py-5 mt-2"
                                     onClick={handleConfirm}
-                                    disabled={confirmed}
+                                    disabled={confirmed || loading}
                                 >
-                                    Vormerkung abschließen
+                                    {loading ? "Wird gespeichert…" : "Vormerkung abschließen"}
                                 </Button>
                                 <div className="text-xs text-muted-foreground mt-1 text-center">
                                     Wird mit deiner Balance verrechnet

@@ -1,81 +1,69 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+
 import { ChevronDown, Search } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
-import { customShaftsData } from '@/lib/customShaftsData';
-
-const data = customShaftsData;
+import { useCustomShafts } from '@/hooks/customShafts/useCustomShafts';
+import Loading from '@/components/Shared/Loading';
+import useDebounce from '@/hooks/useDebounce';
 
 const categories = [
     { label: 'Alle Kategorien', value: 'alle' },
-    { label: 'Halbschuhe', value: 'halbschuhe' },
-    { label: 'Sportschuhe', value: 'sportschuhe' },
-    { label: 'Sandalen', value: 'sandalen' },
-    { label: 'Knochelhoheschuhe', value: 'knochelhoheschuhe' },
+    { label: 'Formal Shoes', value: 'Formal Shoes' },
+    { label: 'Running Shoes', value: 'Running Shoes' },
+    { label: 'Casual Shoes', value: 'Casual Shoes' },
+    { label: 'Sports Shoes', value: 'Sports Shoes' },
 ];
 
 export default function CustomShafts() {
-    const [gender, setGender] = useState<'herren' | 'damen'>('herren');
+    const [gender, setGender] = useState<'Herren' | 'Damen'>('Herren');
     const [category, setCategory] = useState('alle');
     const [categoryOpen, setCategoryOpen] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
-    const [showAll, setShowAll] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const itemsPerPage = 10;
     const router = useRouter();
 
-    const filtered = data.filter(
-        (item) =>
-            item.type === gender &&
-            (category === 'alle' || item.category.toLowerCase() === category) &&
-            (searchQuery === '' ||
-                item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.no.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                item.description.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
+    // Debounce search query to reduce API calls
+    const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
+    // Fetch data from API
+    const { data: apiData, loading, error } = useCustomShafts(currentPage, itemsPerPage, debouncedSearchQuery);
+
+    // Get unique categories from API data
+    const availableCategories = useMemo(() => {
+        if (!apiData?.data) return categories;
+
+        const uniqueCategories = Array.from(new Set(apiData.data.map(item => item.catagoary)));
+        return [
+            { label: 'Alle Kategorien', value: 'alle' },
+            ...uniqueCategories.map(cat => ({ label: cat, value: cat }))
+        ];
+    }, [apiData?.data]);
+
+    // Filter data based on gender and category
+    const filteredData = useMemo(() => {
+        if (!apiData?.data) return [];
+
+        return apiData.data.filter(item => {
+            const genderMatch = item.gender === gender;
+            const categoryMatch = category === 'alle' || item.catagoary === category;
+            return genderMatch && categoryMatch;
+        });
+    }, [apiData?.data, gender, category]);
 
     // Reset pagination when filters change
     React.useEffect(() => {
         setCurrentPage(1);
-        setShowAll(false);
-    }, [gender, category, searchQuery]);
-
-    const totalItems = filtered.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-    // Determine what to show based on item count
-    let itemsToShow = filtered;
-    let showPagination = false;
-    let showMehrAnzeigen = false;
-
-    if (totalItems <= 5) {
-        // Show all items, no pagination or button
-        itemsToShow = filtered;
-    } else if (totalItems <= 10) {
-        if (showAll) {
-            // Show all items
-            itemsToShow = filtered;
-        } else {
-            // Show first 5 items and "Mehr anzeigen" button
-            itemsToShow = filtered.slice(0, 5);
-            showMehrAnzeigen = true;
-        }
-    } else {
-        // Show pagination for 10+ items
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        itemsToShow = filtered.slice(startIndex, startIndex + itemsPerPage);
-        showPagination = true;
-    }
-
+    }, [gender, category, debouncedSearchQuery]);
 
     // handle click on the button
-    const handleClick = (no: string) => {
-        router.push(`/dashboard/custom-shafts/details/${no}`);
+    const handleClick = (id: string) => {
+        router.push(`/dashboard/custom-shafts/details/${id}`);
     }
 
     return (
@@ -96,15 +84,15 @@ export default function CustomShafts() {
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
-                            className={`rounded-none cursor-pointer border border-black px-6 py-1.5 text-base font-normal h-10 ${gender === 'herren' ? 'bg-black text-white' : 'bg-white text-black'}`}
-                            onClick={() => setGender('herren')}
+                            className={`rounded-none cursor-pointer border border-black px-6 py-1.5 text-base font-normal h-10 ${gender === 'Herren' ? 'bg-black text-white' : 'bg-white text-black'}`}
+                            onClick={() => setGender('Herren')}
                         >
                             Herren
                         </Button>
                         <Button
                             variant="outline"
-                            className={`rounded-none cursor-pointer border border-black px-6 py-1.5 text-base font-normal h-10 ${gender === 'damen' ? 'bg-black text-white' : 'bg-white text-black'}`}
-                            onClick={() => setGender('damen')}
+                            className={`rounded-none cursor-pointer border border-black px-6 py-1.5 text-base font-normal h-10 ${gender === 'Damen' ? 'bg-black text-white' : 'bg-white text-black'}`}
+                            onClick={() => setGender('Damen')}
                         >
                             Damen
                         </Button>
@@ -116,12 +104,12 @@ export default function CustomShafts() {
                             onClick={() => setCategoryOpen((v) => !v)}
                             type="button"
                         >
-                            {categories.find((c) => c.value === category)?.label || 'Alle Kategorien'}
+                            {availableCategories.find((c) => c.value === category)?.label || 'Alle Kategorien'}
                             <ChevronDown className="ml-1 w-5 h-5" />
                         </button>
                         {categoryOpen && (
                             <div className="absolute z-10 mt-1 w-48 bg-white border border-gray-200 rounded shadow-lg">
-                                {categories.map((cat) => (
+                                {availableCategories.map((cat) => (
                                     <div
                                         key={cat.value}
                                         className={`px-4 py-2 cursor-pointer hover:bg-gray-100 text-sm ${category === cat.value ? 'font-semibold' : ''}`}
@@ -152,24 +140,44 @@ export default function CustomShafts() {
                 </div>
             </div>
 
+            {/* Loading State */}
+            {loading && (
+                <div className="flex justify-center items-center py-12">
+                    <Loading />
+                </div>
+            )}
+
+            {/* Error State */}
+            {error && (
+                <div className="flex flex-col items-center justify-center py-12">
+                    <div className="text-red-500 text-lg font-medium mb-2">Fehler beim Laden der Daten</div>
+                    <div className="text-gray-400 text-sm text-center">
+                        {error}
+                    </div>
+                </div>
+            )}
+
             {/* Product Grid */}
-            {filtered.length > 0 ? (
+            {!loading && !error && filteredData.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {itemsToShow.map((item) => (
+                    {filteredData.map((item) => (
                         <div key={item.id} className="border group border-gray-300 rounded-md bg-white flex flex-col h-full">
                             <Image src={item.image} alt={item.name} className="w-full h-40 object-contain p-4" width={500} height={500} />
                             <div className="flex-1 flex flex-col justify-between p-4">
                                 <div>
                                     <div className="font-semibold text-base mb-1 text-left">{item.name}</div>
-                                    <div className="text-xs text-gray-500 mb-2 text-left">#{item.no}</div>
-                                    <div className="font-bold text-lg mb-2 text-left">ab {(item.price / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</div>
+                                    <div className="text-xs text-gray-500 mb-2 text-left">#{item.ide}</div>
+                                    <div className="font-bold text-lg mb-2 text-left">ab {item.price.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</div>
                                 </div>
-                                <Button variant="outline" className="w-full cursor-pointer transition-all duration-300 mt-2 rounded-none border border-black bg-white text-black hover:bg-gray-100 text-sm font-medium" onClick={() => handleClick(item.no)}>Jetzt konfigurieren</Button>
+                                <Button variant="outline" className="w-full cursor-pointer transition-all duration-300 mt-2 rounded-none border border-black bg-white text-black hover:bg-gray-100 text-sm font-medium" onClick={() => handleClick(item.id)}>Jetzt konfigurieren</Button>
                             </div>
                         </div>
                     ))}
                 </div>
-            ) : (
+            )}
+
+            {/* No Products Found */}
+            {!loading && !error && filteredData.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-12">
                     <div className="text-gray-500 text-lg font-medium mb-2">Keine Produkte gefunden</div>
                     <div className="text-gray-400 text-sm text-center">
@@ -179,19 +187,8 @@ export default function CustomShafts() {
                 </div>
             )}
 
-            {/* Pagination or Mehr anzeigen Button */}
-            {showMehrAnzeigen && (
-                <div className="flex justify-center mt-8">
-                    <Button
-                        className="rounded-full px-8 py-2 bg-black text-white hover:bg-gray-800 text-sm"
-                        onClick={() => setShowAll(true)}
-                    >
-                        Mehr anzeigen
-                    </Button>
-                </div>
-            )}
-
-            {showPagination && totalPages > 1 && (
+            {/* Pagination */}
+            {!loading && !error && apiData?.pagination && apiData.pagination.totalPages > 1 && (
                 <div className="flex justify-center mt-8">
                     <Pagination>
                         <PaginationContent>
@@ -202,7 +199,7 @@ export default function CustomShafts() {
                                 />
                             </PaginationItem>
 
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            {Array.from({ length: apiData.pagination.totalPages }, (_, i) => i + 1).map((page) => (
                                 <PaginationItem key={page}>
                                     <PaginationLink
                                         onClick={() => setCurrentPage(page)}
@@ -215,8 +212,8 @@ export default function CustomShafts() {
 
                             <PaginationItem>
                                 <PaginationNext
-                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                                    onClick={() => setCurrentPage(prev => Math.min(apiData.pagination.totalPages, prev + 1))}
+                                    className={currentPage === apiData.pagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                                 />
                             </PaginationItem>
                         </PaginationContent>

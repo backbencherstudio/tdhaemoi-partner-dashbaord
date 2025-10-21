@@ -29,8 +29,10 @@ export default function ProcessTable() {
         pagination,
         currentPage,
         selectedDays,
+        selectedStatus,
         setCurrentPage,
         setSelectedDays,
+        setSelectedStatus,
         togglePriority,
         moveToNextStep,
         refetch,
@@ -206,17 +208,32 @@ export default function ProcessTable() {
             link.href = order.invoice;
             link.download = `Rechnung_${order.bestellnummer}_${order.kundenname.replace(/\s+/g, '_')}.pdf`;
             link.target = '_blank';
-            
+
             // Append to DOM, click, and remove
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             toast.success('Rechnung wird heruntergeladen...');
         } catch (error) {
             console.error('Failed to download invoice:', error);
             toast.error('Fehler beim Herunterladen der Rechnung');
         }
+    };
+
+    // Handle status filter
+    const handleStatusFilter = (status: string) => {
+        console.log('Filtering by status:', status);
+        if (selectedStatus === status) {
+            // If clicking the same status, clear the filter
+            console.log('Clearing status filter');
+            setSelectedStatus(null);
+        } else {
+            // Set the new status filter
+            console.log('Setting status filter to:', status);
+            setSelectedStatus(status);
+        }
+        setSelectedOrderId(null); // Reset selection when changing filters
     };
 
     // Handle pagination
@@ -254,16 +271,7 @@ export default function ProcessTable() {
         return 'text-gray-400 font-normal';
     };
 
-    if (loading) {
-        return (
-            <div className="mt-6 sm:mt-10 max-w-full flex justify-center items-center py-20">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading orders...</p>
-                </div>
-            </div>
-        );
-    }
+    // Remove the early return for loading - we'll handle it in the table body
 
     if (error) {
         return (
@@ -278,36 +286,55 @@ export default function ProcessTable() {
         );
     }
 
-    if (!orders || orders.length === 0) {
-        return (
-            <div className="mt-6 sm:mt-10 max-w-full flex justify-center items-center py-20">
-                <div className="text-center">
-                    <p className="text-gray-600 mb-4">No orders found</p>
-                    <Button onClick={refetch} variant="outline">
-                        Refresh
-                    </Button>
-                </div>
-            </div>
-        );
-    }
+    // Remove the early return for empty orders - we'll handle it in the table body
 
     return (
         <div className="mt-6 sm:mt-10 max-w-full overflow-x-auto">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-4 sm:mb-6 gap-4 border-b-2 border-gray-400 pb-4">
+
+                {/* status bar */}
                 <div className="flex items-center w-full overflow-x-auto">
-                    {steps.map((step, idx) => (
-                        <React.Fragment key={step}>
-                            <div className={`flex flex-col items-center min-w-[80px] sm:min-w-[100px] md:min-w-[120px] lg:min-w-[140px] xl:min-w-[160px] flex-shrink-0`}>
-                                <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full mb-1 sm:mb-2 ${idx === activeStep ? 'bg-blue-600' : 'bg-gray-300'}`}></div>
-                                <span className={`text-xs sm:text-sm text-center px-1 leading-tight ${getStepColor(idx, idx === activeStep)}`}>
-                                    {step}
-                                </span>
-                            </div>
-                            {idx < steps.length - 1 && (
-                                <div className={`flex-1 h-px mx-1 sm:mx-2 ${idx < activeStep ? 'bg-blue-600' : 'bg-gray-200'}`} />
-                            )}
-                        </React.Fragment>
-                    ))}
+                    {steps.map((step, idx) => {
+                        // Map German step names to API status values
+                        const stepToApiStatus: Record<string, string> = {
+                            "Einlage vorbereiten": "Einlage_vorbereiten",
+                            "Einlage in Fertigung": "Einlage_in_Fertigung",
+                            "Einlage verpacken": "Einlage_verpacken",
+                            "Einlage Abholbereit": "Einlage_Abholbereit",
+                            "Einlage versandt": "Einlage_versandt",
+                            "Ausgeführte Einlagen": "Ausgeführte_Einlagen"
+                        };
+
+                        const apiStatus = stepToApiStatus[step];
+                        const isFilterActive = selectedStatus === apiStatus;
+                        const isStepActive = idx === activeStep;
+
+                        return (
+                            <React.Fragment key={step}>
+                                <div
+                                    className={`flex flex-col items-center min-w-[80px] sm:min-w-[100px] md:min-w-[120px] lg:min-w-[140px] xl:min-w-[160px] flex-shrink-0 cursor-pointer hover:bg-gray-100 rounded-lg p-2 transition-colors ${isFilterActive ? 'bg-blue-100 border-2 border-blue-500' : ''
+                                        }`}
+                                    onClick={() => handleStatusFilter(apiStatus)}
+                                    title={`Click to filter by ${step}${isFilterActive ? ' (click again to clear)' : ''}`}
+                                >
+                                    <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full mb-1 sm:mb-2 ${isStepActive ? 'bg-blue-600' :
+                                            isFilterActive ? 'bg-blue-500' : 'bg-gray-300'
+                                        }`}></div>
+                                    <span className={`text-xs sm:text-sm text-center px-1 leading-tight ${isStepActive ? getStepColor(idx, true) :
+                                            isFilterActive ? 'text-blue-700 font-semibold' :
+                                                'text-gray-600'
+                                        }`}>
+                                        {step}
+                                    </span>
+                                </div>
+                                {idx < steps.length - 1 && (
+                                    <div className={`flex-1 h-px mx-1 sm:mx-2 ${idx < activeStep ? 'bg-blue-600' :
+                                            isFilterActive ? 'bg-blue-300' : 'bg-gray-200'
+                                        }`} />
+                                )}
+                            </React.Fragment>
+                        );
+                    })}
                 </div>
 
                 <div className="flex-shrink-0">
@@ -323,6 +350,17 @@ export default function ProcessTable() {
                                 <SelectItem value="40">40 Tage</SelectItem>
                             </SelectContent>
                         </Select>
+
+                        {selectedStatus && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedStatus(null)}
+                                className="text-xs h-8 px-2 cursor-pointer"
+                            >
+                                Filter löschen
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -342,132 +380,193 @@ export default function ProcessTable() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {memoizedOrders.map((row, idx) => (
-                        <TableRow
-                            key={row.id}
-                            className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedOrderId === row.id ? 'bg-blue-50' : ''}`}
-                            onClick={() => setSelectedOrderId(row.id)}
-                        >
-                            <TableCell className="p-2 w-[200px] min-w-[200px] max-w-[200px] text-center">
-                                <div className="flex  gap-1 sm:gap-2 justify-center">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className={`h-6 cursor-pointer sm:h-8 px-1 sm:px-2 text-xs hover:bg-gray-200 flex items-center gap-1 min-w-fit ${row.currentStep >= steps.length - 1 ? 'opacity-50 cursor-not-allowed' : ''
-                                            }`}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleNextStep(row.id);
-                                        }}
-                                        disabled={row.currentStep >= steps.length - 1}
-                                        title={row.currentStep >= steps.length - 1 ? "Bereits im letzten Schritt" : "Nächster Schritt"}
-                                    >
-                                        <ArrowLeft className="h-3 w-3 text-gray-700" />
-                                        <span className="hidden sm:inline text-gray-700">Nächster</span>
-                                    </Button>
-
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className={`h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-red-100 ${row.isPrioritized ? 'bg-red-100' : ''}`}
-                                        title="Auftrag priorisieren"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handlePriorityToggle(row.id);
-                                        }}
-                                    >
-                                        <AlertTriangle className={`h-3 w-3 ${row.isPrioritized ? 'text-red-600 fill-current' : 'text-red-500'}`} />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-gray-200"
-                                        title="Löschen"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteOrder(row.id);
-                                        }}
-                                        disabled={deleteLoading}
-                                    >
-                                        <Trash2 className="h-3 w-3 text-gray-700" />
-                                    </Button>
-                                                                         <Button
-                                         variant="ghost"
-                                         size="sm"
-                                         className={`h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-blue-100 ${
-                                             !row.invoice ? 'opacity-50 cursor-not-allowed' : ''
-                                         }`}
-                                         title={row.invoice ? "Rechnung herunterladen" : "Keine Rechnung verfügbar"}
-                                         onClick={(e) => {
-                                             e.stopPropagation();
-                                             if (row.invoice) {
-                                                 handleInvoiceDownload(row.id);
-                                             }
-                                         }}
-                                         disabled={!row.invoice}
-                                     >
-                                         <ClipboardEdit className={`h-3 w-3 ${row.invoice ? 'text-blue-600' : 'text-gray-400'}`} />
-                                     </Button>
+                    {loading ? (
+                        <TableRow>
+                            <TableCell colSpan={9} className="text-center py-20">
+                                <div className="flex flex-col items-center justify-center">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                    <p className="text-gray-600">Loading orders...</p>
                                 </div>
                             </TableCell>
-
-                            <TableCell className="font-medium text-center text-xs sm:text-sm w-[120px] min-w-[120px] max-w-[120px] whitespace-normal break-words overflow-hidden">{row.bestellnummer}</TableCell>
-
-                            <TableCell className="text-center text-xs sm:text-sm w-[140px] min-w-[140px] max-w-[140px] whitespace-normal break-words overflow-hidden">{row.kundenname}</TableCell>
-                            <TableCell className="text-center text-xs sm:text-sm w-[160px] min-w-[160px] max-w-[160px] whitespace-normal break-words overflow-hidden">
-                                <span className={`px-1 sm:px-2 py-1 rounded text-xs font-medium ${row.currentStep === 0 ? 'bg-red-100 text-red-800' :
-                                    row.currentStep === 1 ? 'bg-orange-100 text-orange-800' :
-                                        row.currentStep === 2 ? 'bg-green-100 text-green-800' :
-                                            row.currentStep === 3 ? 'bg-emerald-100 text-emerald-800' :
-                                                row.currentStep === 4 ? 'bg-blue-100 text-blue-800' :
-                                                    'bg-purple-100 text-purple-800'
-                                    }`}>
-                                    {row.status}
-                                </span>
-                            </TableCell>
-                            <TableCell className="text-center text-xs sm:text-sm w-[100px] min-w-[100px] max-w-[100px] whitespace-normal break-words overflow-hidden">{row.preis}</TableCell>
-                            <TableCell className="text-center text-xs sm:text-sm w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words overflow-hidden hidden md:table-cell">{row.zahlung}</TableCell>
-                            <TableCell className="text-center text-xs sm:text-sm w-[160px] min-w-[160px] max-w-[160px] whitespace-normal break-words overflow-hidden hidden lg:table-cell">{row.beschreibung}</TableCell>
-                            <TableCell className="text-center text-xs sm:text-sm w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words overflow-hidden hidden xl:table-cell">{row.abholort}</TableCell>
-                            <TableCell className="text-center text-xs sm:text-sm w-[140px] min-w-[140px] max-w-[140px] whitespace-normal break-words overflow-hidden">{row.fertigstellung}</TableCell>
                         </TableRow>
-                    ))}
+                    ) : memoizedOrders.length === 0 ? (
+                        <TableRow>
+                            <TableCell colSpan={9} className="text-center py-20">
+                                <div className="flex flex-col items-center justify-center">
+                                    <p className="text-gray-600 mb-4 text-lg">No orders found</p>
+                                    <Button onClick={refetch} variant="outline">
+                                        Refresh
+                                    </Button>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    ) : (
+                        memoizedOrders.map((row, idx) => (
+                            <TableRow
+                                key={row.id}
+                                className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedOrderId === row.id ? 'bg-blue-50' : ''}`}
+                                onClick={() => setSelectedOrderId(row.id)}
+                            >
+                                <TableCell className="p-2 w-[200px] min-w-[200px] max-w-[200px] text-center">
+                                    <div className="flex gap-1 sm:gap-2 justify-center">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className={`h-6 cursor-pointer sm:h-8 px-1 sm:px-2 text-xs hover:bg-gray-200 flex items-center gap-1 min-w-fit ${row.currentStep >= steps.length - 1 ? 'opacity-50 cursor-not-allowed' : ''
+                                                }`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleNextStep(row.id);
+                                            }}
+                                            disabled={row.currentStep >= steps.length - 1}
+                                            title={row.currentStep >= steps.length - 1 ? "Bereits im letzten Schritt" : "Nächster Schritt"}
+                                        >
+                                            <ArrowLeft className="h-3 w-3 text-gray-700" />
+                                            <span className="hidden sm:inline text-gray-700">Nächster</span>
+                                        </Button>
+
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className={`h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-red-100 ${row.isPrioritized ? 'bg-red-100' : ''}`}
+                                            title="Auftrag priorisieren"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePriorityToggle(row.id);
+                                            }}
+                                        >
+                                            <AlertTriangle className={`h-3 w-3 ${row.isPrioritized ? 'text-red-600 fill-current' : 'text-red-500'}`} />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-gray-200"
+                                            title="Löschen"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteOrder(row.id);
+                                            }}
+                                            disabled={deleteLoading}
+                                        >
+                                            <Trash2 className="h-3 w-3 text-gray-700" />
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className={`h-6 cursor-pointer w-6 sm:h-8 sm:w-8 p-0 hover:bg-blue-100 ${!row.invoice ? 'opacity-50 cursor-not-allowed' : ''
+                                                }`}
+                                            title={row.invoice ? "Rechnung herunterladen" : "Keine Rechnung verfügbar"}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (row.invoice) {
+                                                    handleInvoiceDownload(row.id);
+                                                }
+                                            }}
+                                            disabled={!row.invoice}
+                                        >
+                                            <ClipboardEdit className={`h-3 w-3 ${row.invoice ? 'text-blue-600' : 'text-gray-400'}`} />
+                                        </Button>
+                                    </div>
+                                </TableCell>
+
+                                <TableCell className="font-medium text-center text-xs sm:text-sm w-[120px] min-w-[120px] max-w-[120px] whitespace-normal break-words overflow-hidden">{row.bestellnummer}</TableCell>
+
+                                <TableCell className="text-center text-xs sm:text-sm w-[140px] min-w-[140px] max-w-[140px] whitespace-normal break-words overflow-hidden">{row.kundenname}</TableCell>
+                                <TableCell className="text-center text-xs sm:text-sm w-[160px] min-w-[160px] max-w-[160px] whitespace-normal break-words overflow-hidden">
+                                    <span className={`px-1 sm:px-2 py-1 rounded text-xs font-medium ${row.currentStep === 0 ? 'bg-red-100 text-red-800' :
+                                        row.currentStep === 1 ? 'bg-orange-100 text-orange-800' :
+                                            row.currentStep === 2 ? 'bg-green-100 text-green-800' :
+                                                row.currentStep === 3 ? 'bg-emerald-100 text-emerald-800' :
+                                                    row.currentStep === 4 ? 'bg-blue-100 text-blue-800' :
+                                                        'bg-purple-100 text-purple-800'
+                                        }`}>
+                                        {row.status}
+                                    </span>
+                                </TableCell>
+                                <TableCell className="text-center text-xs sm:text-sm w-[100px] min-w-[100px] max-w-[100px] whitespace-normal break-words overflow-hidden">{row.preis}</TableCell>
+                                <TableCell className="text-center text-xs sm:text-sm w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words overflow-hidden hidden md:table-cell">{row.zahlung}</TableCell>
+                                <TableCell className="text-center text-xs sm:text-sm w-[160px] min-w-[160px] max-w-[160px] whitespace-normal break-words overflow-hidden hidden lg:table-cell">{row.beschreibung}</TableCell>
+                                <TableCell className="text-center text-xs sm:text-sm w-[180px] min-w-[180px] max-w-[180px] whitespace-normal break-words overflow-hidden hidden xl:table-cell">{row.abholort}</TableCell>
+                                <TableCell className="text-center text-xs sm:text-sm w-[140px] min-w-[140px] max-w-[140px] whitespace-normal break-words overflow-hidden">{row.fertigstellung}</TableCell>
+                            </TableRow>
+                        ))
+                    )}
                 </TableBody>
             </Table>
 
             {/* Pagination Controls */}
-            {pagination && (
+            {pagination && !loading && (
                 <div className="flex justify-between items-center mt-6 px-4">
                     <div className="text-sm text-gray-600">
-                        Showing {((currentPage - 1) * pagination.itemsPerPage) + 1} to {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} orders ({memoizedOrders.length} on this page)
+                        {memoizedOrders.length === 0 ? (
+                            <span>
+                                No orders found
+                                {selectedStatus && (
+                                    <span className="ml-2 text-blue-600 font-medium">
+                                        • Filtered by: {steps.find((_, idx) => {
+                                            const stepToApiStatus: Record<string, string> = {
+                                                "Einlage vorbereiten": "Einlage_vorbereiten",
+                                                "Einlage in Fertigung": "Einlage_in_Fertigung",
+                                                "Einlage verpacken": "Einlage_verpacken",
+                                                "Einlage Abholbereit": "Einlage_Abholbereit",
+                                                "Einlage versandt": "Einlage_versandt",
+                                                "Ausgeführte Einlagen": "Ausgeführte_Einlagen"
+                                            };
+                                            return stepToApiStatus[steps[idx]] === selectedStatus;
+                                        })}
+                                    </span>
+                                )}
+                            </span>
+                        ) : (
+                            <span>
+                                Showing {((currentPage - 1) * pagination.itemsPerPage) + 1} to {Math.min(currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} orders ({memoizedOrders.length} on this page)
+                                {/* {selectedStatus && (
+                                    <span className="ml-2 text-blue-600 font-medium">
+                                        • Filtered by: {steps.find((_, idx) => {
+                                            const stepToApiStatus: Record<string, string> = {
+                                                "Einlage vorbereiten": "Einlage_vorbereiten",
+                                                "Einlage in Fertigung": "Einlage_in_Fertigung", 
+                                                "Einlage verpacken": "Einlage_verpacken",
+                                                "Einlage Abholbereit": "Einlage_Abholbereit",
+                                                "Einlage versandt": "Einlage_versandt",
+                                                "Ausgeführte Einlagen": "Ausgeführte_Einlagen"
+                                            };
+                                            return stepToApiStatus[steps[idx]] === selectedStatus;
+                                        })}
+                                    </span>
+                                )} */}
+                            </span>
+                        )}
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={!pagination.hasPrevPage}
-                            className="flex items-center gap-1"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                            Previous
-                        </Button>
+                    {memoizedOrders.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={!pagination.hasPrevPage}
+                                className="flex items-center gap-1"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                                Previous
+                            </Button>
 
-                        <span className="text-sm text-gray-600 px-3">
-                            Page {currentPage} of {pagination.totalPages}
-                        </span>
+                            <span className="text-sm text-gray-600 px-3">
+                                Page {currentPage} of {pagination.totalPages}
+                            </span>
 
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={!pagination.hasNextPage}
-                            className="flex items-center gap-1"
-                        >
-                            Next
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
-                    </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={!pagination.hasNextPage}
+                                className="flex items-center gap-1"
+                            >
+                                Next
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
                 </div>
             )}
 

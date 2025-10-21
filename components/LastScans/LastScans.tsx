@@ -19,7 +19,7 @@ export interface LastScansRef {
     refreshData: () => void;
 }
 
-const LastScans = forwardRef<LastScansRef>((props, ref) => {
+const  LastScans = forwardRef<LastScansRef>((props, ref) => {
     const [lastScans, setLastScans] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isInitialLoad, setIsInitialLoad] = useState(true);

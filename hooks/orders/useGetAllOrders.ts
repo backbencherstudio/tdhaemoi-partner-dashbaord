@@ -50,17 +50,19 @@ export interface OrdersResponse {
     pagination: PaginationData;
 }
 
-export const useGetAllOrders = (page: number = 1, limit: number = 10, days: number = 30) => {
+export const useGetAllOrders = (page: number = 1, limit: number = 10, days: number = 30, orderStatus?: string) => {
     const [orders, setOrders] = useState<ApiOrderData[]>([]);
     const [pagination, setPagination] = useState<PaginationData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchOrders = async (pageNum: number, limitNum: number, daysNum: number) => {
+    const fetchOrders = async (pageNum: number, limitNum: number, daysNum: number, status?: string) => {
         try {
             setLoading(true);
             setError(null);
-            const response: OrdersResponse = await getAllOrders(pageNum, limitNum, daysNum);
+            console.log('useGetAllOrders: Fetching orders with params:', { pageNum, limitNum, daysNum, status });
+            const response: OrdersResponse = await getAllOrders(pageNum, limitNum, daysNum, status);
+            console.log('useGetAllOrders: API response:', response);
             
             if (response.success) {
                 setOrders(response.data);
@@ -69,6 +71,7 @@ export const useGetAllOrders = (page: number = 1, limit: number = 10, days: numb
                 setError(response.message || 'Failed to fetch orders');
             }
         } catch (err) {
+            console.error('useGetAllOrders: Error:', err);
             setError(err instanceof Error ? err.message : 'An error occurred while fetching orders');
         } finally {
             setLoading(false);
@@ -76,11 +79,11 @@ export const useGetAllOrders = (page: number = 1, limit: number = 10, days: numb
     };
 
     useEffect(() => {
-        fetchOrders(page, limit, days);
-    }, [page, limit, days]);
+        fetchOrders(page, limit, days, orderStatus);
+    }, [page, limit, days, orderStatus]);
 
     const refetch = () => {
-        fetchOrders(page, limit, days);
+        fetchOrders(page, limit, days, orderStatus);
     };
 
     return {

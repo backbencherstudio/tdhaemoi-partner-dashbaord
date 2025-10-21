@@ -1,5 +1,5 @@
 'use client'
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useState, useEffect } from 'react'
 import QuestionSection from '../Scanning/QuestionSection';
 import toast from 'react-hot-toast';
@@ -11,6 +11,7 @@ import ScanDataDisplay from '@/components/Shared/ScanDataDisplay';
 
 export default function ScannningDataPage({ scanData }: { scanData: ScanData }) {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [modalOpen, setModalOpen] = useState(false);
     const [modalImg, setModalImg] = useState<string | null>(null);
     const [modalTitle, setModalTitle] = useState<string>('');
@@ -54,6 +55,14 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
             archIndex2: scanData.archIndex2 ?? '',
         });
     }, [scanData]);
+
+    // Check for query parameter to open manage customer modal automatically
+    useEffect(() => {
+        const manageCustomer = searchParams.get('manageCustomer');
+        if (manageCustomer === 'true') {
+            setAddScanningModalOpen(true);
+        }
+    }, [searchParams]);
 
     // Check if any field has changed
     const [originalData, setOriginalData] = useState(editableData);
@@ -137,17 +146,28 @@ export default function ScannningDataPage({ scanData }: { scanData: ScanData }) 
             {/* Add New Scanning Modal */}
             <CustomerModal
                 isOpen={addScanningModalOpen}
-                onClose={() => setAddScanningModalOpen(false)}
+                onClose={() => {
+                    setAddScanningModalOpen(false);
+                    // Remove query parameter when modal is closed
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('manageCustomer');
+                    router.replace(url.pathname + url.search);
+                }}
                 customerId={displayData.id}
                 onSubmit={() => {
-                    // Refresh the data using the hook
                     refreshCustomer();
                 }}
             />
 
             <div className='flex justify-end mb-4 gap-4'>
                 <button
-                    onClick={() => setAddScanningModalOpen(true)}
+                    onClick={() => {
+                        setAddScanningModalOpen(true);
+                        // Add query parameter to URL
+                        const url = new URL(window.location.href);
+                        url.searchParams.set('manageCustomer', 'true');
+                        router.push(url.pathname + url.search);
+                    }}
                     className='bg-[#62A07C] capitalize cursor-pointer text-white px-4 py-2 rounded hover:bg-[#62a07c98] transition text-sm'
                 >
                     manage customer

@@ -95,10 +95,10 @@ async function generateCombinedFeetPdf(params: {
 
 
     const addFootImage = async (imageUrl: string, currentY: number, footSide: 'L' | 'R'): Promise<void> => {
-        const imageWidth = (pageWidth - margin * 2) * 0.85;
+        const imageWidth = (pageWidth - margin * 2) * 0.75;
         const imageX = (pageWidth - imageWidth) / 2;
         const availableHeight = pageHeight - currentY - margin - 40;
-        const maxImageHeight = Math.min(availableHeight, 210);
+        const maxImageHeight = Math.min(availableHeight, 280);
         const imageDataUrl = await fetchImageAsDataUrl(imageUrl);
         pdf.addImage(imageDataUrl, 'PNG', imageX, currentY, imageWidth, maxImageHeight, undefined, 'SLOW');
         const calculationY = currentY + maxImageHeight + 10;

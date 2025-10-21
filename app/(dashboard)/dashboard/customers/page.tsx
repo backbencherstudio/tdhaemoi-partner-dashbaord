@@ -14,6 +14,7 @@ import { useSearchCustomer } from '@/hooks/customer/useSearchCustomer'
 import legsImg from '@/public/Kunden/legs.png'
 import scanner3D from '@/public/Kunden/3d.png'
 import userImg from '@/public/Kunden/user.png'
+import LastScanTable from '@/components/LastScans/LastScanTable'
 
 export default function Customers() {
     const router = useRouter()
@@ -346,6 +347,8 @@ export default function Customers() {
 
             {/* ===== LAST SCANS SECTION ===== */}
             <LastScans ref={lastScansRef} />
+
+            <LastScanTable/>
 
             {/* ===== ADD CUSTOMER MODAL ===== */}
             <AddCustomerModal

@@ -31,8 +31,10 @@ interface OrdersContextType {
     pagination: any;
     currentPage: number;
     selectedDays: number;
+    selectedStatus: string | null;
     setCurrentPage: (page: number) => void;
     setSelectedDays: (days: number) => void;
+    setSelectedStatus: (status: string | null) => void;
     togglePriority: (orderId: string) => Promise<void>;
     moveToNextStep: (orderId: string) => void;
     moveToPreviousStep: (orderId: string) => void;
@@ -141,10 +143,11 @@ const mapApiDataToOrderData = (apiOrder: ApiOrderData): OrderData => {
 export function OrdersProvider({ children }: { children: ReactNode }) {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedDays, setSelectedDays] = useState(30); // Default to 30 days
+    const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
     const [orders, setOrders] = useState<OrderData[]>([]);
     const [prioritizedOrders, setPrioritizedOrders] = useState<OrderData[]>([]);
 
-    const { orders: apiOrders, loading, error, pagination, refetch } = useGetAllOrders(currentPage, 10, selectedDays);
+    const { orders: apiOrders, loading, error, pagination, refetch } = useGetAllOrders(currentPage, 10, selectedDays, selectedStatus || undefined);
     const { updateStatus: updateOrderStatusHook } = useUpdateOrderStatus();
 
     useEffect(() => {
@@ -152,7 +155,7 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
             try {
                 const allPrioritizedOrders: OrderData[] = [];
                 for (let page = 1; page <= 3; page++) {
-                    const response = await getAllOrders(page, 10, selectedDays);
+                    const response = await getAllOrders(page, 10, selectedDays, selectedStatus || undefined);
                     if (response.success && response.data.length > 0) {
                         const mappedOrders = response.data.map(mapApiDataToOrderData);
                         const prioritizedFromPage = mappedOrders.filter((order: OrderData) => order.isPrioritized);
@@ -169,25 +172,28 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         };
 
         loadPrioritizedOrders();
-    }, [selectedDays]);
+    }, [selectedDays, selectedStatus]);
 
     useEffect(() => {
-        if (apiOrders.length > 0) {
-            const mappedOrders = apiOrders.map(mapApiDataToOrderData);
-            setOrders(mappedOrders);
-            setPrioritizedOrders(prevPrioritized => {
-                const existingPrioritized = prevPrioritized.filter(order =>
-                    !mappedOrders.some(newOrder => newOrder.id === order.id)
-                );
-                const newPrioritized = mappedOrders.filter(order => order.isPrioritized);
-                return [...existingPrioritized, ...newPrioritized];
-            });
-        }
+        // Always update orders, even if empty array
+        console.log('OrdersContext: Updating orders with apiOrders:', apiOrders.length, 'items');
+        console.log('OrdersContext: Current selectedStatus:', selectedStatus);
+        const mappedOrders = apiOrders.map(mapApiDataToOrderData);
+        setOrders(mappedOrders);
+        
+        // Update prioritized orders
+        setPrioritizedOrders(prevPrioritized => {
+            const existingPrioritized = prevPrioritized.filter(order =>
+                !mappedOrders.some(newOrder => newOrder.id === order.id)
+            );
+            const newPrioritized = mappedOrders.filter(order => order.isPrioritized);
+            return [...existingPrioritized, ...newPrioritized];
+        });
     }, [apiOrders]);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [selectedDays]);
+    }, [selectedDays, selectedStatus]);
 
 
     const togglePriority = async (orderId: string) => {
@@ -454,8 +460,10 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
             pagination,
             currentPage,
             selectedDays,
+            selectedStatus,
             setCurrentPage,
             setSelectedDays,
+            setSelectedStatus,
             togglePriority,
             moveToNextStep,
             moveToPreviousStep,

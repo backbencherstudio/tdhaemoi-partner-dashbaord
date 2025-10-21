@@ -4,14 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {  TooltipProvider,  } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { User, UploadCloud } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useParams } from 'next/navigation';
-import { customShaftsData } from '@/lib/customShaftsData';
-import { BsQuestionCircleFill } from 'react-icons/bs';
-import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useSingleCustomShaft } from '@/hooks/customShafts/useSingleCustomShaft';
+import Loading from '@/components/Shared/Loading';
+import { Dialog, DialogContent,  DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import colorPlate from '@/public/images/color.png';
 import toast from 'react-hot-toast';
@@ -20,10 +20,15 @@ import Invoice from '@/app/(dashboard)/dashboard/_components/Payments/Invoice';
 
 export default function DetailsPage() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [leatherProvided, setLeatherProvided] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [nahtfarbeOption, setNahtfarbeOption] = useState('default');
   const [customNahtfarbe, setCustomNahtfarbe] = useState('');
+  const [ledertyp, setLedertyp] = useState('');
+  const [innenfutter, setInnenfutter] = useState('');
+  const [schafthohe, setSchafthohe] = useState('');
+  const [linkerLeistenFile, setLinkerLeistenFile] = useState<File | null>(null);
+  const [linkerLeistenFileName, setLinkerLeistenFileName] = useState('');
+  const linkerLeistenInputRef = useRef<HTMLInputElement>(null);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [userBalance, setUserBalance] = useState(200.00);
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
@@ -40,8 +45,16 @@ export default function DetailsPage() {
     }
   };
 
+  const handleLinkerLeistenFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setLinkerLeistenFile(file);
+      setLinkerLeistenFileName(file.name);
+    }
+  };
+
   const handleOrderConfirmation = () => {
-    const orderPrice = 150.99;
+   
 
     if (userBalance < orderPrice) {
       toast.error("Nicht genügend Balance. Bitte laden Sie Ihr Konto auf, um die Bestellung abzuschließen.");
@@ -56,18 +69,51 @@ export default function DetailsPage() {
   };
 
   const params = useParams();
-  const shaftId = params.id;
-  const shaft = customShaftsData.find(item => item.no === shaftId);
+  const shaftId = params.id as string;
+  
+  // Fetch single custom shaft data from API
+  const { data: apiData, loading, error } = useSingleCustomShaft(shaftId);
+  const shaft = apiData?.data;
 
   useEffect(() => {
-    console.log('shaftId:', shaftId);
-    console.log('shaft:', shaft);
+
     if (shaft) {
-      console.log('Image path:', shaft.image);
+      // console.log('Image path:', shaft.image);
     }
   }, [shaftId, shaft]);
 
-  if (!shaft) return <div>Produkt nicht gefunden</div>;
+  // Loading state
+  if (loading) {
+    return (
+      <div className="px-2 md:px-6 py-8 w-full flex justify-center items-center min-h-[400px]">
+        <Loading />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="px-2 md:px-6 py-8 w-full flex flex-col items-center justify-center min-h-[400px]">
+        <div className="text-red-500 text-lg font-medium mb-2">Fehler beim Laden der Daten</div>
+        <div className="text-gray-400 text-sm text-center">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  // Product not found
+  if (!shaft) {
+    return (
+      <div className="px-2 md:px-6 py-8 w-full flex flex-col items-center justify-center min-h-[400px]">
+        <div className="text-gray-500 text-lg font-medium mb-2">Produkt nicht gefunden</div>
+        <div className="text-gray-400 text-sm text-center">
+          Das angeforderte Produkt konnte nicht gefunden werden.
+        </div>
+      </div>
+    );
+  }
 
   const orderPrice = 150.99;
   const hasEnoughBalance = userBalance >= orderPrice;
@@ -82,14 +128,32 @@ export default function DetailsPage() {
           <User className="w-5 h-5" />
           Kunde auswählen
         </Button>
-        <Button variant="outline" className="justify-start w-full h-12 text-base font-normal border border-black gap-3">
-          <UploadCloud className="w-5 h-5" />
-          Upload 3D-Datei Linker Leisten
-        </Button>
-        <Button variant="outline" className="justify-start w-full h-12 text-base font-normal border border-black gap-3">
+        <div className="relative">
+          <Button 
+            variant="outline" 
+            className="justify-start cursor-pointer w-full h-12 text-base font-normal border border-black gap-3 hover:bg-gray-100"
+            onClick={() => linkerLeistenInputRef.current?.click()}
+          >
+            <UploadCloud className="w-5 h-5" />
+            {linkerLeistenFileName ? linkerLeistenFileName : "Upload 3D-Datei Linker Leisten"}
+          </Button>
+          <input
+            type="file"
+            accept=".stl,.obj,.ply,.3ds,.dae,.fbx,.x3d"
+            ref={linkerLeistenInputRef}
+            onChange={handleLinkerLeistenFileChange}
+            className="hidden"
+          />
+          {linkerLeistenFileName && (
+            <div className="mt-2 text-sm text-green-600 font-medium">
+              ✓ Datei hochgeladen: {linkerLeistenFileName}
+            </div>
+          )}
+        </div>
+        {/* <Button variant="outline" className="justify-start w-full h-12 text-base font-normal border border-black gap-3">
           <UploadCloud className="w-5 h-5" />
           Upload 3D-Datei Rechter Leisten
-        </Button>
+        </Button> */}
       </div>
 
       {/* Bottom: Image and Info */}
@@ -124,13 +188,13 @@ export default function DetailsPage() {
         {/* Product info section */}
         <div className="w-full md:w-1/2 flex flex-col">
           <h2 className="text-2xl font-bold mb-1">{shaft.name}</h2>
-          <p className="text-gray-500 text-sm font-medium mb-4">#{shaft.no}</p>
+          <p className="text-gray-500 text-sm font-medium mb-4">#{shaft.ide}</p>
           <p className="text-lg font-medium mb-6">{shaft.description}</p>
           <div className="mt-2">
             <span className="text-xs text-gray-500 block mb-1">
               Preis <span className="text-[10px]">(wird automatisch aktualisiert)</span>
             </span>
-            <span className="text-3xl font-extrabold tracking-tight">{(shaft.price / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
+            <span className="text-3xl font-extrabold tracking-tight">{shaft.price.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })}</span>
           </div>
         </div>
       </div>
@@ -138,48 +202,28 @@ export default function DetailsPage() {
       {/* Bottom Section: Configurator */}
       <TooltipProvider>
         <div className="flex flex-col gap-6">
-          {/* Leder bereit? */}
+          {/* Ledertyp */}
           <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <div className="flex items-center gap-2 md:w-1/3">
-              <Label className="font-medium text-base">Ich stelle das Leder selbst bereit?</Label>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <BsQuestionCircleFill className="w-4 h-4 text-gray-500 cursor-help hover:text-gray-700" />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-sm p-3">
-                  <div className="text-sm space-y-2">
-                    <p>Sie können gerne Ihr eigenes Leder bereitstellen oder aus unserer ständig wachsenden Auswahl an hochwertigem Leder wählen, das direkt aus dem Norden Italiens stammt – hochwertig produziert im Herzen der Lederherstellung. Dazu bieten wir auch eine Auswahl an Futterleder.</p>
-                    <p>Wählen Sie einfach, was Ihnen besser zuspricht.</p>
-                    <p><strong>Wenn Sie unser Leder wählen, fällt ein Aufpreis von 30 € an.</strong></p>
-                    <p>Wenn Sie Ihr eigenes Leder bereitstellen, entstehen lediglich die Lieferkosten nach Italien.</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <div className="flex gap-6 items-center">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="leatherProvided"
-                  value="yes"
-                  checked={leatherProvided === 'yes'}
-                  onChange={(e) => setLeatherProvided(e.target.value)}
-                  className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300"
-                />
-                <span className="text-sm font-medium text-gray-700">Ja</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="leatherProvided"
-                  value="no"
-                  checked={leatherProvided === 'no'}
-                  onChange={(e) => setLeatherProvided(e.target.value)}
-                  className="w-5 h-5 text-blue-600 bg-gray-100 border-gray-300"
-                />
-                <span className="text-sm font-medium text-gray-700">Nein (+24,99€)</span>
-              </label>
-            </div>
+            <Label className="font-medium  text-base md:w-1/3">Ledertyp:</Label>
+            <Select value={ledertyp} onValueChange={setLedertyp}>
+              <SelectTrigger className="w-full md:w-1/2">
+                <SelectValue placeholder="Ledertyp wählen..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem className='cursor-pointer' value="kalbleder-vitello">Kalbleder Vitello</SelectItem>
+                <SelectItem className='cursor-pointer' value="nappa">Nappa (weiches Glattleder)</SelectItem>
+                <SelectItem className='cursor-pointer' value="nubukleder">Nubukleder</SelectItem>
+                <SelectItem className='cursor-pointer' value="softvelourleder">Softvelourleder</SelectItem>
+                <SelectItem className='cursor-pointer' value="hirschleder-gemustert">Hirschleder Gemustert</SelectItem>
+                <SelectItem className='cursor-pointer' value="performance-textil">Performance Textil</SelectItem>
+                <SelectItem className='cursor-pointer' value="fashion-mesh-gepolstert">Fashion Mesh Gepolstert</SelectItem>
+                <SelectItem className='cursor-pointer' value="soft-touch-material-gepraegt">Soft Touch Material - Geprägt</SelectItem>
+                <SelectItem className='cursor-pointer' value="textil-python-effekt">Textil Python-Effekt</SelectItem>
+                <SelectItem className='cursor-pointer' value="glitter">Glitter</SelectItem>
+                <SelectItem className='cursor-pointer' value="luxury-glitter-fabric">Luxury Glitter Fabric</SelectItem>
+                <SelectItem className='cursor-pointer' value="metallic-finish">Metallic Finish</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           {/* Lederfarbe */}
           <div className="flex flex-col md:flex-row md:items-center gap-4">
@@ -188,27 +232,36 @@ export default function DetailsPage() {
               type="text"
               placeholder="Lederfarbe wählen..."
               className="w-full md:w-1/2"
-              disabled={leatherProvided !== 'yes'}
             />
           </div>
+
           {/* Innenfutter */}
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <Label className="font-medium text-base md:w-1/3">Innenfutter:</Label>
-            <Input
-              type="text"
-              placeholder="Innenfutter wählen..."
-              className="w-full md:w-1/2"
-              disabled={leatherProvided !== 'yes'}
-            />
+            <Select value={innenfutter} onValueChange={setInnenfutter}>
+              <SelectTrigger className="w-full md:w-1/2">
+                <SelectValue placeholder="Innenfutter wählen..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem className='cursor-pointer' value="ziegenleder-hellbraun">Ziegenleder hellbraun</SelectItem>
+                <SelectItem className='cursor-pointer' value="kalbsleder-beige">Kalbsleder Beige</SelectItem>
+                <SelectItem className='cursor-pointer' value="sport-mesh-nero-schwarz">Sport Mesh Nero/Schwarz</SelectItem>
+                <SelectItem className='cursor-pointer' value="sport-mesh-grau-grigio">Sport Mesh Grau/Grigio</SelectItem>
+                <SelectItem className='cursor-pointer' value="sport-mesh-weiss-bianco">Sport Mesh Weiß/Bianco</SelectItem>
+                <SelectItem className='cursor-pointer' value="comfort-line-nero-schwarz">Comfort Line Nero/Schwarz</SelectItem>
+                <SelectItem className='cursor-pointer' value="comfort-line-blau-blu">Comfort Line Blau/Blu</SelectItem>
+                <SelectItem className='cursor-pointer' value="comfort-line-braun-marrone">Comfort Line Braun/Marrone</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           {/* Nahtfarbe */}
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex flex-col md:w-1/3">
               <Label className="font-medium text-base">Nahtfarbe:</Label>
               <Dialog>
-                <DialogTrigger asChild>
+                {/* <DialogTrigger asChild>
                   <a href="#" className="text-sm underline text-blue-700 hover:text-blue-900 w-fit mt-1">Hier können Sie den Katalog unserer Nahtfarben öffnen</a>
-                </DialogTrigger>
+                </DialogTrigger> */}
                 <DialogContent className="max-w-3xl flex flex-col items-center">
                   <DialogTitle>Nahtfarben Katalog</DialogTitle>
                   <Image src={colorPlate} alt="Nahtfarben Katalog" className="w-full h-auto rounded shadow" />
@@ -239,21 +292,15 @@ export default function DetailsPage() {
           {/* Schafthöhe */}
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <Label className="font-medium text-base md:w-1/3">Schafthöhe:</Label>
-            <div className="flex gap-4 flex-wrap">
-              <label className="flex items-center gap-2 cursor-pointer"><Checkbox /> 7cm</label>
-              <label className="flex items-center gap-2 cursor-pointer"><Checkbox /> 9cm</label>
-              <label className="flex items-center gap-2 cursor-pointer"><Checkbox /> Eigene</label>
-            </div>
+            <Input
+              type="text"
+              placeholder="Schafthöhe eingeben (z.B. 7cm, 9cm)..."
+              className="w-full md:w-1/2"
+              value={schafthohe}
+              onChange={e => setSchafthohe(e.target.value)}
+            />
           </div>
-          {/* Schaftform */}
-          <div className="flex flex-col md:flex-row md:items-center gap-4">
-            <Label className="font-medium text-base md:w-1/3">Schaftform:</Label>
-            <div className="flex gap-4 flex-wrap">
-              <label className="flex items-center gap-2 cursor-pointer"><Checkbox /> Standard</label>
-              <label className="flex items-center gap-2 cursor-pointer"><Checkbox /> Eher weich</label>
-              <label className="flex items-center gap-2 cursor-pointer"><Checkbox /> Eher steif</label>
-            </div>
-          </div>
+
           {/* Polsterung */}
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <Label className="font-medium text-base md:w-1/3">Polsterung:</Label>

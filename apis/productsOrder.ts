@@ -44,9 +44,13 @@ export const pdfSendToCustomer = async (orderId: string, formData: FormData) => 
 }
 
 // get all orders 
-export const getAllOrders = async (page: number, limit: number, days: number) => {
+export const getAllOrders = async (page: number, limit: number, days: number, orderStatus?: string) => {
     try {
-        const response = await axiosClient.get(`/customer-orders?page=${page}&limit=${limit}&days=${days}`);
+        let url = `/customer-orders?page=${page}&limit=${limit}&days=${days}`;
+        if (orderStatus) {
+            url += `&orderStatus=${orderStatus}`;
+        }
+        const response = await axiosClient.get(url);
         return response.data;
     } catch (error) {
         throw error;

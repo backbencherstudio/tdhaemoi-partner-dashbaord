@@ -31,3 +31,18 @@ export const getSearchCustom = async (search: string) => {
         throw error;
     }
 }
+
+// create custom shaft
+export const createCustomShaft = async (formData: FormData) => {
+    try {
+        const url = `/custom_shafts/create`;
+        const response = await axiosClient.post(url, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

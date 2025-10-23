@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'apparel-yourself-fairy-citysearch.trycloudflare.com',
+        hostname: 'blah-proc-regularly-wall.trycloudflare.com',
         port: '',
         pathname: '/**',
       }

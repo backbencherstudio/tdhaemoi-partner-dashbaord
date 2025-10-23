@@ -7,9 +7,11 @@ import { useAppoinment } from '@/hooks/appoinment/useAppoinment';
 import AppointmentModal from '@/components/AppointmentModal/AppointmentModal';
 import { useWeeklyCalendar } from '@/hooks/calendar/useWeeklyCalendar';
 import MiniCalendar from '@/components/AppoinmentData/MiniCalendar';
+import DayView from '@/components/AppoinmentData/DayView';
+import DailyCalendarView from '@/components/AppoinmentData/DailyCalendarView';
 
 interface Event {
-    id: number;
+    id: string;
     date: string;
     time: string;
     title: string;
@@ -18,6 +20,12 @@ interface Event {
     assignedTo: string;
     reason: string;
     duration?: number;
+    customer_name?: string;
+    customerId?: string;
+    user?: {
+        name: string;
+        email: string;
+    };
 }
 
 interface AppointmentData {
@@ -73,7 +81,7 @@ const WeeklyCalendar = () => {
     } = useWeeklyCalendar();
     const [deleteConfirmation, setDeleteConfirmation] = React.useState<{
         show: boolean;
-        appointmentId: number | null;
+        appointmentId: string | null;
     }>({
         show: false,
         appointmentId: null
@@ -143,12 +151,12 @@ const WeeklyCalendar = () => {
             const selectedMonth = selectedRowStartDate.getMonth();
             const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0);
 
-            // Generate dates after the selected date until end of month
-            for (let i = 1; i <= 30; i++) { // Start from 1, not 0 (skip the selected date)
+
+            for (let i = 1; i <= 30; i++) {
                 const date = new Date(selectedRowStartDate);
                 date.setDate(selectedRowStartDate.getDate() + i);
 
-                // Stop if we've reached the next month
+
                 if (date.getMonth() !== selectedMonth) {
                     break;
                 }
@@ -158,21 +166,17 @@ const WeeklyCalendar = () => {
             return dates;
         }
 
-        // In Month View: Generate all remaining days of the month for See More functionality
         const selectedYear = miniCalendarDate.getFullYear();
         const selectedMonth = miniCalendarDate.getMonth();
 
-        // Check if selected month is current month
         const isCurrentMonth = selectedYear === today.getFullYear() && selectedMonth === today.getMonth();
 
-        // If it's current month, start from tomorrow (next day after today), otherwise start from 1st of selected month
         const startDate = isCurrentMonth ?
-            new Date(today.getTime() + 24 * 60 * 60 * 1000) : // Tomorrow
+            new Date(today.getTime() + 24 * 60 * 60 * 1000) :
             new Date(selectedYear, selectedMonth, 1);
 
         const endOfMonth = new Date(selectedYear, selectedMonth + 1, 0);
 
-        // Generate all dates from start date to end of month
         const dates = [];
         for (let date = new Date(startDate); date <= endOfMonth; date.setDate(date.getDate() + 1)) {
             dates.push(new Date(date));
@@ -190,24 +194,22 @@ const WeeklyCalendar = () => {
         setVisibleDaysCount(prev => Math.min(prev + 4, selectedMonthDates.length));
     };
 
-    // Reset visible days when month changes in mini calendar
+
     React.useEffect(() => {
         setVisibleDaysCount(4);
-        setSelectedRowStartDate(null); // Reset selected row when month changes
-        setCurrentSelectedDate(today); // Reset to today when month changes
+        setSelectedRowStartDate(null);
+        setCurrentSelectedDate(today);
     }, [miniCalendarDate.getMonth(), miniCalendarDate.getFullYear()]);
 
     // Override the handleMiniCalendarDateClick to set selected row
     const handleMiniCalendarDateClickOverride = (date: Date) => {
-        // Show the next 4 dates starting from the clicked date
         setSelectedRowStartDate(date);
-        setCurrentSelectedDate(date); // Update current selected date
-        setVisibleDaysCount(4); // Show the next 4 dates from clicked date
-        handleMiniCalendarDateClick(date); // Call original function
+        setCurrentSelectedDate(date);
+        setVisibleDaysCount(4);
+        handleMiniCalendarDateClick(date);
     };
 
     const handleDateClick = (date: Date) => {
-        // Prevent adding appointments to past dates
         if (isPastDate(date)) {
             alert('You cannot add appointments to past dates.');
             return;
@@ -236,8 +238,8 @@ const WeeklyCalendar = () => {
     };
 
 
-    const handleAppointmentClick = async (appointmentId: number) => {
-        const apt = await getAppointmentById(appointmentId.toString());
+    const handleAppointmentClick = async (appointmentId: string) => {
+        const apt = await getAppointmentById(appointmentId);
         if (apt) {
             setSelectedAppointment(apt);
 
@@ -296,10 +298,29 @@ const WeeklyCalendar = () => {
                 </div>
             </div>
 
-            <div className="p-4 sm:p-6">
-                <div className="flex flex-col lg:flex-row gap-6 mb-10">
+            <div className="p-2 sm:p-4 md:p-6">
+                <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 mb-6 sm:mb-10 w-full">
+
+                    {/* Daily Calendar View - Responsive layout */}
+                    <div className="w-full xl:w-11/12">
+                        <DailyCalendarView
+                            key={currentSelectedDate.toDateString()}
+                            selectedDate={currentSelectedDate}
+                            events={getEventsForDate(currentSelectedDate)}
+                            monthNames={monthNames}
+                            dayNamesLong={dayNamesLong}
+                            onDateChange={(direction) => {
+                                setCurrentSelectedDate(prev => {
+                                    const next = new Date(prev);
+                                    next.setDate(next.getDate() + direction);
+                                    return next;
+                                });
+                            }}
+                        />
+                    </div>
+
                     {/* MiniCalendar */}
-                    <div className="flex-1">
+                    <div className="w-full xl:w-5/12">
                         <MiniCalendar
                             isMobile={isMobile}
                             miniCalendarDate={miniCalendarDate}
@@ -322,200 +343,13 @@ const WeeklyCalendar = () => {
                     </div>
 
                     {/* Selected Date Display */}
-                    <div className="w-full lg:w-80 flex-shrink-0">
-                        <div className="bg-white border-2 border-gray-200 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                                {selectedRowStartDate ? 'Selected Date' : 'Month View'}
-                            </h3>
-                            <div className="text-center">
-                                {selectedRowStartDate ? (
-                                    // Show selected date
-                                    <>
-                                        <div className="text-4xl font-light mb-2 text-purple-600">
-                                            {currentSelectedDate.getDate()}
-                                        </div>
-                                        <div className="text-sm mb-1 text-purple-600">
-                                            {dayNamesLong[currentSelectedDate.getDay()]}
-                                        </div>
-                                        <div className="text-xs text-gray-500 mb-4">
-                                            {monthNames[currentSelectedDate.getMonth()]} {currentSelectedDate.getFullYear()}
-                                        </div>
-
-                                        {/* Show appointments for selected date */}
-                                        {(() => {
-                                            const selectedDateEvents = getEventsForDate(currentSelectedDate);
-                                            return selectedDateEvents.length > 0 && (
-                                                <div className="mb-4">
-                                                    <div className="text-sm text-gray-700 mb-3">
-                                                        Selected date has {selectedDateEvents.length} appointment{selectedDateEvents.length !== 1 ? 's' : ''}
-                                                    </div>
-
-                                                    {/* Show appointment details */}
-                                                    <div className="space-y-3">
-                                                        {selectedDateEvents.map((event: Event, index: number) => (
-                                                            <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                                                <div className="text-sm font-medium text-gray-800 mb-2">
-                                                                    {event.title}
-                                                                </div>
-                                                                {event.time && (
-                                                                    <div className="text-xs text-gray-600 mb-1">
-                                                                        Time: {(() => {
-                                                                            const t = event.time.trim().toLowerCase();
-                                                                            const ampm = /^(\d{1,2}):(\d{2})\s*(am|pm)$/;
-                                                                            const m = t.match(ampm);
-                                                                            if (m) {
-                                                                                let h = parseInt(m[1], 10);
-                                                                                const min = m[2];
-                                                                                const mod = m[3];
-                                                                                if (mod === 'pm' && h !== 12) h += 12;
-                                                                                if (mod === 'am' && h === 12) h = 0;
-                                                                                return `${String(h).padStart(2, '0')}:${min}`;
-                                                                            }
-                                                                            // already 24h like 15:00
-                                                                            const is24 = /^\d{1,2}:\d{2}$/.test(t);
-                                                                            if (is24) return t.length === 4 ? `0${t}` : t;
-                                                                            // last resort
-                                                                            const d = new Date(`2000-01-01T${t}`);
-                                                                            if (!isNaN(d.getTime())) {
-                                                                                return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                                                                            }
-                                                                            return t;
-                                                                        })()}
-                                                                    </div>
-                                                                )}
-                                                                {event.assignedTo && (
-                                                                    <div className="text-xs text-gray-600 mb-1">
-                                                                        Mitarbeiter: {event.assignedTo}
-                                                                    </div>
-                                                                )}
-                                                                {event.reason && (
-                                                                    <div className="text-xs text-gray-600 mb-1">
-                                                                        Grund: {event.reason}
-                                                                    </div>
-                                                                )}
-                                                                {event.duration && (
-                                                                    <div className="text-xs text-gray-600">
-                                                                        Dauer: {event.duration === 0.17 ? '10 Min' :
-                                                                            event.duration === 0.5 ? '30 Min' :
-                                                                                event.duration === 1 ? '60 Min' :
-                                                                                    `${event.duration} Std`}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-
-                                                    <div className="flex items-center justify-center mt-3">
-                                                        <div className="w-3 h-3 bg-green-500 rounded-full border border-white mr-2"></div>
-                                                        <span className="text-xs text-gray-600">Has appointments</span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-
-
-                                        {/* Status indicator */}
-                                        {/* <div className="mt-4 pt-4 border-t">
-                                            <div className="text-xs px-3 py-1 rounded-full inline-block bg-purple-100 text-purple-800">
-                                                Selected Date
-                                            </div>
-                                        </div> */}
-                                    </>
-                                ) : (
-                                    // Show month view info with today as default selected date
-                                    <>
-                                        <div className="text-4xl font-light mb-2 text-[#62A07C]">
-                                            {today.getDate()}
-                                        </div>
-                                        <div className="text-sm mb-1 text-[#62A07C]">
-                                            {dayNamesLong[today.getDay()]}
-                                        </div>
-                                        <div className="text-xs text-gray-500 mb-4">
-                                            {monthNames[today.getMonth()]} {today.getFullYear()}
-                                        </div>
-
-                                        {/* Show appointments for today */}
-                                        {(() => {
-                                            const todayEvents = getEventsForDate(today);
-                                            return todayEvents.length > 0 && (
-                                                <div className="mb-4">
-                                                    <div className="text-sm text-gray-700 mb-3">
-                                                        Today has {todayEvents.length} appointment{todayEvents.length !== 1 ? 's' : ''}
-                                                    </div>
-
-                                                    {/* Show appointment details */}
-                                                    <div className="space-y-3">
-                                                        {todayEvents.map((event: Event, index: number) => (
-                                                            <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                                                <div className="text-sm font-medium text-gray-800 mb-2">
-                                                                    {event.title}
-                                                                </div>
-                                                                {event.time && (
-                                                                    <div className="text-xs text-gray-600 mb-1">
-                                                                        Time: {(() => {
-                                                                            const t = event.time.trim().toLowerCase();
-                                                                            const ampm = /^(\d{1,2}):(\d{2})\s*(am|pm)$/;
-                                                                            const m = t.match(ampm);
-                                                                            if (m) {
-                                                                                let h = parseInt(m[1], 10);
-                                                                                const min = m[2];
-                                                                                const mod = m[3];
-                                                                                if (mod === 'pm' && h !== 12) h += 12;
-                                                                                if (mod === 'am' && h === 12) h = 0;
-                                                                                return `${String(h).padStart(2, '0')}:${min}`;
-                                                                            }
-                                                                            const is24 = /^\d{1,2}:\d{2}$/.test(t);
-                                                                            if (is24) return t.length === 4 ? `0${t}` : t;
-                                                                            const d = new Date(`2000-01-01T${t}`);
-                                                                            if (!isNaN(d.getTime())) {
-                                                                                return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                                                                            }
-                                                                            return t;
-                                                                        })()}
-                                                                    </div>
-                                                                )}
-                                                                {event.assignedTo && (
-                                                                    <div className="text-xs text-gray-600 mb-1">
-                                                                        Mitarbeiter: {event.assignedTo}
-                                                                    </div>
-                                                                )}
-                                                                {event.reason && (
-                                                                    <div className="text-xs text-gray-600 mb-1">
-                                                                        Grund: {event.reason}
-                                                                    </div>
-                                                                )}
-                                                                {event.duration && (
-                                                                    <div className="text-xs text-gray-600">
-                                                                        Dauer: {event.duration === 0.17 ? '10 Min' :
-                                                                            event.duration === 0.5 ? '30 Min' :
-                                                                                event.duration === 1 ? '60 Min' :
-                                                                                    `${event.duration} Std`}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-
-                                                    <div className="flex items-center justify-center mt-3">
-                                                        <div className="w-3 h-3 bg-green-500 rounded-full border border-white mr-2"></div>
-                                                        <span className="text-xs text-gray-600">Has appointments</span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })()}
-
-
-                                        {/* Status indicator */}
-                                        <div className="mt-4 pt-4 border-t">
-                                            <div className="text-xs px-3 py-1 rounded-full inline-block bg-gray-100 text-gray-600">
-                                                Month View
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    {/* <DayView
+                        selectedDate={selectedRowStartDate ? currentSelectedDate : today}
+                        events={getEventsForDate(selectedRowStartDate ? currentSelectedDate : today)}
+                        monthNames={monthNames}
+                        dayNamesLong={dayNamesLong}
+                        isSelectedDate={!!selectedRowStartDate}
+                    /> */}
                 </div>
 
 
@@ -524,7 +358,7 @@ const WeeklyCalendar = () => {
                 <div className={`${isMobile ? 'block' : 'flex gap-8'}`}>
                     {/* Monthly Calendar */}
                     <div className="flex-1">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                             {visibleDates.map((date, index) => {
                                 const dayEvents = getEventsForDate(date);
                                 const isToday = isSameDay(date, today);
@@ -730,7 +564,7 @@ const WeeklyCalendar = () => {
                                     if (!deleteConfirmation.appointmentId || isDeleting) return;
                                     try {
                                         setIsDeleting(true);
-                                        await deleteAppointments(deleteConfirmation.appointmentId.toString());
+                                        await deleteAppointments(deleteConfirmation.appointmentId);
                                     } finally {
                                         setIsDeleting(false);
                                     }

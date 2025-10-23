@@ -3,7 +3,7 @@ import { createAppoinment, deleteAppointment, getMyAppointments, getSingleAppoin
 import toast from 'react-hot-toast';
 
 interface Event {
-    id: number;
+    id: string;
     date: string;
     time: string;
     title: string;
@@ -12,6 +12,12 @@ interface Event {
     assignedTo: string;
     reason: string;
     duration?: number;
+    customer_name?: string;
+    customerId?: string;
+    user?: {
+        name: string;
+        email: string;
+    };
 }
 
 interface AppointmentData {
@@ -24,6 +30,11 @@ interface AppointmentData {
     details: string;
     isClient: boolean;
     duration?: number;
+    customerId?: string;
+    user?: {
+        name: string;
+        email: string;
+    };
 }
 
 
@@ -69,7 +80,10 @@ export const useAppoinment = () => {
                     type: apt.isClient ? 'user' : 'others',
                     assignedTo: apt.assignedTo || '',
                     reason: apt.reason || '',
-                    duration: apt.duration
+                    duration: apt.duration,
+                    customer_name: apt.customer_name,
+                    customerId: apt.customerId,
+                    user: apt.user
                 }));
                 setEvents(formattedEvents);
                 // console.log('Events state updated with', formattedEvents.length, 'events');
